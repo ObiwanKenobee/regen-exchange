@@ -62,26 +62,60 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  /* Atlas Sanctum — Regenerative Value Exchange
+     Bloomberg-meets-Palantir ecological terminal.
+     Deep midnight graphite base with bioluminescent green/cyan and solar gold. */
+  --radius: 0.5rem;
+
+  --background: oklch(0.16 0.02 200);
+  --foreground: oklch(0.96 0.015 180);
+
+  --card: oklch(0.20 0.025 200);
+  --card-foreground: oklch(0.96 0.015 180);
+
+  --popover: oklch(0.18 0.025 200);
+  --popover-foreground: oklch(0.96 0.015 180);
+
+  /* Regenerative emerald */
+  --primary: oklch(0.74 0.18 155);
+  --primary-foreground: oklch(0.14 0.03 180);
+
+  /* Bioluminescent cyan */
+  --secondary: oklch(0.78 0.14 205);
+  --secondary-foreground: oklch(0.14 0.03 180);
+
+  --muted: oklch(0.24 0.02 200);
+  --muted-foreground: oklch(0.70 0.025 200);
+
+  /* Solar gold accent */
+  --accent: oklch(0.82 0.16 85);
+  --accent-foreground: oklch(0.14 0.03 180);
+
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.30 0.025 200 / 60%);
+  --input: oklch(0.26 0.025 200);
+  --ring: oklch(0.74 0.18 155);
+
+  /* Signature tokens */
+  --forest: oklch(0.45 0.10 155);
+  --emerald: oklch(0.74 0.18 155);
+  --bioluminescent: oklch(0.78 0.16 205);
+  --solar: oklch(0.82 0.16 85);
+  --copper: oklch(0.62 0.14 55);
+  --graphite: oklch(0.16 0.02 200);
+
+  --gradient-aurora: linear-gradient(135deg, oklch(0.74 0.18 155) 0%, oklch(0.78 0.16 205) 60%, oklch(0.82 0.16 85) 100%);
+  --gradient-deep: radial-gradient(ellipse at top, oklch(0.24 0.04 200) 0%, oklch(0.12 0.02 200) 60%);
+  --gradient-glow: linear-gradient(180deg, oklch(0.74 0.18 155 / 20%), transparent 70%);
+
+  --shadow-glow: 0 0 40px -10px oklch(0.74 0.18 155 / 50%);
+  --shadow-cyan: 0 0 40px -10px oklch(0.78 0.16 205 / 60%);
+  --shadow-elevated: 0 20px 60px -20px oklch(0 0 0 / 60%);
+
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -138,7 +172,89 @@
   }
 
   body {
-    background-color: var(--color-background);
+    background: var(--gradient-deep);
+    background-attachment: fixed;
     color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
   }
+}
+
+@layer utilities {
+  .text-gradient-aurora {
+    background: var(--gradient-aurora);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gradient-aurora { background: var(--gradient-aurora); }
+  .bg-gradient-deep { background: var(--gradient-deep); }
+
+  .glow-emerald { box-shadow: var(--shadow-glow); }
+  .glow-cyan { box-shadow: var(--shadow-cyan); }
+
+  .panel {
+    background: linear-gradient(180deg, oklch(0.22 0.025 200 / 80%), oklch(0.18 0.025 200 / 80%));
+    border: 1px solid var(--color-border);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg);
+  }
+
+  .panel-glow {
+    position: relative;
+  }
+  .panel-glow::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradient-aurora);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(oklch(0.74 0.18 155 / 6%) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.74 0.18 155 / 6%) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .ticker-pulse {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 oklch(0.74 0.18 155 / 60%); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 6px oklch(0.74 0.18 155 / 0%); }
+  }
+
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .animate-float { animation: float-slow 8s ease-in-out infinite; }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin-slow { animation: spin-slow 60s linear infinite; }
+
+  @keyframes scan {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+  .animate-scan { animation: scan 4s ease-in-out infinite; }
+
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .animate-ticker { animation: ticker-scroll 40s linear infinite; }
 }
