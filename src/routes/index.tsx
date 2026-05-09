@@ -5,7 +5,7 @@ import {
   Activity, ArrowUpRight, BarChart3, Brain, CheckCircle2,
   Database, Eye, FileCheck, Globe2, Leaf, LineChart, Network, Radio,
   Satellite, Shield, Sparkles, TrendingUp, Users, Cpu, Layers, Coins, Droplets,
-  ArrowDownRight, Vote,
+  ArrowDownRight,
 } from "lucide-react";
 import { ConnectWalletButton } from "@/components/rve/connect-wallet";
 import { OrderTicket } from "@/components/rve/order-ticket";
