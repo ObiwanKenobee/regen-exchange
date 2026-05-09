@@ -1,11 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import livingPlanet from "@/assets/living-planet.jpg";
 import {
-  Activity, ArrowUpRight, ArrowDownRight, BarChart3, Brain, CheckCircle2,
-  Compass, Database, Droplets, Globe2, Leaf, LineChart, Network, Radio,
-  Satellite, Shield, Sparkles, TreePine, TrendingUp, Users, Waves, Zap,
-  Coins, FileCheck, Eye, Cpu, Layers,
+  Activity, ArrowUpRight, BarChart3, Brain, CheckCircle2,
+  Database, Eye, FileCheck, Globe2, Leaf, LineChart, Network, Radio,
+  Satellite, Shield, Sparkles, TrendingUp, Users, Cpu, Layers, Coins, Droplets,
+  ArrowDownRight,
 } from "lucide-react";
+import { ConnectWalletButton } from "@/components/rve/connect-wallet";
+import { OrderTicket } from "@/components/rve/order-ticket";
+import { AssetDetailDrawer } from "@/components/rve/asset-detail-drawer";
+import { PlanetaryMap } from "@/components/rve/planetary-map";
+import { VerificationFeed } from "@/components/rve/verification-feed";
+import { GovernanceSection } from "@/components/rve/governance-section";
+import { ASSETS, type Asset } from "@/components/rve/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -17,15 +25,6 @@ export const Route = createFileRoute("/")({
   component: RVEDashboard,
 });
 
-const assets = [
-  { sym: "AMZ-CO₂", name: "Amazon Carbon Reserve", price: 84.20, change: 2.4, vol: "412M", region: "South America", icon: TreePine },
-  { sym: "OCN-REG", name: "Ocean Regeneration Bond", price: 142.65, change: 4.8, vol: "318M", region: "Pacific", icon: Waves },
-  { sym: "BIO-IDX", name: "Biodiversity Index Unit", price: 56.10, change: -1.2, vol: "204M", region: "Global", icon: Leaf },
-  { sym: "H₂O-SEC", name: "Water Security Asset", price: 98.70, change: 1.6, vol: "188M", region: "East Africa", icon: Droplets },
-  { sym: "IND-STW", name: "Indigenous Stewardship", price: 211.30, change: 6.1, vol: "156M", region: "Andes", icon: Compass },
-  { sym: "SOL-INF", name: "Solar Infrastructure", price: 47.85, change: 0.9, vol: "142M", region: "MENA", icon: Zap },
-];
-
 const ticker = [
   "AMZ-CO₂ +2.4%", "OCN-REG +4.8%", "BIO-IDX −1.2%", "H₂O-SEC +1.6%",
   "IND-STW +6.1%", "SOL-INF +0.9%", "SOIL-RGN +3.2%", "CULT-PRS +5.4%",
@@ -33,10 +32,25 @@ const ticker = [
 ];
 
 function RVEDashboard() {
+  const [drawerAsset, setDrawerAsset] = useState<Asset | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [orderAsset, setOrderAsset] = useState<Asset | null>(null);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [orderSide, setOrderSide] = useState<"buy" | "sell">("buy");
+
+  const openDrawer = (a: Asset) => { setDrawerAsset(a); setDrawerOpen(true); };
+  const openOrder = (a: Asset, side: "buy" | "sell" = "buy") => {
+    setOrderAsset(a); setOrderSide(side); setOrderOpen(true);
+  };
+  const tradeFromDrawer = (a: Asset, side: "buy" | "sell") => {
+    setDrawerOpen(false);
+    setTimeout(() => openOrder(a, side), 200);
+  };
+
   return (
     <div className="min-h-screen text-foreground">
       {/* TOP NAV */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-8 px-6">
           <a href="#" className="flex items-center gap-2">
             <div className="relative h-7 w-7 rounded-md bg-gradient-aurora glow-emerald">
@@ -48,8 +62,14 @@ function RVEDashboard() {
             </div>
           </a>
           <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
-            {["Exchange", "Markets", "Treasury", "Governance", "Intelligence"].map((n, i) => (
-              <a key={n} href="#" className={`rounded-md px-3 py-1.5 transition ${i === 0 ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>{n}</a>
+            {[
+              { l: "Exchange", h: "#markets" },
+              { l: "Markets", h: "#markets" },
+              { l: "Verification", h: "#verification" },
+              { l: "Governance", h: "#governance" },
+              { l: "Treasury", h: "#governance" },
+            ].map((n, i) => (
+              <a key={n.l} href={n.h} className={`rounded-md px-3 py-1.5 transition ${i === 0 ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>{n.l}</a>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
@@ -58,11 +78,9 @@ function RVEDashboard() {
               <span className="text-muted-foreground">Network</span>
               <span className="font-mono text-foreground">Mainnet • Block 18,402,118</span>
             </div>
-            <button className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50">Sign in</button>
-            <button className="rounded-md bg-gradient-aurora px-4 py-1.5 text-sm font-semibold text-background glow-emerald hover:opacity-90">Connect Wallet</button>
+            <ConnectWalletButton />
           </div>
         </div>
-        {/* TICKER */}
         <div className="overflow-hidden border-t border-border/60 bg-background/50">
           <div className="flex animate-ticker whitespace-nowrap py-1.5 text-xs font-mono">
             {[...ticker, ...ticker].map((t, i) => {
@@ -82,7 +100,7 @@ function RVEDashboard() {
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div className="absolute right-0 top-0 h-full w-full md:w-[60%]">
-          <img src={livingPlanet} alt="Living Planet visualization" width={1536} height={1024} className="h-full w-full object-cover opacity-60 [mask-image:linear-gradient(to_left,black_30%,transparent_95%)]" />
+          <img src={livingPlanet} alt="Living Planet" width={1536} height={1024} className="h-full w-full object-cover opacity-60 [mask-image:linear-gradient(to_left,black_30%,transparent_95%)]" />
         </div>
         <div className="relative mx-auto grid max-w-[1600px] gap-12 px-6 py-20 md:grid-cols-2 md:py-28">
           <div>
@@ -97,8 +115,8 @@ function RVEDashboard() {
               Seamless exchange of carbon credits, ecosystem restoration assets, biodiversity credits, water security and cultural preservation funding — powered by AI verification and living smart contracts.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <button className="rounded-md bg-gradient-aurora px-6 py-3 text-sm font-semibold text-background glow-emerald hover:opacity-90">Enter the Exchange</button>
-              <button className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium backdrop-blur hover:bg-muted/50">Explore Living Planet</button>
+              <a href="#markets" className="rounded-md bg-gradient-aurora px-6 py-3 text-sm font-semibold text-background glow-emerald hover:opacity-90">Enter the Exchange</a>
+              <a href="#map" className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium backdrop-blur hover:bg-muted/50">Explore Living Planet</a>
             </div>
             <div className="mt-10 flex flex-wrap items-center gap-6 text-xs text-muted-foreground">
               {[
@@ -114,7 +132,6 @@ function RVEDashboard() {
             </div>
           </div>
 
-          {/* Floating planet panel */}
           <div className="relative hidden md:block">
             <div className="animate-float">
               <div className="panel panel-glow relative aspect-square max-w-[460px] overflow-hidden p-4 ml-auto">
@@ -125,7 +142,7 @@ function RVEDashboard() {
                   <span className="text-muted-foreground">REAL-TIME</span>
                 </div>
                 <div className="relative mt-3 h-[calc(100%-2rem)] overflow-hidden rounded-md">
-                  <img src={livingPlanet} alt="Earth restoration data" width={800} height={800} className="h-full w-full object-cover animate-spin-slow" />
+                  <img src={livingPlanet} alt="Earth" width={800} height={800} className="h-full w-full object-cover animate-spin-slow" />
                   <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent animate-scan" />
                   <div className="absolute bottom-3 left-3 right-3 flex justify-between rounded-md border border-border/60 bg-background/70 px-3 py-2 text-xs backdrop-blur">
                     <div><div className="text-muted-foreground">Forests</div><div className="font-mono text-primary">+1.24%</div></div>
@@ -161,12 +178,10 @@ function RVEDashboard() {
         </div>
       </section>
 
-      {/* MAIN GRID — Markets / Map / Oracles */}
-      <section className="mx-auto max-w-[1600px] px-6 py-16">
-        <SectionHeader eyebrow="Asset Marketplace" title="Live Regenerative Markets" desc="Trade verified ecological and cultural assets with full provenance." />
-
+      {/* MARKETS */}
+      <section id="markets" className="mx-auto max-w-[1600px] px-6 py-16 scroll-mt-20">
+        <SectionHeader eyebrow="Asset Marketplace" title="Live Regenerative Markets" desc="Trade verified ecological and cultural assets with full provenance. Click an asset to inspect or trade." />
         <div className="grid gap-6 lg:grid-cols-12">
-          {/* LEFT — Markets table */}
           <div className="panel lg:col-span-8">
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-3 text-sm">
               <div className="flex items-center gap-2 font-medium"><Activity className="h-4 w-4 text-primary" /> Order Book — Top Markets</div>
@@ -190,11 +205,11 @@ function RVEDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {assets.map(a => {
+                  {ASSETS.map(a => {
                     const up = a.change >= 0;
                     const I = a.icon;
                     return (
-                      <tr key={a.sym} className="border-b border-border/40 transition hover:bg-muted/20">
+                      <tr key={a.sym} onClick={() => openDrawer(a)} className="cursor-pointer border-b border-border/40 transition hover:bg-muted/20">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/30"><I className="h-4 w-4 text-primary" /></div>
@@ -218,7 +233,10 @@ function RVEDashboard() {
                           </div>
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <button className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20">Trade</button>
+                          <div className="flex justify-end gap-1.5">
+                            <button onClick={(e) => { e.stopPropagation(); openOrder(a, "buy"); }} className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">Buy</button>
+                            <button onClick={(e) => { e.stopPropagation(); openOrder(a, "sell"); }} className="rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/20">Sell</button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -228,7 +246,6 @@ function RVEDashboard() {
             </div>
           </div>
 
-          {/* RIGHT — Oracle + Smart contracts */}
           <div className="space-y-6 lg:col-span-4">
             <div className="panel p-5">
               <div className="mb-4 flex items-center justify-between">
@@ -283,58 +300,12 @@ function RVEDashboard() {
         </div>
       </section>
 
-      {/* PLANETARY MAP / Verification */}
-      <section className="border-y border-border/60 bg-background/40">
+      {/* PLANETARY MAP */}
+      <section id="map" className="border-y border-border/60 bg-background/40 scroll-mt-20">
         <div className="mx-auto grid max-w-[1600px] gap-6 px-6 py-16 lg:grid-cols-12">
-          <div className="panel panel-glow relative overflow-hidden lg:col-span-8">
-            <div className="absolute inset-0">
-              <img src={livingPlanet} alt="Planetary restoration map" loading="lazy" width={1536} height={1024} className="h-full w-full object-cover opacity-70" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-              <div className="absolute inset-0 grid-bg opacity-30" />
-            </div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.25em] text-secondary">Living Planet Layer</div>
-                  <h3 className="mt-2 text-3xl font-semibold">Real-Time Restoration Map</h3>
-                </div>
-                <div className="hidden gap-4 text-xs sm:flex">
-                  {[{c:"bg-primary",l:"Forest"},{c:"bg-secondary",l:"Water"},{c:"bg-accent",l:"Cultural"},{c:"bg-destructive",l:"Alert"}].map(x=>(
-                    <span key={x.l} className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${x.c}`}/>{x.l}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-            {/* hotspots */}
-            <div className="absolute inset-0 pointer-events-none">
-              {[
-                {top:"38%",left:"22%",c:"bg-primary"},
-                {top:"55%",left:"30%",c:"bg-accent"},
-                {top:"42%",left:"58%",c:"bg-secondary"},
-                {top:"30%",left:"70%",c:"bg-primary"},
-                {top:"68%",left:"75%",c:"bg-destructive"},
-                {top:"50%",left:"45%",c:"bg-accent"},
-              ].map((h,i)=>(
-                <span key={i} style={{top:h.top,left:h.left}} className="absolute -translate-x-1/2 -translate-y-1/2">
-                  <span className={`block h-2.5 w-2.5 rounded-full ${h.c} ticker-pulse`} />
-                </span>
-              ))}
-            </div>
-            <div className="relative grid grid-cols-2 gap-px border-t border-border/60 bg-border/40 sm:grid-cols-4">
-              {[
-                { l: "Hectares Restored", v: "8.42M" },
-                { l: "Tonnes CO₂ Sequestered", v: "1.18B" },
-                { l: "Species Protected", v: "12,940" },
-                { l: "Water Bodies Restored", v: "3,712" },
-              ].map(s=>(
-                <div key={s.l} className="bg-background/80 p-4">
-                  <div className="font-mono text-2xl">{s.v}</div>
-                  <div className="text-xs text-muted-foreground">{s.l}</div>
-                </div>
-              ))}
-            </div>
+          <div className="lg:col-span-8">
+            <PlanetaryMap assets={ASSETS} onSelect={openDrawer} />
           </div>
-
           <div className="space-y-6 lg:col-span-4">
             <div className="panel p-5">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium"><Eye className="h-4 w-4 text-primary"/> Verification Confidence</div>
@@ -377,7 +348,21 @@ function RVEDashboard() {
         </div>
       </section>
 
-      {/* MODULES GRID */}
+      {/* VERIFICATION FEED */}
+      <section id="verification" className="mx-auto max-w-[1600px] px-6 py-20 scroll-mt-20">
+        <SectionHeader eyebrow="Impact Verification" title="Live Verification Feed" desc="Multi-source attestations from satellites, drones, sensors, AI and community validators — filterable in real time." />
+        <VerificationFeed />
+      </section>
+
+      {/* GOVERNANCE */}
+      <section id="governance" className="border-y border-border/60 bg-background/40 scroll-mt-20">
+        <div className="mx-auto max-w-[1600px] px-6 py-20">
+          <SectionHeader eyebrow="Governance & Treasury" title="Open vote history & community revenue" desc="Every contract event, vote, and disbursement — transparently on-chain." />
+          <GovernanceSection />
+        </div>
+      </section>
+
+      {/* MODULES */}
       <section className="mx-auto max-w-[1600px] px-6 py-20">
         <SectionHeader eyebrow="Core Modules" title="Built for civilization-scale coordination" desc="Five interlocking systems forming the infrastructure of post-extractive finance." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -403,58 +388,8 @@ function RVEDashboard() {
         </div>
       </section>
 
-      {/* INTELLIGENCE / FORECAST */}
-      <section className="border-t border-border/60 bg-background/40">
-        <div className="mx-auto grid max-w-[1600px] gap-6 px-6 py-20 lg:grid-cols-2">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-secondary/30 bg-secondary/10 px-3 py-1 text-xs text-secondary"><Brain className="h-3 w-3"/> Regenerative Intelligence</div>
-            <h2 className="text-4xl font-semibold leading-tight md:text-5xl">An AI continuously evaluating <span className="text-gradient-aurora">planetary health</span></h2>
-            <p className="mt-5 max-w-xl text-muted-foreground">Ecosystem health, restoration ROI, regional resilience, fraud probability, social impact and long-term sustainability — modeled in real time and surfaced as actionable signals.</p>
-            <div className="mt-8 grid grid-cols-2 gap-3 text-sm">
-              {[
-                {l:"Restoration ROI",v:"+ 4.2x"},
-                {l:"Fraud probability",v:"0.04%"},
-                {l:"Resilience index",v:"82.1"},
-                {l:"Social impact",v:"A+"},
-              ].map(s=>(
-                <div key={s.l} className="panel flex items-center justify-between p-4"><span className="text-muted-foreground">{s.l}</span><span className="font-mono text-foreground">{s.v}</span></div>
-              ))}
-            </div>
-          </div>
-          <div className="panel p-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">Predictive Restoration Forecast — 12 months</div>
-              <span className="text-xs text-primary">Confidence 94%</span>
-            </div>
-            {/* SVG chart */}
-            <svg viewBox="0 0 600 240" className="mt-4 h-64 w-full">
-              <defs>
-                <linearGradient id="area" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.74 0.18 155)" stopOpacity="0.5"/>
-                  <stop offset="100%" stopColor="oklch(0.74 0.18 155)" stopOpacity="0"/>
-                </linearGradient>
-                <linearGradient id="area2" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.78 0.16 205)" stopOpacity="0.4"/>
-                  <stop offset="100%" stopColor="oklch(0.78 0.16 205)" stopOpacity="0"/>
-                </linearGradient>
-              </defs>
-              {[40,80,120,160,200].map(y=><line key={y} x1="0" x2="600" y1={y} y2={y} stroke="oklch(0.30 0.025 200 / 50%)" strokeDasharray="2 4"/>)}
-              <path d="M0,180 C60,160 100,150 150,130 C200,110 240,140 290,110 C340,80 390,90 440,60 C490,35 540,50 600,30 L600,240 L0,240 Z" fill="url(#area)"/>
-              <path d="M0,180 C60,160 100,150 150,130 C200,110 240,140 290,110 C340,80 390,90 440,60 C490,35 540,50 600,30" fill="none" stroke="oklch(0.74 0.18 155)" strokeWidth="2"/>
-              <path d="M0,200 C80,190 140,180 200,170 C260,160 320,165 380,140 C440,115 500,120 600,95 L600,240 L0,240 Z" fill="url(#area2)"/>
-              <path d="M0,200 C80,190 140,180 200,170 C260,160 320,165 380,140 C440,115 500,120 600,95" fill="none" stroke="oklch(0.78 0.16 205)" strokeWidth="2"/>
-              {["Q1","Q2","Q3","Q4"].map((q,i)=><text key={q} x={75+i*150} y="232" fill="oklch(0.70 0.025 200)" fontSize="10" fontFamily="monospace">{q}</text>)}
-            </svg>
-            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary"/>Forest cover</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-secondary"/>Biodiversity</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* GOVERNANCE / CTA */}
-      <section className="mx-auto max-w-[1600px] px-6 py-20">
+      {/* CTA */}
+      <section className="mx-auto max-w-[1600px] px-6 pb-20">
         <div className="panel panel-glow relative overflow-hidden p-10 md:p-16">
           <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl"/>
           <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-secondary/20 blur-3xl"/>
@@ -465,7 +400,7 @@ function RVEDashboard() {
               <p className="mt-5 max-w-xl text-muted-foreground">CBDC bridges, sovereign restoration funds, decentralized governance, AI planetary economics, and restoration-backed stable assets — converging on a single coordination layer.</p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <button className="rounded-md bg-gradient-aurora px-6 py-3 text-sm font-semibold text-background glow-emerald">Apply for Early Access</button>
-                <button className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium hover:bg-muted/50">Read the Manifesto</button>
+                <a href="#governance" className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium hover:bg-muted/50">View Governance</a>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -490,15 +425,18 @@ function RVEDashboard() {
             <span>© Atlas Sanctum • Regenerative Value Exchange</span>
           </div>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground">Markets</a>
-            <a href="#" className="hover:text-foreground">Verification</a>
-            <a href="#" className="hover:text-foreground">Governance</a>
-            <a href="#" className="hover:text-foreground">Treasury</a>
+            <a href="#markets" className="hover:text-foreground">Markets</a>
+            <a href="#verification" className="hover:text-foreground">Verification</a>
+            <a href="#governance" className="hover:text-foreground">Governance</a>
             <a href="#" className="hover:text-foreground">Docs</a>
           </div>
           <div className="font-mono">v4.2.1 • Mainnet</div>
         </div>
       </footer>
+
+      {/* DRAWERS / MODALS */}
+      <AssetDetailDrawer asset={drawerAsset} open={drawerOpen} onOpenChange={setDrawerOpen} onTrade={tradeFromDrawer} />
+      <OrderTicket asset={orderAsset} open={orderOpen} onOpenChange={setOrderOpen} initialSide={orderSide} />
     </div>
   );
 }
