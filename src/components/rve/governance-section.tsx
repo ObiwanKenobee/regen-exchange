@@ -110,13 +110,13 @@ export function GovernanceSection() {
               <div key={d.name}>
                 <div className="mb-1 flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: `oklch(${d.color})` }} />
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: d.color }} />
                     {d.name}
                   </span>
                   <span className="font-mono text-muted-foreground">{((totalRGN * d.pct) / 100 / 1e6).toFixed(2)}M RGN</span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full" style={{ width: `${d.pct}%`, background: `oklch(${d.color})` }} />
+                  <div className="h-full" style={{ width: `${d.pct}%`, background: d.color }} />
                 </div>
               </div>
             ))}
@@ -146,7 +146,7 @@ function Donut({ data }: { data: { name: string; pct: number; color: string }[] 
           <circle
             key={i}
             cx="80" cy="80" r="60" fill="none"
-            stroke={`oklch(${d.color})`}
+            stroke={d.color}
             strokeWidth="22"
             strokeDasharray={`${len} ${C - len}`}
             strokeDashoffset={offset}
