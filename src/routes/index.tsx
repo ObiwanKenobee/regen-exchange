@@ -13,6 +13,7 @@ import { AssetDetailDrawer } from "@/components/rve/asset-detail-drawer";
 import { PlanetaryMap } from "@/components/rve/planetary-map";
 import { VerificationFeed } from "@/components/rve/verification-feed";
 import { GovernanceSection } from "@/components/rve/governance-section";
+import { OrderStatusDrawer, OrderActivityButton } from "@/components/rve/order-status-drawer";
 import { ASSETS, type Asset } from "@/components/rve/types";
 
 export const Route = createFileRoute("/")({
@@ -37,6 +38,7 @@ function RVEDashboard() {
   const [orderAsset, setOrderAsset] = useState<Asset | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [orderSide, setOrderSide] = useState<"buy" | "sell">("buy");
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const openDrawer = (a: Asset) => { setDrawerAsset(a); setDrawerOpen(true); };
   const openOrder = (a: Asset, side: "buy" | "sell" = "buy") => {
@@ -78,6 +80,7 @@ function RVEDashboard() {
               <span className="text-muted-foreground">Network</span>
               <span className="font-mono text-foreground">Mainnet • Block 18,402,118</span>
             </div>
+            <OrderActivityButton onOpen={() => setActivityOpen(true)} />
             <ConnectWalletButton />
           </div>
         </div>
@@ -436,7 +439,8 @@ function RVEDashboard() {
 
       {/* DRAWERS / MODALS */}
       <AssetDetailDrawer asset={drawerAsset} open={drawerOpen} onOpenChange={setDrawerOpen} onTrade={tradeFromDrawer} />
-      <OrderTicket asset={orderAsset} open={orderOpen} onOpenChange={setOrderOpen} initialSide={orderSide} />
+      <OrderTicket asset={orderAsset} open={orderOpen} onOpenChange={setOrderOpen} initialSide={orderSide} onViewOrders={() => setActivityOpen(true)} />
+      <OrderStatusDrawer open={activityOpen} onOpenChange={setActivityOpen} />
     </div>
   );
 }
