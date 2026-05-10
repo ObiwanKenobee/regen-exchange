@@ -1,6 +1,7 @@
 import { useState } from "react";
 import livingPlanet from "@/assets/living-planet.jpg";
 import type { Asset } from "./types";
+import { SEED_EVENTS, getEventsForAsset, getLatestConfidenceForAsset, getTimelineProgress, tsAgo } from "./verification-data";
 
 export type Hotspot = { id: string; top: string; left: string; sym: string };
 
@@ -44,6 +45,16 @@ export function PlanetaryMap({ assets, onSelect }: { assets: Asset[]; onSelect: 
           const a = bySym(h.sym);
           if (!a) return null;
           const active = hover === h.id;
+          const confidence = getLatestConfidenceForAsset(SEED_EVENTS, a.sym, a.verification);
+          const progress = getTimelineProgress(SEED_EVENTS, a.sym);
+          const latest = getEventsForAsset(SEED_EVENTS, a.sym)[0];
+          const dotClass = !latest
+            ? "bg-gradient-aurora"
+            : latest.status === "anomaly"
+              ? "bg-destructive"
+              : latest.status === "review"
+                ? "bg-accent"
+                : "bg-gradient-aurora";
           return (
             <button
               key={h.id}
@@ -56,17 +67,43 @@ export function PlanetaryMap({ assets, onSelect }: { assets: Asset[]; onSelect: 
               aria-label={`Open ${a.name}`}
             >
               <span className="relative block">
-                <span className="absolute inset-0 -m-3 rounded-full bg-primary/30 ticker-pulse" />
-                <span className="relative block h-3 w-3 rounded-full bg-gradient-aurora ring-2 ring-background" />
+                <span className={`absolute inset-0 -m-3 rounded-full ticker-pulse ${latest?.status === "anomaly" ? "bg-destructive/40" : latest?.status === "review" ? "bg-accent/40" : "bg-primary/30"}`} />
+                <span className={`relative block h-3 w-3 rounded-full ring-2 ring-background ${dotClass}`} />
               </span>
               {active && (
-                <div className="pointer-events-none absolute left-1/2 top-4 z-10 w-56 -translate-x-1/2 rounded-lg border border-border bg-background/95 p-3 text-left text-xs shadow-xl backdrop-blur">
-                  <div className="font-mono text-[10px] text-muted-foreground">{a.sym}</div>
-                  <div className="font-medium">{a.name}</div>
-                  <div className="mt-1 flex items-center justify-between text-muted-foreground">
-                    <span>{a.region}</span>
+                <div className="pointer-events-none absolute left-1/2 top-4 z-10 w-64 -translate-x-1/2 rounded-lg border border-border bg-background/95 p-3 text-left text-xs shadow-xl backdrop-blur">
+                  <div className="flex items-center justify-between">
+                    <div className="font-mono text-[10px] text-muted-foreground">{a.sym}</div>
                     <span className={a.change >= 0 ? "text-primary" : "text-destructive"}>{a.change >= 0 ? "+" : ""}{a.change}%</span>
                   </div>
+                  <div className="mt-0.5 font-medium">{a.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{a.region}</div>
+
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-muted-foreground">Confidence</span>
+                    <span className="font-mono text-primary">{confidence}%</span>
+                  </div>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-gradient-aurora" style={{ width: `${confidence}%` }} />
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-muted-foreground">Restoration timeline</span>
+                    <span className="font-mono text-secondary">{progress}%</span>
+                  </div>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-secondary/80" style={{ width: `${progress}%` }} />
+                  </div>
+
+                  {latest && (
+                    <div className="mt-2 border-t border-border/60 pt-2">
+                      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span>Latest · {latest.source}</span>
+                        <span>{tsAgo(latest.ts)}</span>
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-foreground/90">{latest.detail}</div>
+                    </div>
+                  )}
                 </div>
               )}
             </button>
