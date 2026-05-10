@@ -1,14 +1,13 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink, MapPin, Satellite, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink, Eye, MapPin, Satellite, ShieldCheck, Users } from "lucide-react";
 import type { Asset } from "./types";
-
-const TIMELINE = [
-  { date: "2026-05-08", title: "Satellite verification pass", status: "ok", detail: "Sentinel-2 confirms +1.4% canopy expansion" },
-  { date: "2026-04-22", title: "Community validators signed off", status: "ok", detail: "27 of 27 local stewards approved milestone 4" },
-  { date: "2026-04-12", title: "Drone imagery uploaded", status: "ok", detail: "1,240 ha surveyed, 0 deforestation events" },
-  { date: "2026-03-30", title: "Funding tranche 4 released", status: "fund", detail: "$1.42M routed to community treasury" },
-  { date: "2026-02-15", title: "AI anomaly check", status: "warn", detail: "1 flag — manually reviewed, cleared" },
-];
+import {
+  SEED_EVENTS,
+  getEventsForAsset,
+  getLatestConfidenceForAsset,
+  getTimelineProgress,
+  tsAgo,
+} from "./verification-data";
 
 export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
   asset: Asset | null;
@@ -19,6 +18,12 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
   if (!asset) return null;
   const Icon = asset.icon;
   const up = asset.change >= 0;
+  const events = getEventsForAsset(SEED_EVENTS, asset.sym);
+  const liveConfidence = getLatestConfidenceForAsset(SEED_EVENTS, asset.sym, asset.verification);
+  const timelineProgress = getTimelineProgress(SEED_EVENTS, asset.sym);
+  const verifiedCount = events.filter((e) => e.status === "verified").length;
+  const reviewCount = events.filter((e) => e.status === "review").length;
+  const anomalyCount = events.filter((e) => e.status === "anomaly").length;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto border-l border-border bg-card sm:max-w-xl">
@@ -48,36 +53,66 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Verification confidence</h3>
-              <span className="font-mono text-sm text-primary">{asset.verification}%</span>
+              <span className="font-mono text-sm text-primary">{liveConfidence}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full bg-gradient-aurora" style={{ width: `${asset.verification}%` }} />
+              <div className="h-full bg-gradient-aurora" style={{ width: `${liveConfidence}%` }} />
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-              <Pill icon={Satellite} label="Satellite" />
-              <Pill icon={Users} label="Community" />
-              <Pill icon={ShieldCheck} label="Audit" />
+              <Pill icon={CheckCircle2} label={`${verifiedCount} verified`} tone="primary" />
+              <Pill icon={Eye} label={`${reviewCount} review`} tone="accent" />
+              <Pill icon={AlertTriangle} label={`${anomalyCount} anomaly`} tone="destructive" />
             </div>
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold">Restoration timeline</h3>
-            <ol className="space-y-3">
-              {TIMELINE.map((t, i) => (
-                <li key={i} className="flex gap-3 rounded-lg border border-border bg-muted/20 p-3">
-                  <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${t.status === "ok" ? "bg-primary/15 text-primary" : t.status === "fund" ? "bg-accent/20 text-accent" : "bg-destructive/15 text-destructive"}`}>
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{t.title}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{t.date}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">{t.detail}</div>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Restoration timeline progress</h3>
+              <span className="font-mono text-sm text-secondary">{timelineProgress}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full bg-secondary/80" style={{ width: `${timelineProgress}%` }} />
+            </div>
+            <div className="mt-2 flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span>Initiated</span><span>Milestones</span><span>Target</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-3 text-sm font-semibold">Audit events</h3>
+            {events.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
+                No verification events recorded for this asset yet.
+              </div>
+            ) : (
+              <ol className="space-y-3">
+                {events.slice(0, 8).map((t) => {
+                  const tone = t.status === "verified" ? "bg-primary/15 text-primary" : t.status === "review" ? "bg-accent/20 text-accent" : "bg-destructive/15 text-destructive";
+                  const I = t.status === "verified" ? CheckCircle2 : t.status === "review" ? Eye : AlertTriangle;
+                  return (
+                    <li key={t.id} className="flex gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                      <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${tone}`}>
+                        <I className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <span className="flex items-center gap-1 text-[10px] text-secondary"><Satellite className="h-3 w-3" />{t.source}</span>
+                          <span className="rounded-full border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{t.region}</span>
+                          <span className="ml-auto font-mono text-xs text-muted-foreground">{tsAgo(t.ts)}</span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">{t.detail}</div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div className={`h-full ${t.confidence > 80 ? "bg-gradient-aurora" : t.confidence > 60 ? "bg-accent" : "bg-destructive"}`} style={{ width: `${t.confidence}%` }} />
+                          </div>
+                          <span className="font-mono text-[10px]">{t.confidence}%</span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </div>
 
           <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs">
@@ -110,10 +145,11 @@ function Stat({ label, value, valueClass = "", icon: I }: { label: string; value
   );
 }
 
-function Pill({ icon: I, label }: { icon: any; label: string }) {
+function Pill({ icon: I, label, tone = "primary" }: { icon: any; label: string; tone?: "primary" | "accent" | "destructive" }) {
+  const cls = tone === "accent" ? "text-accent" : tone === "destructive" ? "text-destructive" : "text-primary";
   return (
     <div className="flex items-center justify-center gap-1 rounded-md border border-border bg-muted/30 py-1.5 text-muted-foreground">
-      <I className="h-3 w-3 text-primary" /> {label}
+      <I className={`h-3 w-3 ${cls}`} /> {label}
     </div>
   );
 }
