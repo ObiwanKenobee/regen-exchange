@@ -1,21 +1,24 @@
 import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowDownUp, CheckCircle2, Info, ShieldCheck } from "lucide-react";
-import { useWallet } from "@/lib/wallet-context";
+import { CheckCircle2, ExternalLink, Info, Loader2, ShieldCheck } from "lucide-react";
+import { useWallet, shortHash, type Order } from "@/lib/wallet-context";
 import type { Asset } from "./types";
 
 type Side = "buy" | "sell";
 
-export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy" }: {
+export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", onViewOrders }: {
   asset: Asset | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initialSide?: Side;
+  onViewOrders?: () => void;
 }) {
-  const { wallet } = useWallet();
+  const { wallet, submitOrder, orders } = useWallet();
   const [side, setSide] = useState<Side>(initialSide);
   const [qty, setQty] = useState("10");
-  const [step, setStep] = useState<"ticket" | "confirm" | "done">("ticket");
+  const [step, setStep] = useState<"ticket" | "confirm" | "signing" | "done">("ticket");
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const liveOrder: Order | undefined = submittedId ? orders.find((o) => o.id === submittedId) : undefined;
 
   const quantity = Math.max(0, parseFloat(qty) || 0);
   const data = useMemo(() => {
@@ -35,7 +38,26 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy" }: 
   const Icon = asset.icon;
   const high = data.impact > 2;
 
-  const reset = () => { setStep("ticket"); setQty("10"); };
+  const reset = () => { setStep("ticket"); setQty("10"); setSubmittedId(null); };
+
+  const sign = async () => {
+    if (!wallet) return;
+    setStep("signing");
+    // simulate wallet popup signing latency
+    await new Promise((r) => setTimeout(r, 900));
+    const order = submitOrder({
+      assetSym: asset.sym,
+      assetName: asset.name,
+      side,
+      qty: quantity,
+      price: data.exec,
+      total: data.grand,
+      fee: data.fee,
+      restorationFee: data.restorationFee,
+    });
+    setSubmittedId(order.id);
+    setStep("done");
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setTimeout(reset, 300); }}>
@@ -123,19 +145,59 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy" }: 
           </div>
         )}
 
-        {step === "done" && (
-          <div className="space-y-4 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15"><CheckCircle2 className="h-8 w-8 text-primary" /></div>
+        {step === "signing" && (
+          <div className="space-y-4 py-4 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent/15">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
             <div>
-              <div className="text-lg font-semibold">Order filled</div>
-              <div className="mt-1 text-sm text-muted-foreground">{quantity} {asset.sym} {side === "buy" ? "purchased" : "sold"} at ${data.exec.toFixed(2)}</div>
+              <div className="text-lg font-semibold">Awaiting wallet signature</div>
+              <div className="mt-1 text-sm text-muted-foreground">Approve the transaction in {wallet?.provider ?? "your wallet"} to broadcast to the network.</div>
+            </div>
+          </div>
+        )}
+
+        {step === "done" && liveOrder && (
+          <div className="space-y-4 text-center">
+            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${liveOrder.status === "confirmed" ? "bg-primary/15" : liveOrder.status === "failed" ? "bg-destructive/15" : "bg-accent/15"}`}>
+              {liveOrder.status === "confirmed" ? <CheckCircle2 className="h-8 w-8 text-primary" /> : liveOrder.status === "failed" ? <Info className="h-8 w-8 text-destructive" /> : <Loader2 className="h-8 w-8 animate-spin text-accent" />}
+            </div>
+            <div>
+              <div className="text-lg font-semibold">
+                {liveOrder.status === "pending" && "Transaction submitted"}
+                {liveOrder.status === "confirmed" && "Order confirmed"}
+                {liveOrder.status === "failed" && "Transaction failed"}
+              </div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {quantity} {asset.sym} {side === "buy" ? "purchased" : "sold"} at ${data.exec.toFixed(2)}
+              </div>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-3 text-left text-xs">
-              <div className="flex items-center justify-between"><span className="text-muted-foreground">Tx hash</span><span className="font-mono">0x{Math.random().toString(16).slice(2, 10)}…{Math.random().toString(16).slice(2, 6)}</span></div>
-              <div className="mt-1 flex items-center justify-between"><span className="text-muted-foreground">Block</span><span className="font-mono">18,402,{Math.floor(Math.random() * 999)}</span></div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">Tx hash</span>
+                <a href={liveOrder.explorerUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 font-mono text-secondary hover:underline">
+                  {shortHash(liveOrder.txHash)} <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+              <div className="mt-1 flex items-center justify-between"><span className="text-muted-foreground">Confirmations</span><span className="font-mono">{liveOrder.confirmations}/{liveOrder.requiredConfirmations}</span></div>
+              <div className="mt-1 flex items-center justify-between"><span className="text-muted-foreground">Block</span><span className="font-mono">{liveOrder.block ? `#${liveOrder.block.toLocaleString()}` : "pending"}</span></div>
               <div className="mt-1 flex items-center justify-between"><span className="text-muted-foreground">Restoration impact</span><span className="text-primary">+{(quantity * 0.42).toFixed(2)} ha funded</span></div>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={`h-full transition-all ${liveOrder.status === "failed" ? "bg-destructive" : liveOrder.status === "confirmed" ? "bg-gradient-aurora" : "bg-accent"}`}
+                  style={{ width: `${liveOrder.status === "failed" ? 100 : Math.min(100, (liveOrder.confirmations / liveOrder.requiredConfirmations) * 100)}%` }}
+                />
+              </div>
             </div>
-            <button onClick={() => onOpenChange(false)} className="w-full rounded-md bg-gradient-aurora px-4 py-2 text-sm font-semibold text-background">Done</button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => { onOpenChange(false); setTimeout(() => onViewOrders?.(), 200); }}
+                className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted/50"
+              >
+                View all orders
+              </button>
+              <button onClick={() => onOpenChange(false)} className="rounded-md bg-gradient-aurora px-4 py-2 text-sm font-semibold text-background">Done</button>
+            </div>
           </div>
         )}
       </DialogContent>
