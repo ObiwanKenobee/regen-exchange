@@ -1,42 +1,69 @@
-import { useMemo, useState } from "react";
-import { CheckCircle2, AlertTriangle, Eye, Filter, History, Satellite } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, AlertTriangle, Eye, Filter, History, Pause, Play, Satellite } from "lucide-react";
 import { ECOSYSTEMS } from "./types";
+import { SEED_EVENTS, SOURCES, generateLiveEvent, tsAgo, type VerificationEvent } from "./verification-data";
 
-type Event = {
-  id: string;
-  ts: string;
-  asset: string;
-  ecosystem: typeof ECOSYSTEMS[number];
-  region: string;
-  source: "Satellite" | "Drone" | "IoT" | "Community" | "AI";
-  confidence: number;
-  status: "verified" | "review" | "anomaly";
-  detail: string;
+const FILTER_KEY = "rve.feed.filters.v1";
+
+type Filters = {
+  eco: (typeof ECOSYSTEMS)[number];
+  src: (typeof SOURCES)[number];
+  status: "all" | "verified" | "review" | "anomaly";
 };
 
-const SOURCES = ["All", "Satellite", "Drone", "IoT", "Community", "AI"] as const;
+const DEFAULT_FILTERS: Filters = { eco: "All", src: "All", status: "all" };
 
-const EVENTS: Event[] = [
-  { id: "v1", ts: "2m ago", asset: "AMZ-CO₂", ecosystem: "Forest", region: "Amazon Basin", source: "Satellite", confidence: 99, status: "verified", detail: "Canopy expansion +1.4% over 412 ha — Sentinel-2 cross-checked" },
-  { id: "v2", ts: "8m ago", asset: "OCN-REG", ecosystem: "Ocean", region: "Great Barrier Reef", source: "Drone", confidence: 96, status: "verified", detail: "Coral cover +3.2% in monitoring grid B-7" },
-  { id: "v3", ts: "14m ago", asset: "H₂O-SEC", ecosystem: "Water", region: "Sahel", source: "IoT", confidence: 98, status: "verified", detail: "Aquifer recharge sensors report +2.1m water table rise" },
-  { id: "v4", ts: "22m ago", asset: "BIO-IDX", ecosystem: "Biodiversity", region: "Borneo", source: "AI", confidence: 71, status: "review", detail: "Species count anomaly — flagged for community validators" },
-  { id: "v5", ts: "31m ago", asset: "IND-STW", ecosystem: "Cultural", region: "Andes", source: "Community", confidence: 94, status: "verified", detail: "27 of 27 stewards signed milestone 4 attestation" },
-  { id: "v6", ts: "47m ago", asset: "SOL-INF", ecosystem: "Energy", region: "Morocco", source: "IoT", confidence: 97, status: "verified", detail: "8.2 GWh generated, displaced 4,100t CO₂ this week" },
-  { id: "v7", ts: "1h ago",  asset: "AMZ-CO₂", ecosystem: "Forest", region: "Pará", source: "AI", confidence: 42, status: "anomaly", detail: "Possible logging activity detected — escalated to ranger network" },
-  { id: "v8", ts: "2h ago",  asset: "OCN-REG", ecosystem: "Ocean", region: "Pacific Northwest", source: "Satellite", confidence: 95, status: "verified", detail: "Kelp forest extent +0.8% confirmed" },
-];
+function loadFilters(): Filters {
+  if (typeof window === "undefined") return DEFAULT_FILTERS;
+  try {
+    const raw = window.localStorage.getItem(FILTER_KEY);
+    if (!raw) return DEFAULT_FILTERS;
+    return { ...DEFAULT_FILTERS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_FILTERS;
+  }
+}
 
 export function VerificationFeed() {
-  const [eco, setEco] = useState<(typeof ECOSYSTEMS)[number]>("All");
-  const [src, setSrc] = useState<(typeof SOURCES)[number]>("All");
-  const [status, setStatus] = useState<"all" | "verified" | "review" | "anomaly">("all");
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [hydrated, setHydrated] = useState(false);
+  const [events, setEvents] = useState<VerificationEvent[]>(SEED_EVENTS);
+  const [streaming, setStreaming] = useState(true);
+  const [newCount, setNewCount] = useState(0);
+  const lastSeenRef = useRef<number>(SEED_EVENTS[0]?.ts ?? Date.now());
 
-  const filtered = useMemo(() => EVENTS.filter(e =>
+  // hydrate filters on client
+  useEffect(() => {
+    setFilters(loadFilters());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || typeof window === "undefined") return;
+    try { window.localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch {}
+  }, [filters, hydrated]);
+
+  // streaming
+  useEffect(() => {
+    if (!streaming) return;
+    const t = setInterval(() => {
+      setEvents((prev) => {
+        const next = generateLiveEvent(prev.slice(0, 24));
+        return [next, ...prev].slice(0, 200);
+      });
+      setNewCount((c) => c + 1);
+    }, 4500);
+    return () => clearInterval(t);
+  }, [streaming]);
+
+  const { eco, src, status } = filters;
+  const set = (patch: Partial<Filters>) => setFilters((f) => ({ ...f, ...patch }));
+
+  const filtered = useMemo(() => events.filter(e =>
     (eco === "All" || e.ecosystem === eco) &&
     (src === "All" || e.source === src) &&
     (status === "all" || e.status === status)
-  ), [eco, src, status]);
+  ), [events, eco, src, status]);
 
   const avg = Math.round(filtered.reduce((s, e) => s + e.confidence, 0) / Math.max(filtered.length, 1));
 
@@ -44,21 +71,27 @@ export function VerificationFeed() {
     <div className="grid gap-6 lg:grid-cols-12">
       <div className="space-y-4 lg:col-span-4">
         <div className="panel p-5">
-          <div className="flex items-center gap-2 text-sm font-medium"><Filter className="h-4 w-4 text-secondary" /> Filters</div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium"><Filter className="h-4 w-4 text-secondary" /> Filters</div>
+            <button
+              onClick={() => setFilters(DEFAULT_FILTERS)}
+              className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >Reset</button>
+          </div>
           <div className="mt-4 space-y-4 text-xs">
             <FilterGroup label="Ecosystem">
               {ECOSYSTEMS.map(e => (
-                <Chip key={e} active={eco === e} onClick={() => setEco(e)}>{e}</Chip>
+                <Chip key={e} active={eco === e} onClick={() => set({ eco: e })}>{e}</Chip>
               ))}
             </FilterGroup>
             <FilterGroup label="Source">
               {SOURCES.map(s => (
-                <Chip key={s} active={src === s} onClick={() => setSrc(s)}>{s}</Chip>
+                <Chip key={s} active={src === s} onClick={() => set({ src: s })}>{s}</Chip>
               ))}
             </FilterGroup>
             <FilterGroup label="Status">
               {(["all","verified","review","anomaly"] as const).map(s => (
-                <Chip key={s} active={status === s} onClick={() => setStatus(s)}>{s}</Chip>
+                <Chip key={s} active={status === s} onClick={() => set({ status: s })}>{s}</Chip>
               ))}
             </FilterGroup>
           </div>
@@ -84,7 +117,23 @@ export function VerificationFeed() {
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border/60 px-5 py-3 text-sm">
             <div className="flex items-center gap-2 font-medium"><History className="h-4 w-4 text-primary" /> Live Verification Feed</div>
-            <div className="flex items-center gap-1.5 text-xs text-primary"><span className="h-2 w-2 rounded-full bg-primary ticker-pulse" /> Streaming</div>
+            <div className="flex items-center gap-3 text-xs">
+              {newCount > 0 && (
+                <button
+                  onClick={() => { setNewCount(0); lastSeenRef.current = Date.now(); }}
+                  className="rounded-full border border-accent/40 bg-accent/15 px-2 py-0.5 font-mono text-accent"
+                >
+                  {newCount} new
+                </button>
+              )}
+              <button
+                onClick={() => setStreaming((s) => !s)}
+                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${streaming ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
+              >
+                {streaming ? <><span className="h-2 w-2 rounded-full bg-primary ticker-pulse" /> Streaming</> : <><Play className="h-3 w-3" /> Paused</>}
+                {streaming && <Pause className="h-3 w-3" />}
+              </button>
+            </div>
           </div>
           <ul className="divide-y divide-border/40">
             {filtered.length === 0 && <li className="p-8 text-center text-sm text-muted-foreground">No events match current filters.</li>}
@@ -102,7 +151,7 @@ export function VerificationFeed() {
                       <span className="font-medium">{e.region}</span>
                       <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{e.ecosystem}</span>
                       <span className="flex items-center gap-1 text-[10px] text-secondary"><Satellite className="h-3 w-3" />{e.source}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">{e.ts}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{tsAgo(e.ts)}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{e.detail}</p>
                     <div className="mt-2 flex items-center gap-3">
