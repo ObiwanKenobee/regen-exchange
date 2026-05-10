@@ -9,8 +9,74 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RefiRouteImport } from './routes/refi'
+import { Route as OracleRouteImport } from './routes/oracle'
+import { Route as NairobiTwinRouteImport } from './routes/nairobi-twin'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as InstitutionalEsgRouteImport } from './routes/institutional-esg'
+import { Route as ImpactExplorerRouteImport } from './routes/impact-explorer'
+import { Route as GovernanceRouteImport } from './routes/governance'
+import { Route as EcoIntelligenceRouteImport } from './routes/eco-intelligence'
+import { Route as CommunityRouteImport } from './routes/community'
+import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
 
+const RefiRoute = RefiRouteImport.update({
+  id: '/refi',
+  path: '/refi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OracleRoute = OracleRouteImport.update({
+  id: '/oracle',
+  path: '/oracle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NairobiTwinRoute = NairobiTwinRouteImport.update({
+  id: '/nairobi-twin',
+  path: '/nairobi-twin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstitutionalEsgRoute = InstitutionalEsgRouteImport.update({
+  id: '/institutional-esg',
+  path: '/institutional-esg',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImpactExplorerRoute = ImpactExplorerRouteImport.update({
+  id: '/impact-explorer',
+  path: '/impact-explorer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernanceRoute = GovernanceRouteImport.update({
+  id: '/governance',
+  path: '/governance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EcoIntelligenceRoute = EcoIntelligenceRouteImport.update({
+  id: '/eco-intelligence',
+  path: '/eco-intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandCenterRoute = CommandCenterRouteImport.update({
+  id: '/command-center',
+  path: '/command-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformArchitectureRoute = PlatformArchitectureRouteImport.update({
+  id: '/platform-architecture',
+  path: '/platform-architecture',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +85,186 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/command-center': typeof CommandCenterRoute
+  '/community': typeof CommunityRoute
+  '/eco-intelligence': typeof EcoIntelligenceRoute
+  '/governance': typeof GovernanceRoute
+  '/impact-explorer': typeof ImpactExplorerRoute
+  '/institutional-esg': typeof InstitutionalEsgRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/nairobi-twin': typeof NairobiTwinRoute
+  '/oracle': typeof OracleRoute
+  '/platform-architecture': typeof PlatformArchitectureRoute
+  '/refi': typeof RefiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/command-center': typeof CommandCenterRoute
+  '/community': typeof CommunityRoute
+  '/eco-intelligence': typeof EcoIntelligenceRoute
+  '/governance': typeof GovernanceRoute
+  '/impact-explorer': typeof ImpactExplorerRoute
+  '/institutional-esg': typeof InstitutionalEsgRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/nairobi-twin': typeof NairobiTwinRoute
+  '/oracle': typeof OracleRoute
+  '/platform-architecture': typeof PlatformArchitectureRoute
+  '/refi': typeof RefiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/command-center': typeof CommandCenterRoute
+  '/community': typeof CommunityRoute
+  '/eco-intelligence': typeof EcoIntelligenceRoute
+  '/governance': typeof GovernanceRoute
+  '/impact-explorer': typeof ImpactExplorerRoute
+  '/institutional-esg': typeof InstitutionalEsgRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/nairobi-twin': typeof NairobiTwinRoute
+  '/oracle': typeof OracleRoute
+  '/platform-architecture': typeof PlatformArchitectureRoute
+  '/refi': typeof RefiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/command-center'
+    | '/community'
+    | '/eco-intelligence'
+    | '/governance'
+    | '/impact-explorer'
+    | '/institutional-esg'
+    | '/marketplace'
+    | '/nairobi-twin'
+    | '/oracle'
+    | '/platform-architecture'
+    | '/refi'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/command-center'
+    | '/community'
+    | '/eco-intelligence'
+    | '/governance'
+    | '/impact-explorer'
+    | '/institutional-esg'
+    | '/marketplace'
+    | '/nairobi-twin'
+    | '/oracle'
+    | '/platform-architecture'
+    | '/refi'
+  id:
+    | '__root__'
+    | '/'
+    | '/command-center'
+    | '/community'
+    | '/eco-intelligence'
+    | '/governance'
+    | '/impact-explorer'
+    | '/institutional-esg'
+    | '/marketplace'
+    | '/nairobi-twin'
+    | '/oracle'
+    | '/platform-architecture'
+    | '/refi'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CommandCenterRoute: typeof CommandCenterRoute
+  CommunityRoute: typeof CommunityRoute
+  EcoIntelligenceRoute: typeof EcoIntelligenceRoute
+  GovernanceRoute: typeof GovernanceRoute
+  ImpactExplorerRoute: typeof ImpactExplorerRoute
+  InstitutionalEsgRoute: typeof InstitutionalEsgRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  NairobiTwinRoute: typeof NairobiTwinRoute
+  OracleRoute: typeof OracleRoute
+  PlatformArchitectureRoute: typeof PlatformArchitectureRoute
+  RefiRoute: typeof RefiRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/refi': {
+      id: '/refi'
+      path: '/refi'
+      fullPath: '/refi'
+      preLoaderRoute: typeof RefiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oracle': {
+      id: '/oracle'
+      path: '/oracle'
+      fullPath: '/oracle'
+      preLoaderRoute: typeof OracleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform-architecture': {
+      id: '/platform-architecture'
+      path: '/platform-architecture'
+      fullPath: '/platform-architecture'
+      preLoaderRoute: typeof PlatformArchitectureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nairobi-twin': {
+      id: '/nairobi-twin'
+      path: '/nairobi-twin'
+      fullPath: '/nairobi-twin'
+      preLoaderRoute: typeof NairobiTwinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-esg': {
+      id: '/institutional-esg'
+      path: '/institutional-esg'
+      fullPath: '/institutional-esg'
+      preLoaderRoute: typeof InstitutionalEsgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impact-explorer': {
+      id: '/impact-explorer'
+      path: '/impact-explorer'
+      fullPath: '/impact-explorer'
+      preLoaderRoute: typeof ImpactExplorerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/governance': {
+      id: '/governance'
+      path: '/governance'
+      fullPath: '/governance'
+      preLoaderRoute: typeof GovernanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eco-intelligence': {
+      id: '/eco-intelligence'
+      path: '/eco-intelligence'
+      fullPath: '/eco-intelligence'
+      preLoaderRoute: typeof EcoIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/command-center': {
+      id: '/command-center'
+      path: '/command-center'
+      fullPath: '/command-center'
+      preLoaderRoute: typeof CommandCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +277,28 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CommandCenterRoute: CommandCenterRoute,
+  CommunityRoute: CommunityRoute,
+  EcoIntelligenceRoute: EcoIntelligenceRoute,
+  GovernanceRoute: GovernanceRoute,
+  ImpactExplorerRoute: ImpactExplorerRoute,
+  InstitutionalEsgRoute: InstitutionalEsgRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  NairobiTwinRoute: NairobiTwinRoute,
+  OracleRoute: OracleRoute,
+  PlatformArchitectureRoute: PlatformArchitectureRoute,
+  RefiRoute: RefiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

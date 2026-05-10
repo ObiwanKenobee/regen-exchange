@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import livingPlanet from "@/assets/living-planet.jpg";
 import {
@@ -63,16 +63,54 @@ function RVEDashboard() {
               <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Regenerative Value Exchange</div>
             </div>
           </a>
-          <nav className="ml-4 hidden items-center gap-1 text-sm md:flex">
+          <nav className="ml-4 hidden flex-wrap items-center gap-1 text-sm lg:flex">
+            <Link
+              to="/platform-architecture"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+            >
+              Architecture
+            </Link>
+            <Link
+              to="/command-center"
+              className="rounded-md bg-muted px-3 py-1.5 text-foreground transition hover:bg-muted/80"
+            >
+              Command Center
+            </Link>
+            <Link
+              to="/marketplace"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+            >
+              RIU Market
+            </Link>
             {[
               { l: "Exchange", h: "#markets" },
-              { l: "Markets", h: "#markets" },
               { l: "Verification", h: "#verification" },
-              { l: "Governance", h: "#governance" },
-              { l: "Treasury", h: "#governance" },
-            ].map((n, i) => (
-              <a key={n.l} href={n.h} className={`rounded-md px-3 py-1.5 transition ${i === 0 ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>{n.l}</a>
-            ))}
+              { l: "Gov", to: "/governance" as const },
+            ].map((n) =>
+              "to" in n ? (
+                <Link
+                  key={n.l}
+                  to={n.to}
+                  className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+                >
+                  {n.l}
+                </Link>
+              ) : (
+                <a
+                  key={n.l}
+                  href={n.h}
+                  className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+                >
+                  {n.l}
+                </a>
+              ),
+            )}
+            <Link
+              to="/nairobi-twin"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+            >
+              Nairobi Twin
+            </Link>
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs lg:flex">
@@ -118,8 +156,24 @@ function RVEDashboard() {
               Seamless exchange of carbon credits, ecosystem restoration assets, biodiversity credits, water security and cultural preservation funding — powered by AI verification and living smart contracts.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#markets" className="rounded-md bg-gradient-aurora px-6 py-3 text-sm font-semibold text-background glow-emerald hover:opacity-90">Enter the Exchange</a>
-              <a href="#map" className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium backdrop-blur hover:bg-muted/50">Explore Living Planet</a>
+              <Link
+                to="/command-center"
+                className="rounded-md bg-gradient-aurora px-6 py-3 text-sm font-semibold text-background glow-emerald hover:opacity-90"
+              >
+                Global Command Center
+              </Link>
+              <Link
+                to="/marketplace"
+                className="rounded-md border border-primary/40 bg-primary/10 px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/20"
+              >
+                RIU Marketplace
+              </Link>
+              <a href="#markets" className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium backdrop-blur hover:bg-muted/50">
+                Exchange (scroll)
+              </a>
+              <a href="#map" className="rounded-md border border-border bg-background/40 px-6 py-3 text-sm font-medium backdrop-blur hover:bg-muted/50">
+                Living planet
+              </a>
             </div>
             <div className="mt-10 flex flex-wrap items-center gap-6 text-xs text-muted-foreground">
               {[
@@ -368,6 +422,15 @@ function RVEDashboard() {
       {/* MODULES */}
       <section className="mx-auto max-w-[1600px] px-6 py-20">
         <SectionHeader eyebrow="Core Modules" title="Built for civilization-scale coordination" desc="Five interlocking systems forming the infrastructure of post-extractive finance." />
+        <p className="mb-10 max-w-2xl text-sm text-muted-foreground">
+          These modules sit inside a non-negotiable{" "}
+          <Link to="/platform-architecture" className="font-medium text-primary hover:underline">
+            20-pillar architecture
+          </Link>
+          : regenerative identity, oracle verification, RIU minting, smart contracts, geospatial and IoT intelligence, community
+          and M-Pesa rails, digital twin, marketplace, DAO, data lake, security, AI decisions, APIs, transparency, climate
+          emergency response, ecological reputation, and knowledge systems.
+        </p>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[
             { icon: LineChart, t: "Asset Marketplace", d: "Live order books, liquidity pools, and routing for carbon, water, biodiversity, soil, and cultural assets.", tags:["Order book","Liquidity","Routing"] },
@@ -427,10 +490,16 @@ function RVEDashboard() {
             <div className="h-5 w-5 rounded bg-gradient-aurora"/>
             <span>© Atlas Sanctum • Regenerative Value Exchange</span>
           </div>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+            <Link to="/platform-architecture" className="hover:text-foreground">
+              20 pillars
+            </Link>
+            <Link to="/command-center" className="hover:text-foreground">
+              Dashboard hub
+            </Link>
             <a href="#markets" className="hover:text-foreground">Markets</a>
             <a href="#verification" className="hover:text-foreground">Verification</a>
-            <a href="#governance" className="hover:text-foreground">Governance</a>
+            <Link to="/governance" className="hover:text-foreground">Governance</Link>
             <a href="#" className="hover:text-foreground">Docs</a>
           </div>
           <div className="font-mono">v4.2.1 • Mainnet</div>
