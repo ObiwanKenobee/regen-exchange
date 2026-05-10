@@ -140,7 +140,7 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setStep("ticket")} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted/50">Back</button>
-              <button onClick={() => setStep("done")} className="rounded-md bg-gradient-aurora px-4 py-2 text-sm font-semibold text-background glow-emerald">Sign & Submit</button>
+              <button onClick={sign} className="rounded-md bg-gradient-aurora px-4 py-2 text-sm font-semibold text-background glow-emerald">Sign & Submit</button>
             </div>
           </div>
         )}
