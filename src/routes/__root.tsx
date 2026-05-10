@@ -76,11 +76,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "RVE — Regenerative Value Exchange | Atlas Sanctum" },
       { name: "description", content: "Trade carbon, biodiversity, water and cultural preservation assets at planetary scale. AI-verified, blockchain-transparent regenerative finance." },
       { name: "author", content: "Atlas Sanctum" },
-      { property: "og:title", content: "RVE — Regenerative Value Exchange" },
-      { property: "og:description", content: "The economic coordination layer for ecosystem restoration and planetary stewardship." },
+      { property: "og:title", content: "RVE — Regenerative Value Exchange | Atlas Sanctum" },
+      { property: "og:description", content: "Trade carbon, biodiversity, water and cultural preservation assets at planetary scale. AI-verified, blockchain-transparent regenerative finance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "RVE — Regenerative Value Exchange | Atlas Sanctum" },
+      { name: "twitter:description", content: "Trade carbon, biodiversity, water and cultural preservation assets at planetary scale. AI-verified, blockchain-transparent regenerative finance." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b033eb47-bd3f-4160-900a-a3416355d317/id-preview-3fdd9599--cd03fc3c-0a93-41ca-8bfc-593a5993a93a.lovable.app-1778427198282.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b033eb47-bd3f-4160-900a-a3416355d317/id-preview-3fdd9599--cd03fc3c-0a93-41ca-8bfc-593a5993a93a.lovable.app-1778427198282.png" },
     ],
     links: [
       {
