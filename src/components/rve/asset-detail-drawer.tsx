@@ -1,5 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink, Eye, MapPin, Satellite, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink, Eye, MapPin, Satellite } from "lucide-react";
 import type { Asset } from "./types";
 import {
   SEED_EVENTS,
