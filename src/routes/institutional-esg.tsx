@@ -16,6 +16,8 @@ import {
   DashSectionHeader,
   MetricTile,
 } from "@/components/rve/dashboard-shell";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { INSTITUTIONAL_ESG_ROADMAP } from "@/lib/rve/institutional-esg-roadmap";
 
 export const Route = createFileRoute("/institutional-esg")({
   head: () => ({
@@ -169,6 +171,15 @@ function InstitutionalEsgPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Institutional ESG Implementation Roadmap"
+          description="Building the comprehensive ESG reporting platform with portfolio analytics, regulatory compliance, and enterprise integration."
+          items={INSTITUTIONAL_ESG_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

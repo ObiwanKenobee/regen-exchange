@@ -6,11 +6,57 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const VOTES = [
-  { id: "RIP-042", title: "Increase Borneo Reforestation tranche by $4.2M", status: "passed", for: 78, against: 18, abstain: 4, ts: "2d ago", quorum: true },
-  { id: "RIP-041", title: "Onboard Madagascar Mangrove Restoration asset", status: "passed", for: 91, against: 6, abstain: 3, ts: "5d ago", quorum: true },
-  { id: "RIP-040", title: "Adjust restoration fee to 0.5% (was 0.4%)", status: "passed", for: 64, against: 30, abstain: 6, ts: "1w ago", quorum: true },
-  { id: "RIP-039", title: "Halt Solar Infrastructure issuance pending audit", status: "rejected", for: 28, against: 68, abstain: 4, ts: "1w ago", quorum: true },
-  { id: "RIP-043", title: "Implement automated oracle verification for carbon credits", status: "active", for: 52, against: 8, abstain: 2, ts: "open", quorum: false, canVote: true },
+  {
+    id: "RIP-042",
+    title: "Increase Borneo Reforestation tranche by $4.2M",
+    status: "passed",
+    for: 78,
+    against: 18,
+    abstain: 4,
+    ts: "2d ago",
+    quorum: true,
+  },
+  {
+    id: "RIP-041",
+    title: "Onboard Madagascar Mangrove Restoration asset",
+    status: "passed",
+    for: 91,
+    against: 6,
+    abstain: 3,
+    ts: "5d ago",
+    quorum: true,
+  },
+  {
+    id: "RIP-040",
+    title: "Adjust restoration fee to 0.5% (was 0.4%)",
+    status: "passed",
+    for: 64,
+    against: 30,
+    abstain: 6,
+    ts: "1w ago",
+    quorum: true,
+  },
+  {
+    id: "RIP-039",
+    title: "Halt Solar Infrastructure issuance pending audit",
+    status: "rejected",
+    for: 28,
+    against: 68,
+    abstain: 4,
+    ts: "1w ago",
+    quorum: true,
+  },
+  {
+    id: "RIP-043",
+    title: "Implement automated oracle verification for carbon credits",
+    status: "active",
+    for: 52,
+    against: 8,
+    abstain: 2,
+    ts: "open",
+    quorum: false,
+    canVote: true,
+  },
 ];
 
 const EVENTS = [

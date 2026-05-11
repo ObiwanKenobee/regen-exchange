@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
 import { MpesaB2cPanel } from "@/components/rve/mpesa/mpesa-b2c-panel";
 

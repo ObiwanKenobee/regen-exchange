@@ -15,6 +15,8 @@ import {
 } from "@/components/rve/dashboard-shell";
 import { MpesaB2cPanel } from "@/components/rve/mpesa/mpesa-b2c-panel";
 import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { REFI_ROADMAP } from "@/lib/rve/refi-roadmap";
 
 export const Route = createFileRoute("/refi")({
   head: () => ({
@@ -150,6 +152,15 @@ function RefiPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Regenerative Finance Implementation Roadmap"
+          description="Building the comprehensive DeFi platform with ecological collateral, impact lending, and mobile-first user experience."
+          items={REFI_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );
