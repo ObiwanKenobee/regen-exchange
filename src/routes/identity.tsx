@@ -26,6 +26,8 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge as UIBadge } from "@/components/ui/badge";
 import { getUserProfile, updateRIDScore } from "@/lib/rve/identity.functions";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { IDENTITY_ROADMAP } from "@/lib/rve/identity-roadmap";
 
 export const Route = createFileRoute("/identity")({
   head: () => ({
@@ -342,6 +344,15 @@ function IdentityPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Identity & RID Scoring Implementation Roadmap"
+          description="Building the comprehensive identity management system with RID scoring, reputation tracking, and trust networks."
+          items={IDENTITY_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

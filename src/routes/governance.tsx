@@ -8,6 +8,8 @@ import {
   DashSectionHeader,
   MetricTile,
 } from "@/components/rve/dashboard-shell";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { GOVERNANCE_ROADMAP } from "@/lib/rve/governance-roadmap";
 
 export const Route = createFileRoute("/governance")({
   head: () => ({
@@ -164,6 +166,15 @@ function GovernancePage() {
           desc="Full module from the public exchange — unified here for DAO operators."
         />
         <GovernanceSection />
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Governance & DAO Implementation Roadmap"
+          description="Building the comprehensive governance system with quadratic voting, treasury management, and participation networks."
+          items={GOVERNANCE_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

@@ -23,6 +23,8 @@ import { MpesaB2cPanel } from "@/components/rve/mpesa/mpesa-b2c-panel";
 import { MpesaEarningsFlow } from "@/components/rve/mpesa/mpesa-earnings-flow";
 import { MpesaRailOverview } from "@/components/rve/mpesa/mpesa-rail-overview";
 import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { COMMUNITY_ROADMAP } from "@/lib/rve/community-roadmap";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -238,6 +240,15 @@ function CommunityPage() {
             Open steward copilot
           </Button>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Community Stewardship Implementation Roadmap"
+          description="Building the comprehensive community platform for ecological stewardship, RIU earnings, and social impact tracking."
+          items={COMMUNITY_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

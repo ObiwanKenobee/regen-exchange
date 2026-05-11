@@ -16,6 +16,8 @@ import {
   DashSectionHeader,
   MetricTile,
 } from "@/components/rve/dashboard-shell";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { NAIROBI_TWIN_ROADMAP } from "@/lib/rve/nairobi-twin-roadmap";
 
 export const Route = createFileRoute("/nairobi-twin")({
   head: () => ({
@@ -160,6 +162,15 @@ function NairobiTwinPage() {
             and verification, not siloed PDFs.
           </p>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Nairobi Digital Twin Implementation Roadmap"
+          description="Building the comprehensive digital twin platform for urban ecological modeling, policy simulation, and climate adaptation planning."
+          items={NAIROBI_TWIN_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

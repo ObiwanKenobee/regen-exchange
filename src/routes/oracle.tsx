@@ -28,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { getOracleConsensus, submitOracleVerification } from "@/lib/rve/identity.functions";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { ORACLE_ROADMAP } from "@/lib/rve/oracle-roadmap";
 
 export const Route = createFileRoute("/oracle")({
   head: () => ({
@@ -346,6 +348,15 @@ function OraclePage() {
       {/* Verification Feed */}
       <div className="mt-6">
         <VerificationFeed />
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Oracle Verification Implementation Roadmap"
+          description="Building the AI-powered trust engine for multi-source ecological verification and fraud detection."
+          items={ORACLE_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );
