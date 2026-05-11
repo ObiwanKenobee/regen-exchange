@@ -1,4 +1,5 @@
 import { ECOSYSTEMS } from "./types";
+import { getResolution } from "@/lib/verification-resolutions";
 
 export type VerificationStatus = "verified" | "review" | "anomaly";
 export type VerificationSource = "Satellite" | "Drone" | "IoT" | "Community" | "AI";
@@ -68,9 +69,16 @@ const TIMELINE_TARGETS: Record<string, number> = {
 };
 
 export function getTimelineProgress(events: VerificationEvent[], sym: string) {
-  const verified = getEventsForAsset(events, sym).filter((e) => e.status === "verified").length;
+  const list = getEventsForAsset(events, sym);
+  const verified = list.filter((e) => e.status === "verified").length;
+  // Resolved anomalies count as completed milestones too
+  const resolved = list.filter((e) => {
+    if (e.status !== "anomaly") return false;
+    const r = getResolution(e.id);
+    return r?.status === "resolved";
+  }).length;
   const target = TIMELINE_TARGETS[sym] ?? 6;
-  return Math.min(100, Math.round((verified / target) * 100));
+  return Math.min(100, Math.round(((verified + resolved) / target) * 100));
 }
 
 const RAND_DETAILS: Record<VerificationSource, string[]> = {
