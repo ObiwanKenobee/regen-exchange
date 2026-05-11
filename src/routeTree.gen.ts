@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RefiRouteImport } from './routes/refi'
+import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
 import { Route as OracleRouteImport } from './routes/oracle'
 import { Route as NairobiTwinRouteImport } from './routes/nairobi-twin'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -20,11 +21,15 @@ import { Route as EcoIntelligenceRouteImport } from './routes/eco-intelligence'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
 
 const RefiRoute = RefiRouteImport.update({
   id: '/refi',
   path: '/refi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformArchitectureRoute = PlatformArchitectureRouteImport.update({
+  id: '/platform-architecture',
+  path: '/platform-architecture',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OracleRoute = OracleRouteImport.update({
@@ -70,11 +75,6 @@ const CommunityRoute = CommunityRouteImport.update({
 const CommandCenterRoute = CommandCenterRouteImport.update({
   id: '/command-center',
   path: '/command-center',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlatformArchitectureRoute = PlatformArchitectureRouteImport.update({
-  id: '/platform-architecture',
-  path: '/platform-architecture',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -195,18 +195,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RefiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/oracle': {
-      id: '/oracle'
-      path: '/oracle'
-      fullPath: '/oracle'
-      preLoaderRoute: typeof OracleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/platform-architecture': {
       id: '/platform-architecture'
       path: '/platform-architecture'
       fullPath: '/platform-architecture'
       preLoaderRoute: typeof PlatformArchitectureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oracle': {
+      id: '/oracle'
+      path: '/oracle'
+      fullPath: '/oracle'
+      preLoaderRoute: typeof OracleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nairobi-twin': {

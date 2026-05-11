@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { BookOpen, Map, Newspaper, Radio, Share2 } from "lucide-react";
+import { BookOpen, Map, Newspaper, Radio, Share2, TrendingUp, BarChart3, PieChart as PieChartIcon } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AssetDetailDrawer } from "@/components/rve/asset-detail-drawer";
 import {
   DashboardShell,
@@ -26,6 +27,31 @@ export const Route = createFileRoute("/impact-explorer")({
 function ImpactExplorerPage() {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [open, setOpen] = useState(false);
+
+  // Sample data for visualizations
+  const restorationData = [
+    { month: "Jan", carbon: 1200, water: 800, biodiversity: 600 },
+    { month: "Feb", carbon: 1350, water: 950, biodiversity: 720 },
+    { month: "Mar", carbon: 1180, water: 1100, biodiversity: 680 },
+    { month: "Apr", carbon: 1420, water: 1200, biodiversity: 850 },
+    { month: "May", carbon: 1680, water: 1350, biodiversity: 920 },
+    { month: "Jun", carbon: 1520, water: 1280, biodiversity: 880 },
+  ];
+
+  const assetTypeData = [
+    { name: "Carbon RIUs", value: 45, color: "#22c55e" },
+    { name: "Water Restoration", value: 25, color: "#3b82f6" },
+    { name: "Biodiversity", value: 20, color: "#8b5cf6" },
+    { name: "Cultural Preservation", value: 10, color: "#f59e0b" },
+  ];
+
+  const verificationData = [
+    { date: "2024-01", verified: 85, pending: 12, rejected: 3 },
+    { date: "2024-02", verified: 92, pending: 8, rejected: 0 },
+    { date: "2024-03", verified: 88, pending: 15, rejected: 2 },
+    { date: "2024-04", verified: 95, pending: 6, rejected: 1 },
+    { date: "2024-05", verified: 97, pending: 4, rejected: 0 },
+  ];
 
   return (
     <DashboardShell
@@ -105,6 +131,76 @@ function ImpactExplorerPage() {
               Short films, photo essays, and audio from stewards — surfaced when verification confidence crosses thresholds.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* New Data Visualization Section */}
+      <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="panel p-6">
+          <DashSectionHeader
+            eyebrow="Analytics"
+            title="Restoration Impact Trends"
+            desc="Monthly ecological restoration metrics across asset types"
+          />
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={restorationData}>
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="carbon" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="water" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="biodiversity" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="panel p-6">
+          <DashSectionHeader
+            eyebrow="Distribution"
+            title="Asset Type Breakdown"
+            desc="Current distribution of verified regenerative assets"
+          />
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={assetTypeData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {assetTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 panel p-6">
+        <DashSectionHeader
+          eyebrow="Verification"
+          title="Oracle Verification Pipeline"
+          desc="Real-time status of ecological verification processes"
+        />
+        <div className="mt-4 h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={verificationData}>
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="verified" stackId="a" fill="#22c55e" name="Verified" />
+              <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending Review" />
+              <Bar dataKey="rejected" stackId="a" fill="#ef4444" name="Rejected" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

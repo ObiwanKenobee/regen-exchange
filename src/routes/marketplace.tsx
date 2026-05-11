@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -15,6 +16,7 @@ import {
   Recycle,
   Landmark,
 } from "lucide-react";
+import { Line, LineChart as RechartsLineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AssetDetailDrawer } from "@/components/rve/asset-detail-drawer";
 import {
   DashboardShell,
@@ -26,6 +28,7 @@ import { MpesaB2cPanel } from "@/components/rve/mpesa/mpesa-b2c-panel";
 import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
 import { OrderTicket } from "@/components/rve/order-ticket";
 import { ASSETS, type Asset } from "@/components/rve/types";
+import { getAssets } from "@/lib/rve/rve.functions";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
@@ -50,6 +53,26 @@ const ASSET_TYPES = [
   { name: "Waste Circularity Credits", icon: Recycle, tags: ["MRF", "Diversion"] },
 ];
 
+// Helper function to get icon based on asset type
+function getAssetIcon(type: string) {
+  switch (type) {
+    case "carbon":
+      return Leaf;
+    case "water":
+      return Droplets;
+    case "biodiversity":
+      return TreePine;
+    case "cultural":
+      return Landmark;
+    case "urban":
+      return Sun;
+    case "waste":
+      return Recycle;
+    default:
+      return Leaf;
+  }
+}
+
 function MarketplacePage() {
   const [drawerAsset, setDrawerAsset] = useState<Asset | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -62,6 +85,40 @@ function MarketplacePage() {
     setOrderSide(side);
     setOrderOpen(true);
   };
+
+  // Fetch assets from server function
+  const { data: apiAssets, isLoading: assetsLoading } = useQuery({
+    queryKey: ["assets"],
+    queryFn: () => getAssets(),
+  });
+
+  // Convert API assets to component format
+  const assets: Asset[] = apiAssets?.map(apiAsset => ({
+    sym: apiAsset.symbol,
+    name: apiAsset.name,
+    price: apiAsset.currentPrice,
+    change: Math.random() * 10 - 5, // Mock change for now
+    icon: getAssetIcon(apiAsset.type),
+    type: apiAsset.type,
+    description: apiAsset.description || "",
+    marketCap: apiAsset.marketCap || 0,
+    volume24h: Math.random() * 1000000, // Mock volume
+    verificationScore: apiAsset.verificationScore,
+  })) || ASSETS; // Fallback to static data if API fails
+
+  // Sample price history data
+  const priceData = [
+    { time: "09:00", price: 1.02 },
+    { time: "10:00", price: 1.05 },
+    { time: "11:00", price: 1.03 },
+    { time: "12:00", price: 1.08 },
+    { time: "13:00", price: 1.06 },
+    { time: "14:00", price: 1.09 },
+    { time: "15:00", price: 1.12 },
+    { time: "16:00", price: 1.08 },
+    { time: "17:00", price: 1.15 },
+    { time: "18:00", price: 1.042 },
+  ];
 
   return (
     <DashboardShell
@@ -102,6 +159,32 @@ function MarketplacePage() {
         />
       </div>
 
+      {/* Price Chart Section */}
+      <div className="mt-6 panel p-6">
+        <DashSectionHeader
+          eyebrow="Live pricing"
+          title="RIU Index Price Chart"
+          desc="Real-time composite price across all ecological asset classes"
+        />
+        <div className="mt-4 h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsLineChart data={priceData}>
+              <XAxis dataKey="time" />
+              <YAxis domain={['dataMin - 0.02', 'dataMax + 0.02']} />
+              <Tooltip formatter={(value) => [`$${value}`, 'Price']} />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#22c55e"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: "#22c55e" }}
+              />
+            </RechartsLineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className="mt-10 grid gap-6 lg:grid-cols-12">
         <div className="panel lg:col-span-8">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
@@ -133,7 +216,7 @@ function MarketplacePage() {
                 </tr>
               </thead>
               <tbody>
-                {ASSETS.map((a) => {
+                {assets.map((a) => {
                   const up = a.change >= 0;
                   const I = a.icon;
                   return (
@@ -167,7 +250,7 @@ function MarketplacePage() {
                             <ArrowDownRight className="h-3 w-3" />
                           )}
                           {up ? "+" : ""}
-                          {a.change}%
+                          {a.change.toFixed(1)}%
                         </span>
                       </td>
                       <td className="px-3 py-4">

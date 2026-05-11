@@ -6,6 +6,8 @@ import {
   DashSectionHeader,
   TagRow,
 } from "@/components/rve/dashboard-shell";
+import { RegenerativeIdentityLayer } from "@/components/rve/regenerative-identity-layer";
+import { AIOracleVerificationEngine } from "@/components/rve/ai-oracle-verification-engine";
 import {
   PLATFORM_PILLARS,
   type PlatformPillar,
@@ -140,6 +142,27 @@ function PlatformArchitecturePage() {
           {future.map((p) => (
             <PillarCard key={p.id} p={p} />
           ))}
+        </div>
+      </div>
+
+      {/* Component Demonstrations */}
+      <div className="mt-14">
+        <DashSectionHeader
+          eyebrow="Live components"
+          title="Critical Component Demonstrations"
+          desc="Interactive previews of the most essential RVE platform components currently in development."
+        />
+
+        <div className="mt-8 space-y-12">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">1. Regenerative Identity Layer (RID)</h3>
+            <RegenerativeIdentityLayer />
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">2. AI Oracle Verification Engine</h3>
+            <AIOracleVerificationEngine />
+          </div>
         </div>
       </div>
     </DashboardShell>

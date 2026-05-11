@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { WalletProvider } from "@/lib/wallet-context";
+import { AuthProvider } from "@/lib/auth/auth.context";
 
 function NotFoundComponent() {
   return (
@@ -119,10 +120,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <Outlet />
-        <Toaster richColors position="top-center" />
-      </WalletProvider>
+      <AuthProvider>
+        <WalletProvider>
+          <Outlet />
+          <Toaster richColors position="top-center" />
+        </WalletProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

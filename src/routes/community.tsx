@@ -12,6 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import {
   DashboardShell,
   DashSectionHeader,
@@ -37,6 +39,23 @@ export const Route = createFileRoute("/community")({
 });
 
 function CommunityPage() {
+  // Sample data for progress tracking
+  const weeklyEarnings = [
+    { day: "Mon", earnings: 45 },
+    { day: "Tue", earnings: 62 },
+    { day: "Wed", earnings: 38 },
+    { day: "Thu", earnings: 71 },
+    { day: "Fri", earnings: 55 },
+    { day: "Sat", earnings: 89 },
+    { day: "Sun", earnings: 42 },
+  ];
+
+  const missionProgress = [
+    { name: "Riparian planting", completed: 85, total: 100 },
+    { name: "Waste sorting", completed: 60, total: 80 },
+    { name: "Climate stories", completed: 3, total: 5 },
+  ];
+
   return (
     <DashboardShell
       eyebrow="Mobile-first"
@@ -53,6 +72,50 @@ function CommunityPage() {
         <MetricTile label="Restoration streak" value="14 days" sub="Photo + GPS attested" trend="🔥" icon={Flame} />
         <MetricTile label="Clan rank" value="Silver" sub="Mukuru restoration collective" trend="↑" icon={Trophy} />
         <MetricTile label="Microgrants unlocked" value="KES 42k" sub="M-Pesa disbursement ready" trend="pending" icon={Sprout} />
+      </div>
+
+      {/* Progress Tracking Section */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="panel p-6">
+          <DashSectionHeader
+            eyebrow="This week"
+            title="RIU Earnings Progress"
+            desc="Your verified restoration earnings over the past 7 days"
+          />
+          <div className="mt-4 h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyEarnings}>
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Bar dataKey="earnings" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="panel p-6">
+          <DashSectionHeader
+            eyebrow="Active missions"
+            title="Mission Progress"
+            desc="Track your completion status for current restoration tasks"
+          />
+          <div className="mt-4 space-y-4">
+            {missionProgress.map((mission) => (
+              <div key={mission.name}>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{mission.name}</span>
+                  <span className="text-muted-foreground">
+                    {mission.completed}/{mission.total}
+                  </span>
+                </div>
+                <Progress
+                  value={(mission.completed / mission.total) * 100}
+                  className="mt-2"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="mt-10 space-y-6">

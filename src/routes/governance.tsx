@@ -37,6 +37,72 @@ function GovernancePage() {
         <MetricTile label="Participation map nodes" value="482" sub="Geographic stewards" trend="+28" icon={Users} />
       </div>
 
+      {/* Active Proposals Section */}
+      <div className="mt-6 panel p-6">
+        <DashSectionHeader
+          eyebrow="Active voting"
+          title="Current Proposals"
+          desc="Cast your quadratic votes on active governance proposals"
+        />
+        <div className="mt-4 space-y-4">
+          <div className="rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">RIP-038: Add Quechua Cultural Archive validator set</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Proposal to onboard indigenous knowledge validators for cultural preservation assets
+                </div>
+                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>Ends in 3 days</span>
+                  <span>52% For • 8% Against • 2% Abstain</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                  Vote For
+                </button>
+                <button className="rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:bg-muted">
+                  Vote Against
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full bg-primary" style={{ width: "52%" }} />
+              <div className="h-full bg-destructive" style={{ width: "8%" }} />
+              <div className="h-full bg-muted-foreground/50" style={{ width: "2%" }} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">RIP-039: Adjust restoration fee to 0.5%</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Treasury proposal to increase platform fees for additional funding
+                </div>
+                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>Ends in 1 week</span>
+                  <span>Quorum not reached</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                  Vote For
+                </button>
+                <button className="rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:bg-muted">
+                  Vote Against
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full bg-primary" style={{ width: "45%" }} />
+              <div className="h-full bg-destructive" style={{ width: "35%" }} />
+              <div className="h-full bg-muted-foreground/50" style={{ width: "5%" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="mt-10 grid gap-6 lg:grid-cols-12">
         <div className="panel p-6 lg:col-span-5">
           <DashSectionHeader

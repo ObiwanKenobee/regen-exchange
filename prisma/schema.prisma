@@ -1,0 +1,262 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  did               String?  @unique
+  ridScore          Float    @default(0)
+  reputationHistory Json?
+  mpesaNumber       String?
+  walletAddress     String?
+  email             String?  @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  orders            Order[]
+  portfolio         Portfolio?
+  riuStakes         RIUStake[]
+  governanceVotes   GovernanceVote[]
+  sensorReadings    SensorReading[]
+  geospatialFeatures GeospatialFeature[]
+
+  @@map("users")
+}
+
+model Asset {
+  id                String   @id @default(cuid())
+  symbol            String   @unique
+  name              String
+  type              String   // carbon, water, biodiversity, cultural, urban
+  description       String?
+  totalSupply       Float?
+  currentPrice      Float
+  marketCap         Float?
+  verificationScore Float    @default(0)
+  oracleId          String?
+  contractAddress   String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  orders            Order[]
+  portfolioItems    PortfolioItem[]
+
+  @@map("assets")
+}
+
+model Order {
+  id                String   @id @default(cuid())
+  userId            String
+  assetId           String
+  side              String   // buy, sell
+  orderType         String   @default("market") // market, limit
+  quantity          Float
+  price             Float?
+  status            String   @default("pending") // pending, filled, cancelled, rejected
+  txHash            String?
+  oracleVerificationId String?
+  executedAt        DateTime?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id])
+  asset             Asset    @relation(fields: [assetId], references: [id])
+
+  @@map("orders")
+}
+
+model Portfolio {
+  id        String @id @default(cuid())
+  userId    String @unique
+  totalValue Float @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User @relation(fields: [userId], references: [id])
+  items   PortfolioItem[]
+
+  @@map("portfolios")
+}
+
+model PortfolioItem {
+  id       String @id @default(cuid())
+  portfolioId String
+  assetId  String
+  quantity Float
+  avgPrice Float
+  currentValue Float @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id])
+  asset     Asset     @relation(fields: [assetId], references: [id])
+
+  @@map("portfolio_items")
+}
+
+model RIUMint {
+  id                String   @id @default(cuid())
+  userId            String
+  oracleVerificationId String
+  amount            Float
+  txHash            String?
+  contractAddress   String?
+  mintedAt          DateTime @default(now())
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@map("riu_mints")
+}
+
+model RIUStake {
+  id                String   @id @default(cuid())
+  userId            String
+  amount            Float
+  lockPeriodDays    Int
+  apy               Float
+  rewardsClaimed    Float    @default(0)
+  stakedAt          DateTime @default(now())
+  unstakedAt        DateTime?
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@map("riu_stakes")
+}
+
+model GovernanceProposal {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  proposerId        String
+  contractAddress   String?
+  executionData     Json?
+  status            String   @default("active") // active, passed, rejected, executed
+  votingStartsAt    DateTime?
+  votingEndsAt      DateTime?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  proposer          User     @relation(fields: [proposerId], references: [id])
+  votes             GovernanceVote[]
+
+  @@map("governance_proposals")
+}
+
+model GovernanceVote {
+  id            String @id @default(cuid())
+  proposalId    String
+  userId        String
+  vote          String // for, against, abstain
+  votingPower   Float
+  votedAt       DateTime @default(now())
+
+  // Relations
+  proposal      GovernanceProposal @relation(fields: [proposalId], references: [id])
+  user          User               @relation(fields: [userId], references: [id])
+
+  @@unique([proposalId, userId])
+  @@map("governance_votes")
+}
+
+model Sensor {
+  id            String   @id @default(cuid())
+  type          String   // air_quality, soil_moisture, water_level, weather
+  location      Json?    // GeoJSON Point
+  ownerId       String?
+  status        String   @default("active") // active, inactive, maintenance
+  batteryLevel  Float?
+  firmwareVersion String?
+  lastSeen      DateTime?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  owner         User?            @relation(fields: [ownerId], references: [id])
+  readings      SensorReading[]
+
+  @@map("sensors")
+}
+
+model SensorReading {
+  id        String   @id @default(cuid())
+  sensorId  String
+  timestamp DateTime
+  metric    String   // temperature, humidity, ph, turbidity
+  value     Float
+  unit      String
+  qualityScore Float?
+  rawData   Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  sensor    Sensor   @relation(fields: [sensorId], references: [id])
+
+  @@map("sensor_readings")
+}
+
+model GeospatialFeature {
+  id            String   @id @default(cuid())
+  type          String   // restoration_zone, sensor_location, biodiversity_hotspot
+  geometry      Json?    // GeoJSON geometry
+  properties    Json?
+  source        String?  // oracle, community, satellite
+  verificationScore Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  owner         User?    @relation(fields: [ownerId], references: [id])
+
+  ownerId       String?
+  @@map("geospatial_features")
+}
+
+model OracleVerification {
+  id                String   @id @default(cuid())
+  type              String   // satellite, iot, drone, community
+  assetId           String?
+  status            String   @default("processing") // processing, verified, rejected
+  confidence        Float    @default(0)
+  inputs            Json?    // Array of input sources
+  results           Json?    // Verification results
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  @@map("oracle_verifications")
+}
+
+model MPesaTransaction {
+  id                String   @id @default(cuid())
+  userId            String?
+  transactionId     String   @unique
+  amount            Float
+  phoneNumber       String
+  accountReference  String
+  transactionDesc   String
+  transactionType   String   // C2B, B2C, STK
+  status            String   @default("pending") // pending, completed, failed
+  resultCode        String?
+  resultDesc        String?
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  user              User?    @relation(fields: [userId], references: [id])
+
+  @@map("mpesa_transactions")
+}

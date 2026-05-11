@@ -1,11 +1,16 @@
-import { CheckCircle2, Clock, FileCheck, Vote, XCircle, Coins } from "lucide-react";
+import { CheckCircle2, Clock, FileCheck, Vote, XCircle, Coins, User } from "lucide-react";
+import { useAuth } from "@/lib/auth/auth.context";
+import { voteOnProposal, getProposals } from "@/lib/rve/rve.functions";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const VOTES = [
   { id: "RIP-042", title: "Increase Borneo Reforestation tranche by $4.2M", status: "passed", for: 78, against: 18, abstain: 4, ts: "2d ago", quorum: true },
   { id: "RIP-041", title: "Onboard Madagascar Mangrove Restoration asset", status: "passed", for: 91, against: 6, abstain: 3, ts: "5d ago", quorum: true },
   { id: "RIP-040", title: "Adjust restoration fee to 0.5% (was 0.4%)", status: "passed", for: 64, against: 30, abstain: 6, ts: "1w ago", quorum: true },
   { id: "RIP-039", title: "Halt Solar Infrastructure issuance pending audit", status: "rejected", for: 28, against: 68, abstain: 4, ts: "1w ago", quorum: true },
-  { id: "RIP-038", title: "Add Quechua Cultural Archive validator set", status: "active", for: 52, against: 8, abstain: 2, ts: "open", quorum: false },
+  { id: "RIP-043", title: "Implement automated oracle verification for carbon credits", status: "active", for: 52, against: 8, abstain: 2, ts: "open", quorum: false, canVote: true },
 ];
 
 const EVENTS = [
@@ -25,9 +30,48 @@ const DISTRIBUTION = [
 ];
 
 export function GovernanceSection() {
+  const { user, isAuthenticated } = useAuth();
+  const [votingStates, setVotingStates] = useState<Record<string, boolean>>({});
   const totalRGN = 18_420_000;
+
+  const handleVote = async (proposalId: string, vote: "for" | "against" | "abstain") => {
+    if (!isAuthenticated || !user) return;
+
+    setVotingStates(prev => ({ ...prev, [proposalId]: true }));
+    try {
+      await voteOnProposal({ proposalId, vote });
+      // In a real app, you'd refresh the proposal data here
+      console.log(`Voted ${vote} on ${proposalId}`);
+    } catch (error) {
+      console.error("Voting failed:", error);
+    } finally {
+      setVotingStates(prev => ({ ...prev, [proposalId]: false }));
+    }
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-12">
+      {/* User RID Score */}
+      {isAuthenticated && user && (
+        <div className="panel lg:col-span-12">
+          <div className="flex items-center justify-between p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-medium">Your Governance Status</div>
+                <div className="text-xs text-muted-foreground">DID: {user.did.slice(0, 16)}...</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-mono font-bold text-primary">{user.ridScore}</div>
+              <div className="text-xs text-muted-foreground">RID Score</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Vote history */}
       <div className="panel lg:col-span-7">
         <div className="flex items-center justify-between border-b border-border/60 px-5 py-3 text-sm">
@@ -38,6 +82,7 @@ export function GovernanceSection() {
           {VOTES.map(v => {
             const StatusIcon = v.status === "passed" ? CheckCircle2 : v.status === "rejected" ? XCircle : Clock;
             const color = v.status === "passed" ? "text-primary" : v.status === "rejected" ? "text-destructive" : "text-accent";
+            const isVoting = votingStates[v.id];
             return (
               <li key={v.id} className="px-5 py-4">
                 <div className="flex items-start justify-between gap-3">
@@ -63,6 +108,42 @@ export function GovernanceSection() {
                   <span><span className="text-destructive">Against {v.against}%</span></span>
                   <span>Abstain {v.abstain}%</span>
                 </div>
+                {v.canVote && isAuthenticated && user && user.ridScore >= 25 && (
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleVote(v.id, "for")}
+                      disabled={isVoting}
+                      className="h-7 text-xs"
+                    >
+                      For
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleVote(v.id, "against")}
+                      disabled={isVoting}
+                      className="h-7 text-xs"
+                    >
+                      Against
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleVote(v.id, "abstain")}
+                      disabled={isVoting}
+                      className="h-7 text-xs"
+                    >
+                      Abstain
+                    </Button>
+                  </div>
+                )}
+                {v.canVote && isAuthenticated && user && user.ridScore < 25 && (
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    Minimum RID score of 25 required to vote
+                  </div>
+                )}
               </li>
             );
           })}
