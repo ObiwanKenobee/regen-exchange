@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import db from "@/lib/db";
+import { authMiddleware, requireAuth } from "@/lib/auth.middleware";
 
 // Marketplace Types
 export interface Listing {
@@ -67,7 +68,7 @@ export interface Order {
 
 // CREATE Listing
 export const createListing = createServerFn({ method: "POST" })
-  .middleware([])
+  .middleware([authMiddleware])
   .validator(
     z.object({
       assetId: z.string(),
@@ -98,23 +99,9 @@ export const createListing = createServerFn({ method: "POST" })
       throw new Error("Database not configured");
     }
 
-    // Calculate expiration date
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + data.expiresIn);
-
-    // Prepare auction data if present
-    const auctionData = data.auction ? {
-      startPrice: data.auction.startPrice,
-      reservePrice: data.auction.reservePrice,
-      endTime: new Date(Date.now() + data.auction.duration * 60 * 60 * 1000),
-      bids: [],
-    } : null;
-
-    // Create listing in database
-    const listing = await db.listing.create({
-      data: {
-        assetId: data.assetId,
-        sellerId: "temp-user-id", // TODO: Get from authentication context
+    // Get authenticated user
+    const user = requireAuth();
+    const sellerId = user.id;
         type: data.type,
         status: "active",
         quantity: data.quantity,
