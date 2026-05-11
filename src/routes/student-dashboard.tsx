@@ -637,37 +637,72 @@ function StudentDashboard() {
                             color: "amber",
                           },
                           { name: "Regen Finance", level: 1, connections: [2], color: "purple" },
-                        ].map((skill, index) => (
-                          <div key={skill.name} className="relative">
-                            <div
-                              className={`p-4 rounded-lg bg-${skill.color}-500/10 border border-${skill.color}-500/30 text-center animate-skill-tree-grow`}
-                            >
+                        ].map((skill, index) => {
+                          const colorClasses = {
+                            emerald: {
+                              bg: "bg-emerald-500/10",
+                              border: "border-emerald-500/30",
+                              bgCircle: "bg-emerald-500/20",
+                              text: "text-emerald-400",
+                              bgLine: "bg-emerald-500/50",
+                            },
+                            cyan: {
+                              bg: "bg-cyan-500/10",
+                              border: "border-cyan-500/30",
+                              bgCircle: "bg-cyan-500/20",
+                              text: "text-cyan-400",
+                              bgLine: "bg-cyan-500/50",
+                            },
+                            amber: {
+                              bg: "bg-amber-500/10",
+                              border: "border-amber-500/30",
+                              bgCircle: "bg-amber-500/20",
+                              text: "text-amber-400",
+                              bgLine: "bg-amber-500/50",
+                            },
+                            purple: {
+                              bg: "bg-purple-500/10",
+                              border: "border-purple-500/30",
+                              bgCircle: "bg-purple-500/20",
+                              text: "text-purple-400",
+                              bgLine: "bg-purple-500/50",
+                            },
+                          };
+
+                          const classes = colorClasses[skill.color as keyof typeof colorClasses] || colorClasses.emerald;
+
+                          return (
+                            <div key={skill.name} className="relative">
                               <div
-                                className={`w-12 h-12 mx-auto mb-2 rounded-full bg-${skill.color}-500/20 flex items-center justify-center`}
+                                className={`p-4 rounded-lg ${classes.bg} ${classes.border} text-center animate-skill-tree-grow`}
                               >
-                                <span className={`text-${skill.color}-400 font-bold`}>
-                                  {skill.level}
-                                </span>
+                                <div
+                                  className={`w-12 h-12 mx-auto mb-2 rounded-full ${classes.bgCircle} flex items-center justify-center`}
+                                >
+                                  <span className={`${classes.text} font-bold`}>
+                                    {skill.level}
+                                  </span>
+                                </div>
+                                <h4 className="font-medium text-white text-sm">{skill.name}</h4>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  Level {skill.level}/5
+                                </div>
                               </div>
-                              <h4 className="font-medium text-white text-sm">{skill.name}</h4>
-                              <div className="text-xs text-slate-400 mt-1">
-                                Level {skill.level}/5
-                              </div>
+                              {/* Connection Lines */}
+                              {skill.connections.map((connectionIndex) => (
+                                <div
+                                  key={connectionIndex}
+                                  className={`absolute top-6 w-px h-6 ${classes.bgLine} transform rotate-90 origin-left`}
+                                  style={{
+                                    left: connectionIndex > index ? "100%" : "0%",
+                                    transform:
+                                      connectionIndex > index ? "rotate(0deg)" : "rotate(180deg)",
+                                  }}
+                                />
+                              ))}
                             </div>
-                            {/* Connection Lines */}
-                            {skill.connections.map((connectionIndex) => (
-                              <div
-                                key={connectionIndex}
-                                className={`absolute top-6 w-px h-6 bg-${skill.color}-500/50 transform rotate-90 origin-left`}
-                                style={{
-                                  left: connectionIndex > index ? "100%" : "0%",
-                                  transform:
-                                    connectionIndex > index ? "rotate(0deg)" : "rotate(180deg)",
-                                }}
-                              />
-                            ))}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </CardContent>
@@ -677,6 +712,35 @@ function StudentDashboard() {
                 <div className="grid gap-6">
                   {learningTracks.map((track) => {
                     const Icon = track.icon;
+                    const colorClasses = {
+                      emerald: {
+                        bgIcon: "bg-emerald-500/20",
+                        textIcon: "text-emerald-400",
+                        textTitle: "text-emerald-400",
+                        bgButton: "bg-emerald-600 hover:bg-emerald-700",
+                      },
+                      cyan: {
+                        bgIcon: "bg-cyan-500/20",
+                        textIcon: "text-cyan-400",
+                        textTitle: "text-cyan-400",
+                        bgButton: "bg-cyan-600 hover:bg-cyan-700",
+                      },
+                      amber: {
+                        bgIcon: "bg-amber-500/20",
+                        textIcon: "text-amber-400",
+                        textTitle: "text-amber-400",
+                        bgButton: "bg-amber-600 hover:bg-amber-700",
+                      },
+                      purple: {
+                        bgIcon: "bg-purple-500/20",
+                        textIcon: "text-purple-400",
+                        textTitle: "text-purple-400",
+                        bgButton: "bg-purple-600 hover:bg-purple-700",
+                      },
+                    };
+
+                    const classes = colorClasses[track.color as keyof typeof colorClasses] || colorClasses.emerald;
+
                     return (
                       <Card
                         key={track.id}
@@ -686,12 +750,12 @@ function StudentDashboard() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div
-                                className={`p-2 rounded-lg bg-${track.color}-500/20 animate-pulse`}
+                                className={`p-2 rounded-lg ${classes.bgIcon} animate-pulse`}
                               >
-                                <Icon className={`h-5 w-5 text-${track.color}-400`} />
+                                <Icon className={`h-5 w-5 ${classes.textIcon}`} />
                               </div>
                               <div>
-                                <CardTitle className={`text-${track.color}-400`}>
+                                <CardTitle className={classes.textTitle}>
                                   {track.name}
                                 </CardTitle>
                                 <CardDescription>
@@ -723,7 +787,7 @@ function StudentDashboard() {
                           <div className="mt-4 flex gap-2">
                             <Button
                               size="sm"
-                              className={`bg-${track.color}-600 hover:bg-${track.color}-700`}
+                              className={classes.bgButton}
                             >
                               Continue Learning
                             </Button>

@@ -12,4 +12,14 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      exclude: ['@prisma/client', '.prisma/client/*']
+    },
+    build: {
+      rollupOptions: {
+        external: ['@prisma/client', '.prisma/client/*']
+      }
+    }
+  }
 });
