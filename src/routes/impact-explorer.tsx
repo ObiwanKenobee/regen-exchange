@@ -9,6 +9,8 @@ import {
 } from "@/components/rve/dashboard-shell";
 import { PlanetaryMap } from "@/components/rve/planetary-map";
 import { ASSETS, type Asset } from "@/components/rve/types";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { IMPACT_EXPLORER_ROADMAP } from "@/lib/rve/impact-explorer-roadmap";
 
 export const Route = createFileRoute("/impact-explorer")({
   head: () => ({
@@ -228,6 +230,15 @@ function ImpactExplorerPage() {
         onOpenChange={setOpen}
         onTrade={() => setOpen(false)}
       />
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Impact Explorer Implementation Roadmap"
+          description="Building the public transparency portal for ecological data, community stories, and media integration."
+          items={IMPACT_EXPLORER_ROADMAP}
+        />
+      </div>
     </DashboardShell>
   );
 }

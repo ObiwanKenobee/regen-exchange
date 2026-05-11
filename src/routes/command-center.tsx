@@ -25,6 +25,8 @@ import {
 import { PlanetaryMap } from "@/components/rve/planetary-map";
 import { ASSETS, type Asset } from "@/components/rve/types";
 import livingPlanet from "@/assets/living-planet.jpg";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { COMMAND_CENTER_ROADMAP } from "@/lib/rve/command-center-roadmap";
 
 export const Route = createFileRoute("/command-center")({
   head: () => ({
@@ -288,6 +290,15 @@ function CommandCenterPage() {
         onOpenChange={setOrderOpen}
         initialSide={orderSide}
       />
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Command Center Implementation Roadmap"
+          description="Building the global operations nerve center for planetary ecological intelligence and crisis coordination."
+          items={COMMAND_CENTER_ROADMAP}
+        />
+      </div>
     </DashboardShell>
   );
 }

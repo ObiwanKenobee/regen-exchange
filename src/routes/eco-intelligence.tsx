@@ -13,6 +13,8 @@ import {
   DashSectionHeader,
   MetricTile,
 } from "@/components/rve/dashboard-shell";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { ECO_INTELLIGENCE_ROADMAP } from "@/lib/rve/eco-intelligence-roadmap";
 
 export const Route = createFileRoute("/eco-intelligence")({
   head: () => ({
@@ -152,6 +154,15 @@ function EcoIntelligencePage() {
             </ol>
           </div>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Ecological Intelligence Implementation Roadmap"
+          description="Building the AI brain for planetary ecological forecasting, species recovery, and real-time alert systems."
+          items={ECO_INTELLIGENCE_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

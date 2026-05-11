@@ -12,6 +12,8 @@ import {
   PLATFORM_PILLARS,
   type PlatformPillar,
 } from "@/lib/rve/platform-architecture";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { PLATFORM_ROADMAP } from "@/lib/rve/platform-roadmap";
 
 export const Route = createFileRoute("/platform-architecture")({
   head: () => ({
@@ -164,6 +166,15 @@ function PlatformArchitecturePage() {
             <AIOracleVerificationEngine />
           </div>
         </div>
+      </div>
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Platform Implementation Roadmap"
+          description="Quarter-by-quarter execution plan for building the complete RVE platform across all 20 pillars. Critical path items are prioritized for Nairobi launch."
+          items={PLATFORM_ROADMAP}
+        />
       </div>
     </DashboardShell>
   );

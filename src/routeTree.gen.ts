@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StudentDashboardRouteImport } from './routes/student-dashboard'
 import { Route as RefiRouteImport } from './routes/refi'
 import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
 import { Route as OrdersRouteImport } from './routes/orders'
@@ -17,12 +18,18 @@ import { Route as NairobiTwinRouteImport } from './routes/nairobi-twin'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as InstitutionalEsgRouteImport } from './routes/institutional-esg'
 import { Route as ImpactExplorerRouteImport } from './routes/impact-explorer'
+import { Route as IdentityRouteImport } from './routes/identity'
 import { Route as GovernanceRouteImport } from './routes/governance'
 import { Route as EcoIntelligenceRouteImport } from './routes/eco-intelligence'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as IndexRouteImport } from './routes/index'
 
+const StudentDashboardRoute = StudentDashboardRouteImport.update({
+  id: '/student-dashboard',
+  path: '/student-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RefiRoute = RefiRouteImport.update({
   id: '/refi',
   path: '/refi',
@@ -63,6 +70,11 @@ const ImpactExplorerRoute = ImpactExplorerRouteImport.update({
   path: '/impact-explorer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IdentityRoute = IdentityRouteImport.update({
+  id: '/identity',
+  path: '/identity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovernanceRoute = GovernanceRouteImport.update({
   id: '/governance',
   path: '/governance',
@@ -95,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
   '/governance': typeof GovernanceRoute
+  '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
   '/institutional-esg': typeof InstitutionalEsgRoute
   '/marketplace': typeof MarketplaceRoute
@@ -103,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
+  '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +124,7 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
   '/governance': typeof GovernanceRoute
+  '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
   '/institutional-esg': typeof InstitutionalEsgRoute
   '/marketplace': typeof MarketplaceRoute
@@ -118,6 +133,7 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
+  '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,6 +142,7 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
   '/governance': typeof GovernanceRoute
+  '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
   '/institutional-esg': typeof InstitutionalEsgRoute
   '/marketplace': typeof MarketplaceRoute
@@ -134,6 +151,7 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
+  '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,6 +161,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/eco-intelligence'
     | '/governance'
+    | '/identity'
     | '/impact-explorer'
     | '/institutional-esg'
     | '/marketplace'
@@ -151,6 +170,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/student-dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -158,6 +178,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/eco-intelligence'
     | '/governance'
+    | '/identity'
     | '/impact-explorer'
     | '/institutional-esg'
     | '/marketplace'
@@ -166,6 +187,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/student-dashboard'
   id:
     | '__root__'
     | '/'
@@ -173,6 +195,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/eco-intelligence'
     | '/governance'
+    | '/identity'
     | '/impact-explorer'
     | '/institutional-esg'
     | '/marketplace'
@@ -181,6 +204,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/student-dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,6 +213,7 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   EcoIntelligenceRoute: typeof EcoIntelligenceRoute
   GovernanceRoute: typeof GovernanceRoute
+  IdentityRoute: typeof IdentityRoute
   ImpactExplorerRoute: typeof ImpactExplorerRoute
   InstitutionalEsgRoute: typeof InstitutionalEsgRoute
   MarketplaceRoute: typeof MarketplaceRoute
@@ -197,10 +222,18 @@ export interface RootRouteChildren {
   OrdersRoute: typeof OrdersRoute
   PlatformArchitectureRoute: typeof PlatformArchitectureRoute
   RefiRoute: typeof RefiRoute
+  StudentDashboardRoute: typeof StudentDashboardRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/student-dashboard': {
+      id: '/student-dashboard'
+      path: '/student-dashboard'
+      fullPath: '/student-dashboard'
+      preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/refi': {
       id: '/refi'
       path: '/refi'
@@ -257,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImpactExplorerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/identity': {
+      id: '/identity'
+      path: '/identity'
+      fullPath: '/identity'
+      preLoaderRoute: typeof IdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/governance': {
       id: '/governance'
       path: '/governance'
@@ -301,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   EcoIntelligenceRoute: EcoIntelligenceRoute,
   GovernanceRoute: GovernanceRoute,
+  IdentityRoute: IdentityRoute,
   ImpactExplorerRoute: ImpactExplorerRoute,
   InstitutionalEsgRoute: InstitutionalEsgRoute,
   MarketplaceRoute: MarketplaceRoute,
@@ -309,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersRoute: OrdersRoute,
   PlatformArchitectureRoute: PlatformArchitectureRoute,
   RefiRoute: RefiRoute,
+  StudentDashboardRoute: StudentDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

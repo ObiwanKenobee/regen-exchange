@@ -257,4 +257,63 @@
     to { transform: translateX(-50%); }
   }
   .animate-ticker { animation: ticker-scroll 40s linear infinite; }
+
+  /* Newsletter Banner Animations */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(124, 255, 79, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(124, 255, 79, 0.6), 0 0 30px rgba(124, 255, 79, 0.4); }
+  }
+  .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+  @keyframes data-flow {
+    0% { transform: translateX(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+  .animate-data-flow { animation: data-flow 8s ease-in-out infinite; }
+
+  @keyframes satellite-orbit {
+    0% { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+  }
+  .animate-satellite-orbit { animation: satellite-orbit 20s linear infinite; }
+
+  @keyframes grid-scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  .animate-grid-scan { animation: grid-scan 4s ease-in-out infinite; }
+
+  /* Student Dashboard Animations */
+  @keyframes ecological-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(124, 255, 79, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(124, 255, 79, 0.6), 0 0 35px rgba(124, 255, 79, 0.4); }
+  }
+  .animate-ecological-pulse { animation: ecological-pulse 4s ease-in-out infinite; }
+
+  @keyframes neural-network {
+    0% { opacity: 0.3; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 0.3; transform: scale(0.95); }
+  }
+  .animate-neural-network { animation: neural-network 3s ease-in-out infinite; }
+
+  @keyframes mission-glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 209, 255, 0.2); }
+    50% { box-shadow: 0 0 15px rgba(0, 209, 255, 0.5), 0 0 25px rgba(0, 209, 255, 0.3); }
+  }
+  .animate-mission-glow { animation: mission-glow 2s ease-in-out infinite; }
+
+  @keyframes reputation-wave {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .animate-reputation-wave { animation: reputation-wave 6s ease-in-out infinite; }
+
+  @keyframes skill-tree-grow {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-skill-tree-grow { animation: skill-tree-grow 0.8s ease-out; }
 }

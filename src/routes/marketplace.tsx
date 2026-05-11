@@ -15,6 +15,11 @@ import {
   Sun,
   Recycle,
   Landmark,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  BarChart3,
+  Zap,
 } from "lucide-react";
 import { Line, LineChart as RechartsLineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AssetDetailDrawer } from "@/components/rve/asset-detail-drawer";
@@ -29,6 +34,12 @@ import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
 import { OrderTicket } from "@/components/rve/order-ticket";
 import { ASSETS, type Asset } from "@/components/rve/types";
 import { getAssets } from "@/lib/rve/rve.functions";
+import { getOrderBook, getTradingOrders } from "@/lib/rve/identity.functions";
+import { RoadmapSection } from "@/components/rve/roadmap-section";
+import { MARKETPLACE_ROADMAP } from "@/lib/rve/marketplace-roadmap";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
@@ -182,6 +193,185 @@ function MarketplacePage() {
               />
             </RechartsLineChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Trading Engine Section */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="text-slate-300"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Trading Engine
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Market Depth
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300"
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Recent Trades
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Order Book */}
+                <div>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">Order Book - AMZ-CO₂</h3>
+                  <div className="space-y-2">
+                    {/* Bids */}
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-400 mb-2">Bids (Buy Orders)</div>
+                      {[
+                        { price: 1.045, volume: 12500, total: 13062.5 },
+                        { price: 1.042, volume: 8200, total: 8544.4 },
+                        { price: 1.040, volume: 15600, total: 16224.0 },
+                        { price: 1.038, volume: 9300, total: 9643.4 },
+                        { price: 1.035, volume: 18700, total: 19354.5 },
+                      ].map((bid, i) => (
+                        <div key={i} className="flex justify-between text-sm py-1 px-2 rounded bg-emerald-500/10 border border-emerald-500/20">
+                          <span className="text-emerald-400 font-mono">${bid.price.toFixed(3)}</span>
+                          <span className="text-slate-300">{bid.volume.toLocaleString()}</span>
+                          <span className="text-slate-400 font-mono">${bid.total.toFixed(1)}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Spread */}
+                    <div className="text-center py-2 text-xs text-slate-400">
+                      Spread: $0.003 (0.29%)
+                    </div>
+
+                    {/* Asks */}
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-400 mb-2">Asks (Sell Orders)</div>
+                      {[
+                        { price: 1.048, volume: 11200, total: 11737.6 },
+                        { price: 1.050, volume: 15800, total: 16590.0 },
+                        { price: 1.052, volume: 9200, total: 9668.4 },
+                        { price: 1.055, volume: 13400, total: 14117.0 },
+                        { price: 1.058, volume: 7800, total: 8240.4 },
+                      ].map((ask, i) => (
+                        <div key={i} className="flex justify-between text-sm py-1 px-2 rounded bg-red-500/10 border border-red-500/20">
+                          <span className="text-red-400 font-mono">${ask.price.toFixed(3)}</span>
+                          <span className="text-slate-300">{ask.volume.toLocaleString()}</span>
+                          <span className="text-slate-400 font-mono">${ask.total.toFixed(1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Market Depth Chart */}
+                <div>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">Market Depth</h3>
+                  <div className="h-64 bg-slate-700/30 rounded-lg p-4 flex items-end justify-center">
+                    <div className="flex items-end gap-1 h-full">
+                      {/* Bids visualization */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="text-xs text-emerald-400 mb-1">Bids</div>
+                        {[
+                          { height: 80, volume: 12500 },
+                          { height: 60, volume: 8200 },
+                          { height: 90, volume: 15600 },
+                          { height: 70, volume: 9300 },
+                          { height: 95, volume: 18700 },
+                        ].map((bid, i) => (
+                          <div
+                            key={i}
+                            className="w-6 bg-emerald-500/60 rounded-t"
+                            style={{ height: `${bid.height}%` }}
+                            title={`$${1.045 - i * 0.003} - ${bid.volume} RIU`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Mid price */}
+                      <div className="flex flex-col items-center justify-center px-4">
+                        <div className="text-xs text-slate-400">Mid</div>
+                        <div className="text-sm font-mono text-slate-200">$1.046</div>
+                      </div>
+
+                      {/* Asks visualization */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="text-xs text-red-400 mb-1">Asks</div>
+                        {[
+                          { height: 75, volume: 11200 },
+                          { height: 85, volume: 15800 },
+                          { height: 65, volume: 9200 },
+                          { height: 80, volume: 13400 },
+                          { height: 55, volume: 7800 },
+                        ].map((ask, i) => (
+                          <div
+                            key={i}
+                            className="w-6 bg-red-500/60 rounded-t"
+                            style={{ height: `${ask.height}%` }}
+                            title={`$${1.048 + i * 0.003} - ${ask.volume} RIU`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-4">
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-emerald-400 flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Trades
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { time: "14:32:15", price: 1.047, volume: 2500, side: "buy", symbol: "AMZ-CO₂" },
+                { time: "14:31:42", price: 1.046, volume: 1800, side: "sell", symbol: "H₂O-SEC" },
+                { time: "14:31:18", price: 1.048, volume: 4200, side: "buy", symbol: "AMZ-CO₂" },
+                { time: "14:30:55", price: 1.045, volume: 3100, side: "sell", symbol: "BIO-MAR" },
+                { time: "14:30:33", price: 1.049, volume: 1500, side: "buy", symbol: "AMZ-CO₂" },
+                { time: "14:29:47", price: 1.044, volume: 2800, side: "sell", symbol: "H₂O-SEC" },
+                { time: "14:29:12", price: 1.047, volume: 3900, side: "buy", symbol: "BIO-MAR" },
+                { time: "14:28:38", price: 1.046, volume: 2100, side: "sell", symbol: "AMZ-CO₂" },
+              ].map((trade, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50 border border-slate-600">
+                  <div className="flex items-center gap-2">
+                    {trade.side === 'buy' ? (
+                      <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-red-400" />
+                    )}
+                    <div>
+                      <div className="text-xs text-slate-400">{trade.time}</div>
+                      <div className="text-xs text-slate-500">{trade.symbol}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-mono text-slate-200">${trade.price.toFixed(3)}</div>
+                    <div className="text-xs text-slate-400">{trade.volume.toLocaleString()} RIU</div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -390,6 +580,15 @@ function MarketplacePage() {
         onOpenChange={setOrderOpen}
         initialSide={orderSide}
       />
+
+      {/* Implementation Roadmap */}
+      <div className="mt-14">
+        <RoadmapSection
+          title="Marketplace Implementation Roadmap"
+          description="Building the comprehensive trading platform for RIUs, impact investments, and ecological derivatives."
+          items={MARKETPLACE_ROADMAP}
+        />
+      </div>
     </DashboardShell>
   );
 }

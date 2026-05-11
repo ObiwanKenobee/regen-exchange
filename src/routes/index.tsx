@@ -16,6 +16,7 @@ import { GovernanceSection } from "@/components/rve/governance-section";
 import { OrderStatusDrawer, OrderActivityButton } from "@/components/rve/order-status-drawer";
 import { NotificationSettings } from "@/components/rve/notification-settings";
 import { ASSETS, type Asset } from "@/components/rve/types";
+import { NewsletterBanner } from "@/components/rve/newsletter-banner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,6 +41,7 @@ function RVEDashboard() {
   const [orderOpen, setOrderOpen] = useState(false);
   const [orderSide, setOrderSide] = useState<"buy" | "sell">("buy");
   const [activityOpen, setActivityOpen] = useState(false);
+  const [newsletterVisible, setNewsletterVisible] = useState(true);
 
   const openDrawer = (a: Asset) => { setDrawerAsset(a); setDrawerOpen(true); };
   const openOrder = (a: Asset, side: "buy" | "sell" = "buy") => {
@@ -52,8 +54,14 @@ function RVEDashboard() {
 
   return (
     <div className="min-h-screen text-foreground">
+      {/* Newsletter Banner */}
+      <NewsletterBanner
+        isVisible={newsletterVisible}
+        onClose={() => setNewsletterVisible(false)}
+      />
+
       {/* TOP NAV */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-8 px-6">
           <a href="#" className="flex items-center gap-2">
             <div className="relative h-7 w-7 rounded-md bg-gradient-aurora glow-emerald">
@@ -113,10 +121,22 @@ function RVEDashboard() {
               ),
             )}
             <Link
-              to="/nairobi-twin"
+              to="/identity"
               className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
             >
-              Nairobi Twin
+              Identity
+            </Link>
+            <Link
+              to="/oracle"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+            >
+              Oracle
+            </Link>
+            <Link
+              to="/student-dashboard"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+            >
+              Student Hub
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-3">
