@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { getNotificationPrefs, playNotifySound } from "@/lib/notification-prefs";
 
 export type Wallet = {
   address: string;
@@ -44,6 +45,7 @@ type Ctx = {
   pendingCount: number;
   submitOrder: (input: SubmitInput) => Order;
   refreshOrder: (id: string) => void;
+  retryOrder: (id: string) => void;
   clearOrders: () => void;
 };
 
@@ -111,14 +113,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           const block = 18_402_000 + Math.floor(Math.random() * 999);
           // fire toast outside setState
           setTimeout(() => {
+            const prefs = getNotificationPrefs();
+            if (!prefs.orders) return;
             if (failed) {
               toast.error(`Order failed — ${o.side.toUpperCase()} ${o.qty} ${o.assetSym}`, {
-                description: "Transaction reverted. Tap Refresh in Order Activity to retry.",
+                description: "Transaction reverted. Tap Retry on the order to resubmit.",
               });
+              if (prefs.sound) playNotifySound("error");
             } else {
               toast.success(`Order confirmed — ${o.side.toUpperCase()} ${o.qty} ${o.assetSym}`, {
                 description: `Filled @ $${o.price.toFixed(2)} • Block #${block.toLocaleString()}`,
               });
+              if (prefs.sound) playNotifySound("success");
             }
           }, 0);
           return prev.map((x) =>
@@ -188,13 +194,40 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const retryOrder = (id: string) => {
+    let started = false;
+    setOrders((prev) => {
+      const o = prev.find((x) => x.id === id);
+      if (!o || o.status !== "failed") return prev;
+      const newHash = "0x" + randHex(64);
+      started = true;
+      return prev.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              status: "pending",
+              confirmations: 0,
+              block: undefined,
+              txHash: newHash,
+              explorerUrl: explorerFor(newHash),
+              createdAt: Date.now(),
+            }
+          : x,
+      );
+    });
+    if (started) {
+      toast(`Retrying order…`, { description: "New transaction submitted." });
+      setTimeout(() => startTickingOrder(id), 50);
+    }
+  };
+
   const clearOrders = () => setOrders((prev) => prev.filter((o) => o.status === "pending"));
 
   const pendingCount = orders.filter((o) => o.status === "pending").length;
 
   return (
     <WalletCtx.Provider
-      value={{ wallet, connecting, connect, disconnect, orders, pendingCount, submitOrder, refreshOrder, clearOrders }}
+      value={{ wallet, connecting, connect, disconnect, orders, pendingCount, submitOrder, refreshOrder, retryOrder, clearOrders }}
     >
       {children}
     </WalletCtx.Provider>

@@ -14,6 +14,7 @@ import { PlanetaryMap } from "@/components/rve/planetary-map";
 import { VerificationFeed } from "@/components/rve/verification-feed";
 import { GovernanceSection } from "@/components/rve/governance-section";
 import { OrderStatusDrawer, OrderActivityButton } from "@/components/rve/order-status-drawer";
+import { NotificationSettings } from "@/components/rve/notification-settings";
 import { ASSETS, type Asset } from "@/components/rve/types";
 
 export const Route = createFileRoute("/")({
@@ -125,6 +126,7 @@ function RVEDashboard() {
               <span className="font-mono text-foreground">Mainnet • Block 18,402,118</span>
             </div>
             <OrderActivityButton onOpen={() => setActivityOpen(true)} />
+            <NotificationSettings />
             <ConnectWalletButton />
           </div>
         </div>
@@ -291,7 +293,7 @@ function RVEDashboard() {
                         <td className="px-3 py-4">
                           <div className="ml-auto flex h-6 w-24 items-end gap-0.5">
                             {Array.from({length:14}).map((_,i)=>(
-                              <div key={i} className="flex-1 rounded-sm bg-gradient-to-t from-primary/40 to-secondary/60" style={{height:`${20+Math.abs(Math.sin(i+a.price))*80}%`}} />
+                              <div key={i} className="flex-1 rounded-sm bg-gradient-to-t from-primary/40 to-secondary/60" style={{height:`${Math.round(20+Math.abs(Math.sin(i+a.price))*80)}%`}} />
                             ))}
                           </div>
                         </td>

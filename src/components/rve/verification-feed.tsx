@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, Bell, BellOff, CheckCheck, Download, Eye, Filter, FlagTriangleRight, History, Pause, Play, Satellite } from "lucide-react";
+import { CheckCircle2, AlertTriangle, CheckCheck, Download, Eye, Filter, FlagTriangleRight, History, Pause, Play, Satellite } from "lucide-react";
 import { toast } from "sonner";
 import { ECOSYSTEMS } from "./types";
 import { SEED_EVENTS, SOURCES, generateLiveEvent, tsAgo, type VerificationEvent } from "./verification-data";
 import { setResolution, useResolutions, type ResolutionStatus } from "@/lib/verification-resolutions";
 import { downloadCSV, toCSV } from "@/lib/csv";
+import { CsvExportDialog, type CsvColumn } from "./csv-export-dialog";
+import { PresetBar } from "./preset-bar";
+import { useNotificationPrefs, playNotifySound } from "@/lib/notification-prefs";
 
 const FILTER_KEY = "rve.feed.filters.v1";
-const NOTIFY_KEY = "rve.feed.notify.v1";
 
 type Filters = {
   eco: (typeof ECOSYSTEMS)[number];
@@ -16,6 +18,17 @@ type Filters = {
 };
 
 const DEFAULT_FILTERS: Filters = { eco: "All", src: "All", status: "all" };
+const CSV_COLUMNS: CsvColumn[] = [
+  { key: "timestamp", label: "Timestamp", defaultOn: true, alwaysOn: true },
+  { key: "asset", label: "Asset", defaultOn: true, alwaysOn: true },
+  { key: "ecosystem", label: "Ecosystem", defaultOn: true },
+  { key: "region", label: "Region", defaultOn: true },
+  { key: "source", label: "Source", defaultOn: true },
+  { key: "confidence", label: "Confidence", defaultOn: true },
+  { key: "status", label: "Status", defaultOn: true },
+  { key: "resolution", label: "Resolution status", defaultOn: false },
+  { key: "detail", label: "Detail", defaultOn: false },
+];
 
 function loadFilters(): Filters {
   if (typeof window === "undefined") return DEFAULT_FILTERS;
@@ -34,21 +47,19 @@ export function VerificationFeed() {
   const [events, setEvents] = useState<VerificationEvent[]>(SEED_EVENTS);
   const [streaming, setStreaming] = useState(true);
   const [newCount, setNewCount] = useState(0);
-  const [notify, setNotify] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
   const lastSeenRef = useRef<number>(SEED_EVENTS[0]?.ts ?? Date.now());
   const resolutions = useResolutions();
+  const prefs = useNotificationPrefs();
   // Use a ref of saved filters so streaming interval can read latest values
   const filtersRef = useRef<Filters>(DEFAULT_FILTERS);
-  const notifyRef = useRef(false);
+  const prefsRef = useRef(prefs);
   useEffect(() => { filtersRef.current = filters; }, [filters]);
-  useEffect(() => { notifyRef.current = notify; }, [notify]);
+  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
 
   // hydrate filters on client
   useEffect(() => {
     setFilters(loadFilters());
-    if (typeof window !== "undefined") {
-      try { setNotify(window.localStorage.getItem(NOTIFY_KEY) === "1"); } catch {}
-    }
     setHydrated(true);
   }, []);
 
@@ -56,10 +67,6 @@ export function VerificationFeed() {
     if (!hydrated || typeof window === "undefined") return;
     try { window.localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch {}
   }, [filters, hydrated]);
-  useEffect(() => {
-    if (!hydrated || typeof window === "undefined") return;
-    try { window.localStorage.setItem(NOTIFY_KEY, notify ? "1" : "0"); } catch {}
-  }, [notify, hydrated]);
 
   // streaming
   useEffect(() => {
@@ -71,7 +78,7 @@ export function VerificationFeed() {
       });
       setNewCount((c) => c + 1);
       // notification: matches saved (current) filters
-      if (notifyRef.current) {
+      if (prefsRef.current.verification) {
         const f = filtersRef.current;
         const matches =
           (f.eco === "All" || next.ecosystem === f.eco) &&
@@ -81,6 +88,7 @@ export function VerificationFeed() {
           toast(`New ${next.status} event — ${next.asset}`, {
             description: `${next.region} • ${next.source} • ${next.confidence}% confidence`,
           });
+          if (prefsRef.current.sound) playNotifySound("info");
         }
       }
     }, 4500);
@@ -98,8 +106,7 @@ export function VerificationFeed() {
 
   const avg = Math.round(filtered.reduce((s, e) => s + e.confidence, 0) / Math.max(filtered.length, 1));
 
-  const exportCsv = () => {
-    const rows = filtered.map((e) => ({
+  const buildRow = (e: VerificationEvent) => ({
       timestamp: new Date(e.ts).toISOString(),
       asset: e.asset,
       ecosystem: e.ecosystem,
@@ -109,13 +116,13 @@ export function VerificationFeed() {
       status: e.status,
       resolution: resolutions[e.id]?.status ?? "",
       detail: e.detail,
-    }));
-    if (!rows.length) {
-      toast.error("No events to export with current filters.");
-      return;
-    }
-    downloadCSV(`rve-verification-feed-${Date.now()}.csv`, toCSV(rows));
-    toast.success(`Exported ${rows.length} verification events`);
+  });
+  const exportCsv = (cols: string[], scope: "filtered" | "all") => {
+    const source = scope === "all" ? events : filtered;
+    if (!source.length) return toast.error("No events to export");
+    const rows = source.map(buildRow);
+    downloadCSV(`rve-verification-${scope}-${Date.now()}.csv`, toCSV(rows, cols));
+    toast.success(`Exported ${rows.length} events (${cols.length} columns)`);
   };
 
   const handleResolve = (e: VerificationEvent, status: ResolutionStatus) => {
@@ -126,6 +133,8 @@ export function VerificationFeed() {
       toast.success(`Anomaly marked resolved — ${e.asset}`, { description: `Timeline updated for ${e.asset}` });
     }
   };
+
+  const isActivePreset = (p: Filters) => p.eco === filters.eco && p.src === filters.src && p.status === filters.status;
 
   return (
     <div className="grid gap-6 lg:grid-cols-12">
@@ -154,6 +163,14 @@ export function VerificationFeed() {
                 <Chip key={s} active={status === s} onClick={() => set({ status: s })}>{s}</Chip>
               ))}
             </FilterGroup>
+          </div>
+          <div className="mt-4 border-t border-border/60 pt-3">
+            <PresetBar<Filters>
+              scope="feed"
+              current={filters}
+              onApply={setFilters}
+              isActive={isActivePreset}
+            />
           </div>
         </div>
         <div className="panel p-5">
@@ -187,15 +204,7 @@ export function VerificationFeed() {
                 </button>
               )}
               <button
-                onClick={() => setNotify((n) => !n)}
-                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${notify ? "border-accent/40 bg-accent/15 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
-                title={notify ? "Notifications on for saved filters" : "Notify when new events match saved filters"}
-              >
-                {notify ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
-                Notify
-              </button>
-              <button
-                onClick={exportCsv}
+                onClick={() => setCsvOpen(true)}
                 className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-muted-foreground hover:text-foreground"
                 title="Export filtered events as CSV"
               >
@@ -266,6 +275,16 @@ export function VerificationFeed() {
           </ul>
         </div>
       </div>
+      <CsvExportDialog
+        open={csvOpen}
+        onOpenChange={setCsvOpen}
+        title="Export verification events"
+        columns={CSV_COLUMNS}
+        storageKey="rve.csv.feed.v1"
+        filteredCount={filtered.length}
+        totalCount={events.length}
+        onExport={exportCsv}
+      />
     </div>
   );
 }
