@@ -54,6 +54,9 @@ export const createSteward = createServerFn({ method: "POST" })
         ridScore: 0,
         mpesaNumber: data.phone,
         email: data.email,
+        name: data.name,
+        location: data.location,
+        skills: data.skills,
         reputationHistory: {
           steward: 0,
           oracle: 0,
@@ -117,11 +120,11 @@ export const getSteward = createServerFn({ method: "GET" })
     // Map user to steward interface
     const steward: Steward = {
       id: user.id,
-      name: user.did || "Unknown Steward", // For now, using DID as name placeholder
+      name: user.name || user.did || "Unknown Steward",
       phone: user.mpesaNumber || "",
       email: user.email,
-      location: "Unknown", // Location not stored in User model yet
-      skills: [], // Skills not stored in User model yet
+      location: user.location || "Unknown",
+      skills: (user.skills as string[]) || [],
       reputation: (user.reputationHistory as any) || {
         steward: 0,
         oracle: 0,
@@ -131,11 +134,13 @@ export const getSteward = createServerFn({ method: "GET" })
       },
       ridScore: user.ridScore,
       riusEarned: user.riuStakes.reduce((sum, stake) => sum + stake.amount, 0),
-      missionsCompleted: 0, // TODO: Calculate from mission participations
-      certifications: [], // TODO: Add certification system
+      missionsCompleted: user.missionParticipations.filter(p => p.status === 'completed').length,
+      certifications: (user.certifications as string[]) || [],
       joinedAt: user.createdAt,
       lastActive: user.updatedAt,
-      isActive: true, // TODO: Add active status logic
+      isActive: user.isActive,
+      avatar: user.avatar,
+      bio: user.bio,
     };
 
     return steward;
@@ -180,11 +185,11 @@ export const getStewards = createServerFn({ method: "GET" })
     // Map users to stewards
     const stewards: Steward[] = users.map(user => ({
       id: user.id,
-      name: user.did || "Unknown Steward",
+      name: user.name || user.did || "Unknown Steward",
       phone: user.mpesaNumber || "",
       email: user.email,
-      location: "Unknown", // TODO: Add location field to User model
-      skills: [], // TODO: Add skills field to User model
+      location: user.location || "Unknown",
+      skills: (user.skills as string[]) || [],
       reputation: (user.reputationHistory as any) || {
         steward: 0,
         oracle: 0,
@@ -194,11 +199,13 @@ export const getStewards = createServerFn({ method: "GET" })
       },
       ridScore: user.ridScore,
       riusEarned: user.riuStakes.reduce((sum, stake) => sum + stake.amount, 0),
-      missionsCompleted: 0, // TODO: Calculate from mission participations
-      certifications: [], // TODO: Add certification system
+      missionsCompleted: user.missionParticipations.filter(p => p.status === 'completed').length,
+      certifications: (user.certifications as string[]) || [],
       joinedAt: user.createdAt,
       lastActive: user.updatedAt,
-      isActive: true, // TODO: Add active status logic
+      isActive: user.isActive,
+      avatar: user.avatar,
+      bio: user.bio,
     }));
 
     return stewards;
@@ -231,9 +238,13 @@ export const updateSteward = createServerFn({ method: "PATCH" })
       updatedAt: new Date(),
     };
 
+    if (updates.name) updateData.name = updates.name;
     if (updates.email) updateData.email = updates.email;
     if (updates.phone) updateData.mpesaNumber = updates.phone;
-    // TODO: Add fields for name, location, skills, bio, avatar to User model
+    if (updates.location) updateData.location = updates.location;
+    if (updates.skills) updateData.skills = updates.skills;
+    if (updates.bio) updateData.bio = updates.bio;
+    if (updates.avatar) updateData.avatar = updates.avatar;
 
     const user = await db.user.update({
       where: { id },

@@ -94,33 +94,71 @@ export const createListing = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
-    // Mock implementation
+    if (!db) {
+      throw new Error("Database not configured");
+    }
+
+    // Calculate expiration date
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + data.expiresIn);
 
-    const newListing: Listing = {
-      id: `listing-${Date.now()}`,
-      assetId: data.assetId,
-      sellerId: "current-user", // TODO: Get from auth context
-      type: data.type,
-      status: "pending",
-      quantity: data.quantity,
-      unit: data.unit,
-      price: data.price,
-      conditions: data.conditions,
-      auction: data.auction ? {
-        startPrice: data.auction.startPrice,
-        reservePrice: data.auction.reservePrice,
-        endTime: new Date(Date.now() + data.auction.duration * 60 * 60 * 1000),
-        bids: [],
-      } : undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      expiresAt,
-    };
+    // Prepare auction data if present
+    const auctionData = data.auction ? {
+      startPrice: data.auction.startPrice,
+      reservePrice: data.auction.reservePrice,
+      endTime: new Date(Date.now() + data.auction.duration * 60 * 60 * 1000),
+      bids: [],
+    } : null;
 
-    // TODO: Save to database and trigger verification
-    // const listing = await db.listing.create({ data: newListing });
+    // Create listing in database
+    const listing = await db.listing.create({
+      data: {
+        assetId: data.assetId,
+        sellerId: "temp-user-id", // TODO: Get from authentication context
+        type: data.type,
+        status: "active",
+        quantity: data.quantity,
+        unit: data.unit,
+        price: data.price.rius,
+        usdPrice: data.price.usd,
+        conditions: data.conditions,
+        auctionData,
+        expiresAt,
+      },
+      include: {
+        asset: true,
+        seller: true,
+      },
+    });
+
+    // Map to Listing interface
+    const newListing: Listing = {
+      id: listing.id,
+      assetId: listing.assetId,
+      sellerId: listing.sellerId,
+      type: listing.type as Listing['type'],
+      status: listing.status as Listing['status'],
+      quantity: listing.quantity,
+      unit: listing.unit,
+      price: {
+        rius: listing.price,
+        usd: listing.usdPrice || undefined,
+        currency: "RIUS",
+      },
+      conditions: (listing.conditions as any) || {
+        minQuality: "C",
+        certifications: [],
+      },
+      auction: auctionData ? {
+        startPrice: auctionData.startPrice,
+        reservePrice: auctionData.reservePrice,
+        endTime: auctionData.endTime,
+        bids: auctionData.bids,
+      } : undefined,
+      createdAt: listing.createdAt,
+      updatedAt: listing.updatedAt,
+      expiresAt: listing.expiresAt,
+    };
 
     return newListing;
   });

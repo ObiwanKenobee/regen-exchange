@@ -85,15 +85,15 @@ export const createAsset = createServerFn({ method: "POST" })
       symbol: `${data.type.toUpperCase()}_${Date.now()}`, // Generate a unique symbol
       name: data.name,
       type: data.type,
+      category: data.category,
       description: data.description,
       totalSupply: data.quantity,
       currentPrice: data.valuation.riusValue,
       marketCap: data.valuation.usdValue * data.quantity,
       verificationScore: data.quality.score,
+      unit: data.unit,
       metadata: {
-        category: data.category,
         location: data.location,
-        unit: data.unit,
         quality: data.quality,
         valuation: data.valuation,
         ...data.metadata,
@@ -166,7 +166,7 @@ export const getAsset = createServerFn({ method: "GET" })
       id: asset.id,
       name: asset.name,
       type: asset.type as Asset['type'],
-      category: metadata.category || "environmental",
+      category: asset.category as Asset['category'] || "environmental",
       description: asset.description || "",
       location: metadata.location || {
         name: "Unknown",
@@ -174,13 +174,13 @@ export const getAsset = createServerFn({ method: "GET" })
         region: "Unknown",
       },
       quantity: asset.totalSupply || 0,
-      unit: metadata.unit || "units",
+      unit: asset.unit || "units",
       quality: metadata.quality || {
         grade: "C",
         score: asset.verificationScore,
         certifications: [],
       },
-      ownership: [], // TODO: Implement ownership tracking from portfolioItems
+      ownership: [], // TODO: Implement ownership tracking from asset.ownerships
       valuation: {
         riusValue: asset.currentPrice,
         usdValue: metadata.valuation?.usdValue || 0,
@@ -196,7 +196,7 @@ export const getAsset = createServerFn({ method: "GET" })
       metadata: asset.metadata as Record<string, any>,
       createdAt: asset.createdAt,
       updatedAt: asset.updatedAt,
-      isActive: true, // TODO: Add active status to Asset model
+      isActive: asset.isActive,
     };
 
     return assetData;

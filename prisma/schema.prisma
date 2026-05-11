@@ -18,6 +18,14 @@ model User {
   mpesaNumber       String?
   walletAddress     String?
   email             String?  @unique
+  // Extended fields for steward profile
+  name              String?
+  location          String?
+  skills            Json?    // Array of skill strings
+  certifications    Json?    // Array of certification strings
+  bio               String?
+  avatar            String?
+  isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -28,6 +36,10 @@ model User {
   governanceVotes   GovernanceVote[]
   sensorReadings    SensorReading[]
   geospatialFeatures GeospatialFeature[]
+  ownedAssets       AssetOwnership[]
+  createdMissions   Mission[]
+  missionParticipations MissionParticipant[]
+  listings          Listing[]
 
   @@map("users")
 }
@@ -37,6 +49,7 @@ model Asset {
   symbol            String   @unique
   name              String
   type              String   // carbon, water, biodiversity, cultural, urban
+  category          String?  // environmental, social, economic
   description       String?
   totalSupply       Float?
   currentPrice      Float
@@ -44,6 +57,8 @@ model Asset {
   verificationScore Float    @default(0)
   oracleId          String?
   contractAddress   String?
+  unit              String?  // tCO2, hectares, m³, etc.
+  isActive          Boolean  @default(true)
   metadata          Json?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -51,6 +66,8 @@ model Asset {
   // Relations
   orders            Order[]
   portfolioItems    PortfolioItem[]
+  ownerships        AssetOwnership[]
+  listings          Listing[]
 
   @@map("assets")
 }
@@ -74,6 +91,30 @@ model Order {
   asset             Asset    @relation(fields: [assetId], references: [id])
 
   @@map("orders")
+}
+
+model Listing {
+  id                String   @id @default(cuid())
+  assetId           String
+  sellerId          String
+  type              String   // sell, buy, auction, swap
+  status            String   @default("active") // active, pending, completed, cancelled
+  quantity          Float
+  unit              String
+  price             Float    // RIUS price
+  usdPrice          Float?
+  conditions        Json?    // minQuality, certifications, location, deliveryTerms
+  auctionData       Json?    // startPrice, reservePrice, endTime, bids
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  asset             Asset    @relation(fields: [assetId], references: [id])
+  seller            User     @relation(fields: [sellerId], references: [id])
+  orders            Order[]
+
+  @@map("listings")
 }
 
 model Portfolio {
@@ -259,4 +300,119 @@ model MPesaTransaction {
   user              User?    @relation(fields: [userId], references: [id])
 
   @@map("mpesa_transactions")
+}
+
+// New models for extended functionality
+model AssetOwnership {
+  id            String   @id @default(cuid())
+  assetId       String
+  userId        String
+  percentage    Float    // Percentage of ownership (0-100)
+  quantity      Float    // Actual quantity owned
+  acquiredAt    DateTime @default(now())
+  acquiredPrice Float?   // Price per unit when acquired
+  source        String?  // How ownership was acquired (mint, purchase, etc.)
+
+  // Relations
+  asset         Asset    @relation(fields: [assetId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([assetId, userId])
+  @@map("asset_ownerships")
+}
+
+model Mission {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  type              String   // restoration, monitoring, education, etc.
+  status            String   @default("active") // active, completed, cancelled
+  location          Json?    // GeoJSON location
+  targetCompletion  DateTime?
+  rewardAmount      Float    @default(0)
+  rewardToken       String   @default("RIUS")
+  requiredSkills    Json?    // Array of required skills
+  maxParticipants   Int?
+  currentParticipants Int     @default(0)
+  createdById       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  createdBy         User     @relation(fields: [createdById], references: [id])
+  participants      MissionParticipant[]
+
+  @@map("missions")
+}
+
+model MissionParticipant {
+  id            String   @id @default(cuid())
+  missionId     String
+  userId        String
+  joinedAt      DateTime @default(now())
+  completedAt   DateTime?
+  status        String   @default("active") // active, completed, withdrawn
+  contribution  Float    @default(0) // Contribution score/percentage
+
+  // Relations
+  mission       Mission  @relation(fields: [missionId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([missionId, userId])
+  @@map("mission_participants")
+}
+
+model Oracle {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   // ai, human, iot, satellite
+  specialty     String?  // carbon, water, biodiversity, etc.
+  accuracy      Float    @default(0)
+  totalVerifications Int  @default(0)
+  successfulVerifications Int @default(0)
+  isActive      Boolean  @default(true)
+  credentials   Json?    // API keys, certifications, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  verifications OracleVerification[]
+
+  @@map("oracles")
+}
+
+model GovernanceProposal {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  proposerId        String
+  contractAddress   String?
+  executionData     Json?
+  status            String   @default("active") // active, passed, rejected, executed
+  votingStartsAt    DateTime?
+  votingEndsAt      DateTime?
+  quorumRequired    Float    @default(0.1) // Percentage required for quorum
+  createdAt         DateTime @default(now())
+
+  // Relations
+  proposer          User     @relation(fields: [proposerId], references: [id])
+  votes             GovernanceVote[]
+
+  @@map("governance_proposals")
+}
+
+model GovernanceVote {
+  id            String @id @default(cuid())
+  proposalId    String
+  userId        String
+  vote          String // for, against, abstain
+  votingPower   Float
+  votedAt       DateTime @default(now())
+
+  // Relations
+  proposal      GovernanceProposal @relation(fields: [proposalId], references: [id])
+  user          User               @relation(fields: [userId], references: [id])
+
+  @@unique([proposalId, userId])
+  @@map("governance_votes")
 }
