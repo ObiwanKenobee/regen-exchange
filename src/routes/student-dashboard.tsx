@@ -41,6 +41,7 @@ import {
   Calendar,
   Clock,
   Star,
+  ArrowDownRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +56,11 @@ export const Route = createFileRoute("/student-dashboard")({
   head: () => ({
     meta: [
       { title: "Student Dashboard — RVE Academy / Atlas Learning Network" },
-      { name: "description", content: "Turn students into regenerative operators. Mission interface, research command center, climate-tech RPG, and launchpad into real-world ecological impact." },
+      {
+        name: "description",
+        content:
+          "Turn students into regenerative operators. Mission interface, research command center, climate-tech RPG, and launchpad into real-world ecological impact.",
+      },
     ],
   }),
   component: StudentDashboard,
@@ -120,7 +125,12 @@ const learningTracks = [
     icon: Cpu,
     color: "purple",
     progress: 31,
-    skills: ["Sensor Deployment", "LoRaWAN Systems", "Environmental Monitoring", "Drone Operations"],
+    skills: [
+      "Sensor Deployment",
+      "LoRaWAN Systems",
+      "Environmental Monitoring",
+      "Drone Operations",
+    ],
     missions: 3,
     xp: 280,
   },
@@ -140,7 +150,8 @@ const activeMissions = [
   {
     id: 1,
     title: "Map Illegal Dumping Zones",
-    description: "Use satellite imagery and community reports to identify and map illegal waste dumping sites in Eastlands.",
+    description:
+      "Use satellite imagery and community reports to identify and map illegal waste dumping sites in Eastlands.",
     type: "Ecology XP",
     xp: 150,
     rius: 25,
@@ -152,7 +163,8 @@ const activeMissions = [
   {
     id: 2,
     title: "Train Biodiversity Detection AI",
-    description: "Label images of Nairobi's native plant species to improve AI recognition for restoration projects.",
+    description:
+      "Label images of Nairobi's native plant species to improve AI recognition for restoration projects.",
     type: "Intelligence XP",
     xp: 200,
     rius: 35,
@@ -164,7 +176,8 @@ const activeMissions = [
   {
     id: 3,
     title: "Participate in Nairobi River Cleanup",
-    description: "Join the weekly river restoration mission along Nairobi River. Physical participation required.",
+    description:
+      "Join the weekly river restoration mission along Nairobi River. Physical participation required.",
     type: "Restoration XP",
     xp: 300,
     rius: 50,
@@ -183,9 +196,19 @@ const nairobiPulse = [
 ];
 
 const recentAchievements = [
-  { title: "River Guardian", description: "Completed 10 river cleanup missions", icon: Droplets, date: "2026-05-10" },
+  {
+    title: "River Guardian",
+    description: "Completed 10 river cleanup missions",
+    icon: Droplets,
+    date: "2026-05-10",
+  },
   { title: "AI Apprentice", description: "Trained 500 AI labels", icon: Brain, date: "2026-05-08" },
-  { title: "Community Builder", description: "Organized 3 community surveys", icon: Users, date: "2026-05-05" },
+  {
+    title: "Community Builder",
+    description: "Organized 3 community surveys",
+    icon: Users,
+    date: "2026-05-05",
+  },
 ];
 
 function StudentDashboard() {
@@ -222,26 +245,44 @@ function StudentDashboard() {
               </div>
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold text-emerald-400 tracking-wider">RVE Academy</h1>
+              <h1 className="text-lg md:text-xl font-bold text-emerald-400 tracking-wider">
+                RVE Academy
+              </h1>
               <p className="text-xs text-slate-400 hidden md:block">Atlas Learning Network</p>
             </div>
           </div>
 
           <nav className="ml-auto flex items-center gap-3 md:gap-6">
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-emerald-400 hidden md:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:text-emerald-400 hidden md:flex"
+            >
               <BookOpen className="h-4 w-4 mr-2" />
               Learning Hub
             </Button>
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-emerald-400 hidden md:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:text-emerald-400 hidden md:flex"
+            >
               <Users className="h-4 w-4 mr-2" />
               Community
             </Button>
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-emerald-400 hidden md:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:text-emerald-400 hidden md:flex"
+            >
               <Trophy className="h-4 w-4 mr-2" />
               Leaderboard
             </Button>
             {/* Mobile Menu Button */}
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-emerald-400 md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:text-emerald-400 md:hidden"
+            >
               <Menu className="h-4 w-4" />
             </Button>
           </nav>
@@ -281,7 +322,9 @@ function StudentDashboard() {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-slate-300">XP Progress</span>
-                    <span className="text-emerald-400">{studentData.xp}/{studentData.xpToNext}</span>
+                    <span className="text-emerald-400">
+                      {studentData.xp}/{studentData.xpToNext}
+                    </span>
                   </div>
                   <Progress value={(studentData.xp / studentData.xpToNext) * 100} className="h-2" />
                 </div>
@@ -292,7 +335,9 @@ function StudentDashboard() {
                     <Coins className="h-4 w-4 text-amber-400" />
                     <span className="text-sm text-slate-300">RIUs Earned</span>
                   </div>
-                  <span className="font-bold text-amber-400">{studentData.rius.toLocaleString()}</span>
+                  <span className="font-bold text-amber-400">
+                    {studentData.rius.toLocaleString()}
+                  </span>
                 </div>
 
                 {/* Reputation Scores */}
@@ -314,11 +359,15 @@ function StudentDashboard() {
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-700">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-emerald-400">{studentData.completedMissions}</div>
+                    <div className="text-lg font-bold text-emerald-400">
+                      {studentData.completedMissions}
+                    </div>
                     <div className="text-xs text-slate-400">Missions</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-cyan-400">{studentData.certifications}</div>
+                    <div className="text-lg font-bold text-cyan-400">
+                      {studentData.certifications}
+                    </div>
                     <div className="text-xs text-slate-400">Certs</div>
                   </div>
                 </div>
@@ -330,23 +379,38 @@ function StudentDashboard() {
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-slate-800/50">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm">
+                <TabsTrigger
+                  value="overview"
+                  className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm"
+                >
                   <Compass className="h-4 w-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="missions" className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm">
+                <TabsTrigger
+                  value="missions"
+                  className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm"
+                >
                   <Target className="h-4 w-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Missions</span>
                 </TabsTrigger>
-                <TabsTrigger value="learning" className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm">
+                <TabsTrigger
+                  value="learning"
+                  className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm"
+                >
                   <BookOpen className="h-4 w-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Learning</span>
                 </TabsTrigger>
-                <TabsTrigger value="community" className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm">
+                <TabsTrigger
+                  value="community"
+                  className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm"
+                >
                   <Users className="h-4 w-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Community</span>
                 </TabsTrigger>
-                <TabsTrigger value="rewards" className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm">
+                <TabsTrigger
+                  value="rewards"
+                  className="data-[state=active]:bg-emerald-500/20 text-xs md:text-sm"
+                >
                   <Coins className="h-4 w-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Rewards</span>
                 </TabsTrigger>
@@ -365,14 +429,23 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {nairobiPulse.map((item) => (
-                        <div key={item.metric} className="text-center p-3 rounded-lg bg-slate-900/50">
+                        <div
+                          key={item.metric}
+                          className="text-center p-3 rounded-lg bg-slate-900/50"
+                        >
                           <div className="text-lg font-bold text-white">{item.value}</div>
                           <div className="text-xs text-slate-400">{item.metric}</div>
-                          <div className={`text-xs ${
-                            item.color === 'emerald' ? 'text-emerald-400' :
-                            item.color === 'blue' ? 'text-blue-400' :
-                            item.color === 'cyan' ? 'text-cyan-400' : 'text-amber-400'
-                          }`}>
+                          <div
+                            className={`text-xs ${
+                              item.color === "emerald"
+                                ? "text-emerald-400"
+                                : item.color === "blue"
+                                  ? "text-blue-400"
+                                  : item.color === "cyan"
+                                    ? "text-cyan-400"
+                                    : "text-amber-400"
+                            }`}
+                          >
                             {item.trend}
                           </div>
                         </div>
@@ -393,7 +466,10 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="space-y-4">
                       {activeMissions.map((mission) => (
-                        <div key={mission.id} className="p-4 rounded-lg bg-slate-900/30 border border-slate-700">
+                        <div
+                          key={mission.id}
+                          className="p-4 rounded-lg bg-slate-900/30 border border-slate-700"
+                        >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-start gap-3">
                               <div className="p-2 rounded-lg bg-slate-800">
@@ -415,7 +491,9 @@ function StudentDashboard() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-medium text-emerald-400">{mission.xp} XP</div>
+                              <div className="text-sm font-medium text-emerald-400">
+                                {mission.xp} XP
+                              </div>
                               <div className="text-sm text-amber-400">{mission.rius} RIUs</div>
                             </div>
                           </div>
@@ -443,7 +521,10 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="space-y-3">
                       {recentAchievements.map((achievement, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/30">
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/30"
+                        >
                           <div className="p-2 rounded-lg bg-amber-500/20">
                             <achievement.icon className="h-4 w-4 text-amber-400" />
                           </div>
@@ -468,11 +549,23 @@ function StudentDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {["Environmental Survey", "AI Training Task", "Community Outreach", "Sensor Deployment"].map((mission) => (
-                          <div key={mission} className="p-3 rounded-lg bg-slate-900/30 border border-slate-700 hover:border-emerald-500/50 cursor-pointer transition-colors">
+                        {[
+                          "Environmental Survey",
+                          "AI Training Task",
+                          "Community Outreach",
+                          "Sensor Deployment",
+                        ].map((mission) => (
+                          <div
+                            key={mission}
+                            className="p-3 rounded-lg bg-slate-900/30 border border-slate-700 hover:border-emerald-500/50 cursor-pointer transition-colors"
+                          >
                             <div className="flex items-center justify-between">
                               <span className="text-white">{mission}</span>
-                              <Button size="sm" variant="outline" className="border-emerald-500/30 text-emerald-400">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-emerald-500/30 text-emerald-400"
+                              >
                                 Accept
                               </Button>
                             </div>
@@ -489,11 +582,22 @@ function StudentDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {["Nairobi River Cleanup", "Biodiversity Survey", "AI Model Training", "Community Workshop"].map((mission) => (
-                          <div key={mission} className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/30">
+                        {[
+                          "Nairobi River Cleanup",
+                          "Biodiversity Survey",
+                          "AI Model Training",
+                          "Community Workshop",
+                        ].map((mission) => (
+                          <div
+                            key={mission}
+                            className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/30"
+                          >
                             <CheckCircle className="h-4 w-4 text-emerald-400" />
                             <span className="text-slate-300">{mission}</span>
-                            <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 ml-auto">
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-500/30 text-emerald-400 ml-auto"
+                            >
                               Completed
                             </Badge>
                           </div>
@@ -519,18 +623,36 @@ function StudentDashboard() {
                       {/* Skill Tree Nodes */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {[
-                          { name: "Climate Science", level: 3, connections: [1, 2], color: "emerald" },
+                          {
+                            name: "Climate Science",
+                            level: 3,
+                            connections: [1, 2],
+                            color: "emerald",
+                          },
                           { name: "AI Vision", level: 2, connections: [0, 2], color: "cyan" },
-                          { name: "Urban Ecology", level: 4, connections: [0, 1, 3], color: "amber" },
+                          {
+                            name: "Urban Ecology",
+                            level: 4,
+                            connections: [0, 1, 3],
+                            color: "amber",
+                          },
                           { name: "Regen Finance", level: 1, connections: [2], color: "purple" },
                         ].map((skill, index) => (
                           <div key={skill.name} className="relative">
-                            <div className={`p-4 rounded-lg bg-${skill.color}-500/10 border border-${skill.color}-500/30 text-center animate-skill-tree-grow`}>
-                              <div className={`w-12 h-12 mx-auto mb-2 rounded-full bg-${skill.color}-500/20 flex items-center justify-center`}>
-                                <span className={`text-${skill.color}-400 font-bold`}>{skill.level}</span>
+                            <div
+                              className={`p-4 rounded-lg bg-${skill.color}-500/10 border border-${skill.color}-500/30 text-center animate-skill-tree-grow`}
+                            >
+                              <div
+                                className={`w-12 h-12 mx-auto mb-2 rounded-full bg-${skill.color}-500/20 flex items-center justify-center`}
+                              >
+                                <span className={`text-${skill.color}-400 font-bold`}>
+                                  {skill.level}
+                                </span>
                               </div>
                               <h4 className="font-medium text-white text-sm">{skill.name}</h4>
-                              <div className="text-xs text-slate-400 mt-1">Level {skill.level}/5</div>
+                              <div className="text-xs text-slate-400 mt-1">
+                                Level {skill.level}/5
+                              </div>
                             </div>
                             {/* Connection Lines */}
                             {skill.connections.map((connectionIndex) => (
@@ -538,8 +660,9 @@ function StudentDashboard() {
                                 key={connectionIndex}
                                 className={`absolute top-6 w-px h-6 bg-${skill.color}-500/50 transform rotate-90 origin-left`}
                                 style={{
-                                  left: connectionIndex > index ? '100%' : '0%',
-                                  transform: connectionIndex > index ? 'rotate(0deg)' : 'rotate(180deg)',
+                                  left: connectionIndex > index ? "100%" : "0%",
+                                  transform:
+                                    connectionIndex > index ? "rotate(0deg)" : "rotate(180deg)",
                                 }}
                               />
                             ))}
@@ -555,21 +678,32 @@ function StudentDashboard() {
                   {learningTracks.map((track) => {
                     const Icon = track.icon;
                     return (
-                      <Card key={track.id} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/30 transition-colors">
+                      <Card
+                        key={track.id}
+                        className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/30 transition-colors"
+                      >
                         <CardHeader>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg bg-${track.color}-500/20 animate-pulse`}>
+                              <div
+                                className={`p-2 rounded-lg bg-${track.color}-500/20 animate-pulse`}
+                              >
                                 <Icon className={`h-5 w-5 text-${track.color}-400`} />
                               </div>
                               <div>
-                                <CardTitle className={`text-${track.color}-400`}>{track.name}</CardTitle>
-                                <CardDescription>{track.skills.length} skills • {track.missions} missions completed</CardDescription>
+                                <CardTitle className={`text-${track.color}-400`}>
+                                  {track.name}
+                                </CardTitle>
+                                <CardDescription>
+                                  {track.skills.length} skills • {track.missions} missions completed
+                                </CardDescription>
                               </div>
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold text-white">{track.xp} XP</div>
-                              <div className="text-sm text-slate-400">{track.progress}% complete</div>
+                              <div className="text-sm text-slate-400">
+                                {track.progress}% complete
+                              </div>
                             </div>
                           </div>
                         </CardHeader>
@@ -577,16 +711,27 @@ function StudentDashboard() {
                           <Progress value={track.progress} className="mb-4" />
                           <div className="flex flex-wrap gap-2">
                             {track.skills.map((skill) => (
-                              <Badge key={skill} variant="outline" className="border-slate-600 text-slate-300 hover:border-emerald-500/50">
+                              <Badge
+                                key={skill}
+                                variant="outline"
+                                className="border-slate-600 text-slate-300 hover:border-emerald-500/50"
+                              >
                                 {skill}
                               </Badge>
                             ))}
                           </div>
                           <div className="mt-4 flex gap-2">
-                            <Button size="sm" className={`bg-${track.color}-600 hover:bg-${track.color}-700`}>
+                            <Button
+                              size="sm"
+                              className={`bg-${track.color}-600 hover:bg-${track.color}-700`}
+                            >
                               Continue Learning
                             </Button>
-                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-slate-600 text-slate-300"
+                            >
                               View Missions
                             </Button>
                           </div>
@@ -648,7 +793,9 @@ function StudentDashboard() {
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-purple-400">Research Opportunities</CardTitle>
-                    <CardDescription>Contribute to cutting-edge ecological research</CardDescription>
+                    <CardDescription>
+                      Contribute to cutting-edge ecological research
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -656,11 +803,18 @@ function StudentDashboard() {
                         "Urban Heat Island Analysis",
                         "Biodiversity Corridor Mapping",
                         "Flood Risk Prediction Models",
-                        "Carbon Sequestration Studies"
+                        "Carbon Sequestration Studies",
                       ].map((research) => (
-                        <div key={research} className="flex items-center justify-between p-3 rounded-lg bg-slate-900/30">
+                        <div
+                          key={research}
+                          className="flex items-center justify-between p-3 rounded-lg bg-slate-900/30"
+                        >
                           <span className="text-white">{research}</span>
-                          <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-400">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-purple-500/30 text-purple-400"
+                          >
                             Join Research
                           </Button>
                         </div>
@@ -683,23 +837,35 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="p-4 rounded-lg bg-slate-900/50 border border-cyan-500/30">
-                        <p className="text-cyan-400 font-medium mb-2">Personalized Recommendation</p>
+                        <p className="text-cyan-400 font-medium mb-2">
+                          Personalized Recommendation
+                        </p>
                         <p className="text-slate-300 text-sm">
                           Based on your biodiversity work in Karura Forest, I recommend exploring
-                          geospatial AI modeling. This would complement your field experience perfectly.
+                          geospatial AI modeling. This would complement your field experience
+                          perfectly.
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                        <Button
+                          variant="outline"
+                          className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                        >
                           <Lightbulb className="h-4 w-4 mr-2" />
                           Career Paths
                         </Button>
-                        <Button variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+                        <Button
+                          variant="outline"
+                          className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                        >
                           <Target className="h-4 w-4 mr-2" />
                           Mission Suggestions
                         </Button>
-                        <Button variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                        <Button
+                          variant="outline"
+                          className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                        >
                           <GraduationCap className="h-4 w-4 mr-2" />
                           Skill Roadmap
                         </Button>
@@ -718,20 +884,45 @@ function StudentDashboard() {
                     <CardContent>
                       <div className="space-y-3">
                         {[
-                          { name: "Nairobi River Guardians", members: 24, mission: "Weekly cleanup operations" },
-                          { name: "Karura Biodiversity Scouts", members: 18, mission: "Forest monitoring & research" },
-                          { name: "Urban Climate Warriors", members: 31, mission: "Heat island mapping" },
-                          { name: "AI Ecology Collective", members: 15, mission: "Machine learning for conservation" },
+                          {
+                            name: "Nairobi River Guardians",
+                            members: 24,
+                            mission: "Weekly cleanup operations",
+                          },
+                          {
+                            name: "Karura Biodiversity Scouts",
+                            members: 18,
+                            mission: "Forest monitoring & research",
+                          },
+                          {
+                            name: "Urban Climate Warriors",
+                            members: 31,
+                            mission: "Heat island mapping",
+                          },
+                          {
+                            name: "AI Ecology Collective",
+                            members: 15,
+                            mission: "Machine learning for conservation",
+                          },
                         ].map((team) => (
-                          <div key={team.name} className="p-3 rounded-lg bg-slate-900/30 border border-slate-700">
+                          <div
+                            key={team.name}
+                            className="p-3 rounded-lg bg-slate-900/30 border border-slate-700"
+                          >
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="font-medium text-white">{team.name}</h4>
-                              <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
+                              <Badge
+                                variant="outline"
+                                className="border-emerald-500/30 text-emerald-400"
+                              >
                                 {team.members} members
                               </Badge>
                             </div>
                             <p className="text-sm text-slate-400 mb-3">{team.mission}</p>
-                            <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700">
+                            <Button
+                              size="sm"
+                              className="w-full bg-emerald-600 hover:bg-emerald-700"
+                            >
                               Join Team
                             </Button>
                           </div>
@@ -748,17 +939,36 @@ function StudentDashboard() {
                     <CardContent>
                       <div className="space-y-3">
                         {[
-                          { name: "Flood Prediction Hackathon", prize: "50,000 KES", deadline: "2026-05-30" },
-                          { name: "Urban Greening Challenge", prize: "Innovation Grant", deadline: "2026-06-15" },
-                          { name: "AI Conservation Prize", prize: "25,000 KES", deadline: "2026-05-25" },
+                          {
+                            name: "Flood Prediction Hackathon",
+                            prize: "50,000 KES",
+                            deadline: "2026-05-30",
+                          },
+                          {
+                            name: "Urban Greening Challenge",
+                            prize: "Innovation Grant",
+                            deadline: "2026-06-15",
+                          },
+                          {
+                            name: "AI Conservation Prize",
+                            prize: "25,000 KES",
+                            deadline: "2026-05-25",
+                          },
                         ].map((challenge) => (
-                          <div key={challenge.name} className="p-3 rounded-lg bg-slate-900/30 border border-slate-700">
+                          <div
+                            key={challenge.name}
+                            className="p-3 rounded-lg bg-slate-900/30 border border-slate-700"
+                          >
                             <h4 className="font-medium text-white mb-1">{challenge.name}</h4>
                             <div className="flex items-center justify-between text-sm text-slate-400 mb-3">
                               <span>🏆 {challenge.prize}</span>
                               <span>📅 {challenge.deadline}</span>
                             </div>
-                            <Button size="sm" variant="outline" className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                            >
                               Enter Challenge
                             </Button>
                           </div>
@@ -780,19 +990,32 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="space-y-3">
                       {[
-                        { rank: 1, name: "Kofi Environmental", title: "Climate Cartographer", xp: 15420 },
+                        {
+                          rank: 1,
+                          name: "Kofi Environmental",
+                          title: "Climate Cartographer",
+                          xp: 15420,
+                        },
                         { rank: 2, name: "Zara Nairobi", title: "Biodiversity Scout", xp: 14890 },
                         { rank: 3, name: "Jomo Tech", title: "AI Engineer", xp: 14250 },
                         { rank: 4, name: "Amina Rivers", title: "River Sentinel", xp: 13980 },
                         { rank: 5, name: "David Urban", title: "Regenerative Operator", xp: 13650 },
                       ].map((leader) => (
-                        <div key={leader.rank} className="flex items-center gap-4 p-3 rounded-lg bg-slate-900/30">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            leader.rank === 1 ? 'bg-amber-500 text-black' :
-                            leader.rank === 2 ? 'bg-slate-400 text-black' :
-                            leader.rank === 3 ? 'bg-amber-600 text-white' :
-                            'bg-slate-600 text-white'
-                          }`}>
+                        <div
+                          key={leader.rank}
+                          className="flex items-center gap-4 p-3 rounded-lg bg-slate-900/30"
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                              leader.rank === 1
+                                ? "bg-amber-500 text-black"
+                                : leader.rank === 2
+                                  ? "bg-slate-400 text-black"
+                                  : leader.rank === 3
+                                    ? "bg-amber-600 text-white"
+                                    : "bg-slate-600 text-white"
+                            }`}
+                          >
                             {leader.rank}
                           </div>
                           <Avatar className="h-10 w-10">
@@ -805,7 +1028,9 @@ function StudentDashboard() {
                             <p className="text-sm text-slate-400">{leader.title}</p>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-emerald-400">{leader.xp.toLocaleString()}</div>
+                            <div className="text-lg font-bold text-emerald-400">
+                              {leader.xp.toLocaleString()}
+                            </div>
                             <div className="text-xs text-slate-400">XP</div>
                           </div>
                         </div>
@@ -871,12 +1096,17 @@ function StudentDashboard() {
                       <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-cyan-400 font-medium">Buy RIUs</span>
-                          <Badge variant="outline" className="border-cyan-500/30 text-cyan-400">Premium</Badge>
+                          <Badge variant="outline" className="border-cyan-500/30 text-cyan-400">
+                            Premium
+                          </Badge>
                         </div>
                         <p className="text-sm text-slate-300 mb-3">
                           Purchase additional RIUs to accelerate your learning journey
                         </p>
-                        <Button variant="outline" className="w-full border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+                        <Button
+                          variant="outline"
+                          className="w-full border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                        >
                           Buy RIUs
                         </Button>
                       </div>
@@ -911,42 +1141,96 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="space-y-3">
                       {[
-                        { type: "mission", description: "Nairobi River Cleanup Mission", amount: 150, date: "2024-01-15", status: "credited" },
-                        { type: "learning", description: "Environmental Intelligence Module", amount: 75, date: "2024-01-14", status: "credited" },
-                        { type: "community", description: "Team Collaboration Bonus", amount: 50, date: "2024-01-13", status: "credited" },
-                        { type: "achievement", description: "First Certification Complete", amount: 200, date: "2024-01-12", status: "credited" },
-                        { type: "cashout", description: "M-Pesa Withdrawal", amount: -500, date: "2024-01-10", status: "processed" },
+                        {
+                          type: "mission",
+                          description: "Nairobi River Cleanup Mission",
+                          amount: 150,
+                          date: "2024-01-15",
+                          status: "credited",
+                        },
+                        {
+                          type: "learning",
+                          description: "Environmental Intelligence Module",
+                          amount: 75,
+                          date: "2024-01-14",
+                          status: "credited",
+                        },
+                        {
+                          type: "community",
+                          description: "Team Collaboration Bonus",
+                          amount: 50,
+                          date: "2024-01-13",
+                          status: "credited",
+                        },
+                        {
+                          type: "achievement",
+                          description: "First Certification Complete",
+                          amount: 200,
+                          date: "2024-01-12",
+                          status: "credited",
+                        },
+                        {
+                          type: "cashout",
+                          description: "M-Pesa Withdrawal",
+                          amount: -500,
+                          date: "2024-01-10",
+                          status: "processed",
+                        },
                       ].map((transaction, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-slate-900/30 border border-slate-700">
+                        <div
+                          key={i}
+                          className="flex items-center justify-between p-4 rounded-lg bg-slate-900/30 border border-slate-700"
+                        >
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${
-                              transaction.type === 'cashout' ? 'bg-red-500/20' :
-                              transaction.type === 'mission' ? 'bg-emerald-500/20' :
-                              transaction.type === 'learning' ? 'bg-cyan-500/20' :
-                              transaction.type === 'community' ? 'bg-purple-500/20' :
-                              'bg-amber-500/20'
-                            }`}>
-                              {transaction.type === 'cashout' ? <ArrowDownRight className="h-4 w-4 text-red-400" /> :
-                               transaction.type === 'mission' ? <Target className="h-4 w-4 text-emerald-400" /> :
-                               transaction.type === 'learning' ? <BookOpen className="h-4 w-4 text-cyan-400" /> :
-                               transaction.type === 'community' ? <Users className="h-4 w-4 text-purple-400" /> :
-                               <Trophy className="h-4 w-4 text-amber-400" />}
+                            <div
+                              className={`p-2 rounded-lg ${
+                                transaction.type === "cashout"
+                                  ? "bg-red-500/20"
+                                  : transaction.type === "mission"
+                                    ? "bg-emerald-500/20"
+                                    : transaction.type === "learning"
+                                      ? "bg-cyan-500/20"
+                                      : transaction.type === "community"
+                                        ? "bg-purple-500/20"
+                                        : "bg-amber-500/20"
+                              }`}
+                            >
+                              {transaction.type === "cashout" ? (
+                                <ArrowDownRight className="h-4 w-4 text-red-400" />
+                              ) : transaction.type === "mission" ? (
+                                <Target className="h-4 w-4 text-emerald-400" />
+                              ) : transaction.type === "learning" ? (
+                                <BookOpen className="h-4 w-4 text-cyan-400" />
+                              ) : transaction.type === "community" ? (
+                                <Users className="h-4 w-4 text-purple-400" />
+                              ) : (
+                                <Trophy className="h-4 w-4 text-amber-400" />
+                              )}
                             </div>
                             <div>
-                              <h4 className="text-sm font-medium text-white">{transaction.description}</h4>
+                              <h4 className="text-sm font-medium text-white">
+                                {transaction.description}
+                              </h4>
                               <p className="text-xs text-slate-400">{transaction.date}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className={`text-sm font-mono ${
-                              transaction.amount > 0 ? 'text-emerald-400' : 'text-red-400'
-                            }`}>
-                              {transaction.amount > 0 ? '+' : ''}{transaction.amount} RIU
+                            <div
+                              className={`text-sm font-mono ${
+                                transaction.amount > 0 ? "text-emerald-400" : "text-red-400"
+                              }`}
+                            >
+                              {transaction.amount > 0 ? "+" : ""}
+                              {transaction.amount} RIU
                             </div>
-                            <Badge variant="outline" className={`text-xs ${
-                              transaction.status === 'credited' ? 'border-emerald-500/30 text-emerald-400' :
-                              'border-slate-500/30 text-slate-400'
-                            }`}>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                transaction.status === "credited"
+                                  ? "border-emerald-500/30 text-emerald-400"
+                                  : "border-slate-500/30 text-slate-400"
+                              }`}
+                            >
                               {transaction.status}
                             </Badge>
                           </div>
