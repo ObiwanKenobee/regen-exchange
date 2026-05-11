@@ -1,5 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink, Eye, MapPin, Satellite } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCheck, CheckCircle2, Download, ExternalLink, Eye, FlagTriangleRight, MapPin, Satellite } from "lucide-react";
+import { toast } from "sonner";
 import type { Asset } from "./types";
 import {
   SEED_EVENTS,
@@ -8,6 +9,8 @@ import {
   getTimelineProgress,
   tsAgo,
 } from "./verification-data";
+import { setResolution, useResolutions, type ResolutionStatus } from "@/lib/verification-resolutions";
+import { downloadCSV, toCSV } from "@/lib/csv";
 
 export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
   asset: Asset | null;
@@ -18,12 +21,39 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
   if (!asset) return null;
   const Icon = asset.icon;
   const up = asset.change >= 0;
+  const resolutions = useResolutions();
   const events = getEventsForAsset(SEED_EVENTS, asset.sym);
   const liveConfidence = getLatestConfidenceForAsset(SEED_EVENTS, asset.sym, asset.verification);
   const timelineProgress = getTimelineProgress(SEED_EVENTS, asset.sym);
   const verifiedCount = events.filter((e) => e.status === "verified").length;
   const reviewCount = events.filter((e) => e.status === "review").length;
   const anomalyCount = events.filter((e) => e.status === "anomaly").length;
+
+  const exportCsv = () => {
+    if (!events.length) {
+      toast.error("No audit events to export");
+      return;
+    }
+    const rows = events.map((e) => ({
+      timestamp: new Date(e.ts).toISOString(),
+      asset: e.asset,
+      ecosystem: e.ecosystem,
+      region: e.region,
+      source: e.source,
+      confidence: e.confidence,
+      status: e.status,
+      resolution: resolutions[e.id]?.status ?? "",
+      detail: e.detail,
+    }));
+    downloadCSV(`rve-${asset!.sym}-audit-${Date.now()}.csv`, toCSV(rows));
+    toast.success(`Exported ${rows.length} audit events for ${asset!.sym}`);
+  };
+
+  const resolve = (id: string, status: ResolutionStatus, sym: string) => {
+    setResolution(id, status);
+    if (status === "human_review") toast(`Human review requested — ${sym}`);
+    else toast.success(`Anomaly resolved — ${sym} timeline updated`);
+  };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto border-l border-border bg-card sm:max-w-xl">
@@ -79,7 +109,15 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold">Audit events</h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Audit events</h3>
+              <button
+                onClick={exportCsv}
+                className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <Download className="h-3 w-3" /> Export CSV
+              </button>
+            </div>
             {events.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
                 No verification events recorded for this asset yet.
@@ -89,6 +127,7 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
                 {events.slice(0, 8).map((t) => {
                   const tone = t.status === "verified" ? "bg-primary/15 text-primary" : t.status === "review" ? "bg-accent/20 text-accent" : "bg-destructive/15 text-destructive";
                   const I = t.status === "verified" ? CheckCircle2 : t.status === "review" ? Eye : AlertTriangle;
+                  const res = resolutions[t.id];
                   return (
                     <li key={t.id} className="flex gap-3 rounded-lg border border-border bg-muted/20 p-3">
                       <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${tone}`}>
@@ -98,6 +137,11 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
                         <div className="flex flex-wrap items-center gap-2 text-sm">
                           <span className="flex items-center gap-1 text-[10px] text-secondary"><Satellite className="h-3 w-3" />{t.source}</span>
                           <span className="rounded-full border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{t.region}</span>
+                          {res && (
+                            <span className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${res.status === "resolved" ? "border-primary/40 bg-primary/15 text-primary" : "border-accent/40 bg-accent/15 text-accent"}`}>
+                              {res.status === "human_review" ? "Human review" : "Resolved"}
+                            </span>
+                          )}
                           <span className="ml-auto font-mono text-xs text-muted-foreground">{tsAgo(t.ts)}</span>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">{t.detail}</div>
@@ -107,6 +151,24 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
                           </div>
                           <span className="font-mono text-[10px]">{t.confidence}%</span>
                         </div>
+                        {t.status === "anomaly" && res?.status !== "resolved" && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {res?.status !== "human_review" && (
+                              <button
+                                onClick={() => resolve(t.id, "human_review", t.asset)}
+                                className="flex items-center gap-1 rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] text-accent hover:bg-accent/20"
+                              >
+                                <FlagTriangleRight className="h-3 w-3" /> Request human review
+                              </button>
+                            )}
+                            <button
+                              onClick={() => resolve(t.id, "resolved", t.asset)}
+                              className="flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20"
+                            >
+                              <CheckCheck className="h-3 w-3" /> Mark resolved
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </li>
                   );
