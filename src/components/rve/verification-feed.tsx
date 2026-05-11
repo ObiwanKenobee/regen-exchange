@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, AlertTriangle, Eye, Filter, History, Pause, Play, Satellite } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Bell, BellOff, CheckCheck, Download, Eye, Filter, FlagTriangleRight, History, Pause, Play, Satellite } from "lucide-react";
+import { toast } from "sonner";
 import { ECOSYSTEMS } from "./types";
 import { SEED_EVENTS, SOURCES, generateLiveEvent, tsAgo, type VerificationEvent } from "./verification-data";
+import { setResolution, useResolutions, type ResolutionStatus } from "@/lib/verification-resolutions";
+import { downloadCSV, toCSV } from "@/lib/csv";
 
 const FILTER_KEY = "rve.feed.filters.v1";
+const NOTIFY_KEY = "rve.feed.notify.v1";
 
 type Filters = {
   eco: (typeof ECOSYSTEMS)[number];
@@ -30,11 +34,21 @@ export function VerificationFeed() {
   const [events, setEvents] = useState<VerificationEvent[]>(SEED_EVENTS);
   const [streaming, setStreaming] = useState(true);
   const [newCount, setNewCount] = useState(0);
+  const [notify, setNotify] = useState(false);
   const lastSeenRef = useRef<number>(SEED_EVENTS[0]?.ts ?? Date.now());
+  const resolutions = useResolutions();
+  // Use a ref of saved filters so streaming interval can read latest values
+  const filtersRef = useRef<Filters>(DEFAULT_FILTERS);
+  const notifyRef = useRef(false);
+  useEffect(() => { filtersRef.current = filters; }, [filters]);
+  useEffect(() => { notifyRef.current = notify; }, [notify]);
 
   // hydrate filters on client
   useEffect(() => {
     setFilters(loadFilters());
+    if (typeof window !== "undefined") {
+      try { setNotify(window.localStorage.getItem(NOTIFY_KEY) === "1"); } catch {}
+    }
     setHydrated(true);
   }, []);
 
@@ -42,16 +56,33 @@ export function VerificationFeed() {
     if (!hydrated || typeof window === "undefined") return;
     try { window.localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch {}
   }, [filters, hydrated]);
+  useEffect(() => {
+    if (!hydrated || typeof window === "undefined") return;
+    try { window.localStorage.setItem(NOTIFY_KEY, notify ? "1" : "0"); } catch {}
+  }, [notify, hydrated]);
 
   // streaming
   useEffect(() => {
     if (!streaming) return;
     const t = setInterval(() => {
+      const next = generateLiveEvent();
       setEvents((prev) => {
-        const next = generateLiveEvent(prev.slice(0, 24));
         return [next, ...prev].slice(0, 200);
       });
       setNewCount((c) => c + 1);
+      // notification: matches saved (current) filters
+      if (notifyRef.current) {
+        const f = filtersRef.current;
+        const matches =
+          (f.eco === "All" || next.ecosystem === f.eco) &&
+          (f.src === "All" || next.source === f.src) &&
+          (f.status === "all" || next.status === f.status);
+        if (matches) {
+          toast(`New ${next.status} event — ${next.asset}`, {
+            description: `${next.region} • ${next.source} • ${next.confidence}% confidence`,
+          });
+        }
+      }
     }, 4500);
     return () => clearInterval(t);
   }, [streaming]);
@@ -66,6 +97,35 @@ export function VerificationFeed() {
   ), [events, eco, src, status]);
 
   const avg = Math.round(filtered.reduce((s, e) => s + e.confidence, 0) / Math.max(filtered.length, 1));
+
+  const exportCsv = () => {
+    const rows = filtered.map((e) => ({
+      timestamp: new Date(e.ts).toISOString(),
+      asset: e.asset,
+      ecosystem: e.ecosystem,
+      region: e.region,
+      source: e.source,
+      confidence: e.confidence,
+      status: e.status,
+      resolution: resolutions[e.id]?.status ?? "",
+      detail: e.detail,
+    }));
+    if (!rows.length) {
+      toast.error("No events to export with current filters.");
+      return;
+    }
+    downloadCSV(`rve-verification-feed-${Date.now()}.csv`, toCSV(rows));
+    toast.success(`Exported ${rows.length} verification events`);
+  };
+
+  const handleResolve = (e: VerificationEvent, status: ResolutionStatus) => {
+    setResolution(e.id, status);
+    if (status === "human_review") {
+      toast(`Human review requested — ${e.asset}`, { description: `${e.region} • ${e.source}` });
+    } else if (status === "resolved") {
+      toast.success(`Anomaly marked resolved — ${e.asset}`, { description: `Timeline updated for ${e.asset}` });
+    }
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-12">
@@ -127,6 +187,21 @@ export function VerificationFeed() {
                 </button>
               )}
               <button
+                onClick={() => setNotify((n) => !n)}
+                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${notify ? "border-accent/40 bg-accent/15 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+                title={notify ? "Notifications on for saved filters" : "Notify when new events match saved filters"}
+              >
+                {notify ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
+                Notify
+              </button>
+              <button
+                onClick={exportCsv}
+                className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-muted-foreground hover:text-foreground"
+                title="Export filtered events as CSV"
+              >
+                <Download className="h-3 w-3" /> CSV
+              </button>
+              <button
                 onClick={() => setStreaming((s) => !s)}
                 className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${streaming ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
               >
@@ -140,6 +215,7 @@ export function VerificationFeed() {
             {filtered.map(e => {
               const Icon = e.status === "anomaly" ? AlertTriangle : e.status === "review" ? Eye : CheckCircle2;
               const color = e.status === "anomaly" ? "text-destructive bg-destructive/10" : e.status === "review" ? "text-accent bg-accent/15" : "text-primary bg-primary/15";
+              const res = resolutions[e.id];
               return (
                 <li key={e.id} className="flex gap-4 px-5 py-4 transition hover:bg-muted/20">
                   <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}>
@@ -151,6 +227,11 @@ export function VerificationFeed() {
                       <span className="font-medium">{e.region}</span>
                       <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{e.ecosystem}</span>
                       <span className="flex items-center gap-1 text-[10px] text-secondary"><Satellite className="h-3 w-3" />{e.source}</span>
+                      {res && (
+                        <span className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${res.status === "resolved" ? "border-primary/40 bg-primary/15 text-primary" : "border-accent/40 bg-accent/15 text-accent"}`}>
+                          {res.status === "human_review" ? "Human review" : "Resolved"}
+                        </span>
+                      )}
                       <span className="ml-auto text-xs text-muted-foreground">{tsAgo(e.ts)}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{e.detail}</p>
@@ -160,6 +241,24 @@ export function VerificationFeed() {
                       </div>
                       <span className="font-mono text-xs">{e.confidence}%</span>
                     </div>
+                    {e.status === "anomaly" && res?.status !== "resolved" && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {res?.status !== "human_review" && (
+                          <button
+                            onClick={() => handleResolve(e, "human_review")}
+                            className="flex items-center gap-1 rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] text-accent hover:bg-accent/20"
+                          >
+                            <FlagTriangleRight className="h-3 w-3" /> Request human review
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleResolve(e, "resolved")}
+                          className="flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-1 text-[11px] text-primary hover:bg-primary/20"
+                        >
+                          <CheckCheck className="h-3 w-3" /> Mark resolved
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </li>
               );
