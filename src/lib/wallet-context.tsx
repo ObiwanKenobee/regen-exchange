@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
 export type Wallet = {
   address: string;
@@ -107,13 +108,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           if (t) { clearInterval(t); timersRef.current.delete(id); }
           // 95% confirm, 5% fail
           const failed = Math.random() < 0.05;
+          const block = 18_402_000 + Math.floor(Math.random() * 999);
+          // fire toast outside setState
+          setTimeout(() => {
+            if (failed) {
+              toast.error(`Order failed — ${o.side.toUpperCase()} ${o.qty} ${o.assetSym}`, {
+                description: "Transaction reverted. Tap Refresh in Order Activity to retry.",
+              });
+            } else {
+              toast.success(`Order confirmed — ${o.side.toUpperCase()} ${o.qty} ${o.assetSym}`, {
+                description: `Filled @ $${o.price.toFixed(2)} • Block #${block.toLocaleString()}`,
+              });
+            }
+          }, 0);
           return prev.map((x) =>
             x.id === id
               ? {
                   ...x,
                   confirmations: nextConf,
                   status: failed ? "failed" : "confirmed",
-                  block: 18_402_000 + Math.floor(Math.random() * 999),
+                  block,
                 }
               : x,
           );
