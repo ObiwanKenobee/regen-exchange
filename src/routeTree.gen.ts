@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RefiRouteImport } from './routes/refi'
 import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
+import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OracleRouteImport } from './routes/oracle'
 import { Route as NairobiTwinRouteImport } from './routes/nairobi-twin'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -30,6 +31,11 @@ const RefiRoute = RefiRouteImport.update({
 const PlatformArchitectureRoute = PlatformArchitectureRouteImport.update({
   id: '/platform-architecture',
   path: '/platform-architecture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OracleRoute = OracleRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/nairobi-twin': typeof NairobiTwinRoute
   '/oracle': typeof OracleRoute
+  '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/nairobi-twin': typeof NairobiTwinRoute
   '/oracle': typeof OracleRoute
+  '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/nairobi-twin': typeof NairobiTwinRoute
   '/oracle': typeof OracleRoute
+  '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/nairobi-twin'
     | '/oracle'
+    | '/orders'
     | '/platform-architecture'
     | '/refi'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/nairobi-twin'
     | '/oracle'
+    | '/orders'
     | '/platform-architecture'
     | '/refi'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/nairobi-twin'
     | '/oracle'
+    | '/orders'
     | '/platform-architecture'
     | '/refi'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   NairobiTwinRoute: typeof NairobiTwinRoute
   OracleRoute: typeof OracleRoute
+  OrdersRoute: typeof OrdersRoute
   PlatformArchitectureRoute: typeof PlatformArchitectureRoute
   RefiRoute: typeof RefiRoute
 }
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/platform-architecture'
       fullPath: '/platform-architecture'
       preLoaderRoute: typeof PlatformArchitectureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oracle': {
@@ -286,9 +306,20 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   NairobiTwinRoute: NairobiTwinRoute,
   OracleRoute: OracleRoute,
+  OrdersRoute: OrdersRoute,
   PlatformArchitectureRoute: PlatformArchitectureRoute,
   RefiRoute: RefiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
