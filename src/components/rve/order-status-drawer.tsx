@@ -1,9 +1,9 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Activity, CheckCircle2, ExternalLink, Loader2, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, ExternalLink, Loader2, RefreshCw, RotateCw, Trash2, XCircle } from "lucide-react";
 import { useWallet, shortHash, type Order, type OrderStatus } from "@/lib/wallet-context";
 
 export function OrderStatusDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { orders, refreshOrder, clearOrders, pendingCount } = useWallet();
+  const { orders, refreshOrder, retryOrder, clearOrders, pendingCount } = useWallet();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -36,7 +36,7 @@ export function OrderStatusDrawer({ open, onOpenChange }: { open: boolean; onOpe
             </li>
           )}
           {orders.map((o) => (
-            <OrderRow key={o.id} order={o} onRefresh={() => refreshOrder(o.id)} />
+            <OrderRow key={o.id} order={o} onRefresh={() => refreshOrder(o.id)} onRetry={() => retryOrder(o.id)} />
           ))}
         </ul>
       </SheetContent>
@@ -50,7 +50,7 @@ function StatusBadge({ s }: { s: OrderStatus }) {
   return <span className="inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/15 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-destructive"><XCircle className="h-3 w-3" />Failed</span>;
 }
 
-function OrderRow({ order, onRefresh }: { order: Order; onRefresh: () => void }) {
+function OrderRow({ order, onRefresh, onRetry }: { order: Order; onRefresh: () => void; onRetry: () => void }) {
   const pct = Math.min(100, (order.confirmations / order.requiredConfirmations) * 100);
   return (
     <li className="rounded-lg border border-border bg-muted/20 p-4">
@@ -89,13 +89,22 @@ function OrderRow({ order, onRefresh }: { order: Order; onRefresh: () => void })
         >
           {shortHash(order.txHash)} <ExternalLink className="h-3 w-3" />
         </a>
-        <button
-          onClick={onRefresh}
-          disabled={order.status !== "pending"}
-          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <RefreshCw className="h-3 w-3" /> Refresh
-        </button>
+        {order.status === "failed" ? (
+          <button
+            onClick={onRetry}
+            className="flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20"
+          >
+            <RotateCw className="h-3 w-3" /> Retry
+          </button>
+        ) : (
+          <button
+            onClick={onRefresh}
+            disabled={order.status !== "pending"}
+            className="flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw className="h-3 w-3" /> Refresh
+          </button>
+        )}
       </div>
     </li>
   );
