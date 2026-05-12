@@ -43,7 +43,8 @@ export function ExportJobsProvider({ children }: { children: ReactNode }) {
     const dataset = input.rows();
     const total = dataset.length;
     const chunk = input.chunkSize ?? 500;
-    setJobs((p) => [{ id, filename: input.filename, total, done: 0, status: "running", startedAt: Date.now() }, ...p].slice(0, 8));
+    const newJob: ExportJob = { id, filename: input.filename, total, done: 0, status: "running", startedAt: Date.now() };
+    setJobs((p) => [newJob, ...p].slice(0, 8));
     cancelFlags.set(id, false);
 
     if (total === 0) {
