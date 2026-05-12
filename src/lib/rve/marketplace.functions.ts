@@ -102,21 +102,31 @@ export const createListing = createServerFn({ method: "POST" })
     // Get authenticated user
     const user = requireAuth();
     const sellerId = user.id;
-        type: data.type,
-        status: "active",
-        quantity: data.quantity,
-        unit: data.unit,
-        price: data.price.rius,
-        usdPrice: data.price.usd,
-        conditions: data.conditions,
-        auctionData,
-        expiresAt,
-      },
-      include: {
-        asset: true,
-        seller: true,
-      },
-    });
+    const expiresAt = new Date(Date.now() + data.expiresIn * 24 * 60 * 60 * 1000);
+    const auctionData = data.auction
+      ? {
+          startPrice: data.auction.startPrice,
+          reservePrice: data.auction.reservePrice,
+          endTime: new Date(Date.now() + data.auction.duration * 60 * 60 * 1000),
+          bids: [] as Array<{ bidderId: string; amount: number; bidTime: Date }>,
+        }
+      : null;
+    // TODO: Persist via Prisma when schema is ready.
+    const listing = {
+      id: `listing-${Date.now()}`,
+      assetId: data.assetId,
+      sellerId,
+      type: data.type,
+      status: "active" as const,
+      quantity: data.quantity,
+      unit: data.unit,
+      price: data.price.rius,
+      usdPrice: data.price.usd,
+      conditions: data.conditions,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      expiresAt,
+    };
 
     // Map to Listing interface
     const newListing: Listing = {
