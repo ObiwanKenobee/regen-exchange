@@ -13,6 +13,7 @@ datasource db {
 model User {
   id                String   @id @default(cuid())
   did               String?  @unique
+  role              String   @default("student_researcher") // RBAC role type
   ridScore          Float    @default(0)
   reputationHistory Json?
   mpesaNumber       String?
