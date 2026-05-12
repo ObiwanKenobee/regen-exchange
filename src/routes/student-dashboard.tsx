@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   Award,
   BookOpen,
@@ -214,6 +214,17 @@ const recentAchievements = [
 function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMission, setSelectedMission] = useState<number | null>(null);
+  const [acceptedMissions, setAcceptedMissions] = useState<number[]>([]);
+
+  const toggleMissionAcceptance = (missionId: number) => {
+    setAcceptedMissions((current) =>
+      current.includes(missionId)
+        ? current.filter((id) => id !== missionId)
+        : [...current, missionId],
+    );
+  };
+
+  const selectedMissionData = activeMissions.find((mission) => mission.id === selectedMission);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white relative overflow-hidden">
@@ -290,6 +301,60 @@ function StudentDashboard() {
       </header>
 
       <div className="mx-auto max-w-[1600px] p-4 md:p-6">
+        <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Link
+            to="/marketplace"
+            className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4 text-left transition hover:border-emerald-400/40 hover:bg-emerald-500/15"
+          >
+            <div className="flex items-center gap-3">
+              <Coins className="h-5 w-5 text-emerald-400" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Browse Marketplace</p>
+                <p className="text-xs text-slate-400">Swap RIUs, asset claims, and restoration tranches.</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/command-center"
+            className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-4 text-left transition hover:border-cyan-400/40 hover:bg-cyan-500/15"
+          >
+            <div className="flex items-center gap-3">
+              <Globe className="h-5 w-5 text-cyan-400" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Open Command Center</p>
+                <p className="text-xs text-slate-400">Track missions, sensors, and live city intelligence.</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/governance"
+            className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-left transition hover:border-amber-400/40 hover:bg-amber-500/15"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 text-amber-400" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Explore Governance</p>
+                <p className="text-xs text-slate-400">Vote on restoration proposals and asset verification rules.</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/impact-explorer"
+            className="rounded-2xl border border-purple-500/20 bg-purple-500/10 px-4 py-4 text-left transition hover:border-purple-400/40 hover:bg-purple-500/15"
+          >
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-purple-400" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">View Impact Explorer</p>
+                <p className="text-xs text-slate-400">Inspect ecological metrics and restoration outcomes.</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+
         <div className="grid gap-4 md:gap-6 lg:grid-cols-4">
           {/* Left Sidebar - Student Profile */}
           <div className="lg:col-span-1 order-2 lg:order-1">
@@ -549,25 +614,48 @@ function StudentDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {[
-                          "Environmental Survey",
-                          "AI Training Task",
-                          "Community Outreach",
-                          "Sensor Deployment",
-                        ].map((mission) => (
+                        {activeMissions.map((mission) => (
                           <div
-                            key={mission}
-                            className="p-3 rounded-lg bg-slate-900/30 border border-slate-700 hover:border-emerald-500/50 cursor-pointer transition-colors"
+                            key={mission.id}
+                            className="p-3 rounded-lg bg-slate-900/30 border border-slate-700 hover:border-emerald-500/50 transition-colors"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-white">{mission}</span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-emerald-500/30 text-emerald-400"
-                              >
-                                Accept
-                              </Button>
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="space-y-2">
+                                <h4 className="text-white font-medium">{mission.title}</h4>
+                                <p className="text-sm text-slate-400">{mission.description}</p>
+                                <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                                  <span className="inline-flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {mission.location}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Due {mission.deadline}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <Target className="h-3 w-3" />
+                                    {mission.type}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant={acceptedMissions.includes(mission.id) ? "secondary" : "outline"}
+                                  className="border-emerald-500/30 text-emerald-400"
+                                  onClick={() => toggleMissionAcceptance(mission.id)}
+                                >
+                                  {acceptedMissions.includes(mission.id) ? "Accepted" : "Accept"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-slate-300 hover:text-foreground"
+                                  onClick={() => setSelectedMission(mission.id)}
+                                >
+                                  View details
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -606,6 +694,47 @@ function StudentDashboard() {
                     </CardContent>
                   </Card>
                 </div>
+                {selectedMissionData ? (
+                  <Card className="bg-slate-800/50 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="text-emerald-400">Mission Detail</CardTitle>
+                      <CardDescription>Review and launch mission actions</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-slate-700 bg-slate-900/40 p-5">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <h3 className="text-white text-lg font-semibold">
+                                {selectedMissionData.title}
+                              </h3>
+                              <p className="mt-2 text-sm text-slate-300">
+                                {selectedMissionData.description}
+                              </p>
+                            </div>
+                            <div className="space-y-2 text-right">
+                              <div className="text-sm text-slate-400">Due {selectedMissionData.deadline}</div>
+                              <div className="text-sm text-emerald-400">{selectedMissionData.progress}% progress</div>
+                            </div>
+                          </div>
+                          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                            <Button size="sm" asChild className="bg-emerald-600 hover:bg-emerald-700">
+                              <Link to="/command-center">Open Command Center</Link>
+                            </Button>
+                            <Button
+                              size="sm"
+                              asChild
+                              variant="outline"
+                              className="border-cyan-500/30 text-cyan-400"
+                            >
+                              <Link to="/marketplace">Review Resources</Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
               </TabsContent>
 
               <TabsContent value="learning" className="space-y-6">
