@@ -47,6 +47,10 @@ type Ctx = {
   refreshOrder: (id: string) => void;
   retryOrder: (id: string) => void;
   clearOrders: () => void;
+  retryFailed: (ids?: string[]) => number;
+  refreshPending: (ids?: string[]) => number;
+  streamEnabled: boolean;
+  setStreamEnabled: (v: boolean) => void;
 };
 
 const WalletCtx = createContext<Ctx | null>(null);
@@ -225,9 +229,61 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const pendingCount = orders.filter((o) => o.status === "pending").length;
 
+  const retryFailed = (ids?: string[]) => {
+    const targets = orders.filter((o) => o.status === "failed" && (!ids || ids.includes(o.id)));
+    targets.forEach((o) => retryOrder(o.id));
+    if (targets.length) toast(`Retrying ${targets.length} failed order${targets.length === 1 ? "" : "s"}`);
+    return targets.length;
+  };
+  const refreshPending = (ids?: string[]) => {
+    const targets = orders.filter((o) => o.status === "pending" && (!ids || ids.includes(o.id)));
+    targets.forEach((o) => refreshOrder(o.id));
+    return targets.length;
+  };
+
+  // Synthetic stream simulator for demo mode
+  const [streamEnabled, setStreamEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("rve.orders.stream") === "1";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("rve.orders.stream", streamEnabled ? "1" : "0");
+    }
+  }, [streamEnabled]);
+  useEffect(() => {
+    if (!streamEnabled) return;
+    const SYM_POOL = [
+      { sym: "AMZ-CO₂", name: "Amazon Carbon Reserve", price: 84.2 },
+      { sym: "OCN-REG", name: "Ocean Regeneration Bond", price: 142.65 },
+      { sym: "BIO-IDX", name: "Biodiversity Index Unit", price: 56.1 },
+      { sym: "H₂O-SEC", name: "Water Security Asset", price: 98.7 },
+      { sym: "IND-STW", name: "Indigenous Stewardship", price: 211.3 },
+      { sym: "SOL-INF", name: "Solar Infrastructure", price: 47.85 },
+    ];
+    const t = setInterval(() => {
+      const a = SYM_POOL[Math.floor(Math.random() * SYM_POOL.length)];
+      const qty = 1 + Math.floor(Math.random() * 25);
+      const side: "buy" | "sell" = Math.random() < 0.55 ? "buy" : "sell";
+      const total = qty * a.price;
+      const id = `ord-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+      const txHash = "0x" + randHex(64);
+      const order: Order = {
+        id, txHash, assetSym: a.sym, assetName: a.name, side, qty,
+        price: a.price, total, fee: total * 0.001, restorationFee: total * 0.005,
+        status: "pending", confirmations: 0, requiredConfirmations: 3,
+        createdAt: Date.now(), explorerUrl: explorerFor(txHash),
+        walletProvider: "Sanctum",
+      };
+      setOrders((prev) => [order, ...prev].slice(0, 5000));
+      setTimeout(() => startTickingOrder(id), 50);
+    }, 6000);
+    return () => clearInterval(t);
+  }, [streamEnabled]);
+
   return (
     <WalletCtx.Provider
-      value={{ wallet, connecting, connect, disconnect, orders, pendingCount, submitOrder, refreshOrder, retryOrder, clearOrders }}
+      value={{ wallet, connecting, connect, disconnect, orders, pendingCount, submitOrder, refreshOrder, retryOrder, clearOrders, retryFailed, refreshPending, streamEnabled, setStreamEnabled }}
     >
       {children}
     </WalletCtx.Provider>
