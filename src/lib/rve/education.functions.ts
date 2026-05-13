@@ -159,7 +159,7 @@ export interface LearningPath {
 // CREATE Course
 export const createCourse = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -258,7 +258,7 @@ export const createCourse = createServerFn({ method: "POST" })
 // READ Course
 export const getCourse = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockCourse: Course = {
@@ -360,7 +360,7 @@ export const getCourse = createServerFn({ method: "GET" })
 // READ Courses
 export const getCourses = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       category: z.enum(["regenerative_finance", "sustainable_tech", "environmental_science", "blockchain", "impact_measurement", "policy_governance", "other"]).optional(),
       level: z.enum(["beginner", "intermediate", "advanced", "expert"]).optional(),
@@ -413,9 +413,9 @@ export const getCourses = createServerFn({ method: "GET" })
   });
 
 // UPDATE Course
-export const updateCourse = createServerFn({ method: "PATCH" })
+export const updateCourse = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -457,7 +457,7 @@ export const updateCourse = createServerFn({ method: "PATCH" })
 // Enroll in Course
 export const enrollInCourse = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ courseId: z.string() }))
+  .inputValidator(z.object({ courseId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const enrollment: Enrollment = {
@@ -491,7 +491,7 @@ export const enrollInCourse = createServerFn({ method: "POST" })
 // Submit Assessment
 export const submitAssessment = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       enrollmentId: z.string(),
       assessmentId: z.string(),
@@ -522,7 +522,7 @@ export const submitAssessment = createServerFn({ method: "POST" })
 // CREATE Learning Path
 export const createLearningPath = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -569,7 +569,7 @@ export const createLearningPath = createServerFn({ method: "POST" })
 // READ Learning Paths
 export const getLearningPaths = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       category: z.enum(["beginner", "intermediate", "advanced", "specialization"]).optional(),
       targetAudience: z.string().optional(),
@@ -632,7 +632,7 @@ export const getLearningPaths = createServerFn({ method: "GET" })
 // Enroll in Learning Path
 export const enrollInLearningPath = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ pathId: z.string() }))
+  .inputValidator(z.object({ pathId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const enrollment = {
@@ -657,7 +657,7 @@ export const enrollInLearningPath = createServerFn({ method: "POST" })
 // Rate Course
 export const rateCourse = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       courseId: z.string(),
       rating: z.number().min(1).max(5),
@@ -684,7 +684,7 @@ export const rateCourse = createServerFn({ method: "POST" })
 // Get Education Stats
 export const getEducationStats = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const stats = {

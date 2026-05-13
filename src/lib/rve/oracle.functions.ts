@@ -49,7 +49,7 @@ export interface Verification {
 // CREATE Oracle
 export const createOracle = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       type: z.enum(["ai", "human", "hybrid"]),
@@ -84,7 +84,7 @@ export const createOracle = createServerFn({ method: "POST" })
 // READ Oracle
 export const getOracle = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockOracle: Oracle = {
@@ -115,7 +115,7 @@ export const getOracle = createServerFn({ method: "GET" })
 // READ All Oracles
 export const getOracles = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["ai", "human", "hybrid"]).optional(),
       domain: z.enum(["environmental", "social", "economic", "technical"]).optional(),
@@ -175,9 +175,9 @@ export const getOracles = createServerFn({ method: "GET" })
   });
 
 // UPDATE Oracle
-export const updateOracle = createServerFn({ method: "PATCH" })
+export const updateOracle = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       name: z.string().optional(),
@@ -207,9 +207,9 @@ export const updateOracle = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Oracle
-export const deleteOracle = createServerFn({ method: "DELETE" })
+export const deleteOracle = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = { id: data.id, deleted: true, deletedAt: new Date() };
@@ -228,7 +228,7 @@ export const deleteOracle = createServerFn({ method: "DELETE" })
 // CREATE Verification Request
 export const createVerification = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       missionId: z.string(),
       oracleId: z.string(),
@@ -269,7 +269,7 @@ export const createVerification = createServerFn({ method: "POST" })
 // READ Verification
 export const getVerification = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockVerification: Verification = {
@@ -311,7 +311,7 @@ export const getVerification = createServerFn({ method: "GET" })
 // READ Verifications for Mission
 export const getMissionVerifications = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ missionId: z.string() }))
+  .inputValidator(z.object({ missionId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockVerifications: Verification[] = [
@@ -349,7 +349,7 @@ export const getMissionVerifications = createServerFn({ method: "GET" })
 // Update Oracle Performance
 export const updateOraclePerformance = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       oracleId: z.string(),
       verificationId: z.string(),

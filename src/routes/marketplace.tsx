@@ -34,7 +34,7 @@ import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
 import { OrderTicket } from "@/components/rve/order-ticket";
 import { ASSETS, type Asset } from "@/components/rve/types";
 import { getAssets } from "@/lib/rve/rve.functions";
-import { getOrderBook, getTradingOrders } from "@/lib/rve/identity.functions";
+import { getOrderBook } from "@/lib/rve/identity.functions";
 import { RoadmapSection } from "@/components/rve/roadmap-section";
 import { MARKETPLACE_ROADMAP } from "@/lib/rve/marketplace-roadmap";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,7 @@ function MarketplacePage() {
   });
 
   // Convert API assets to component format
-  const assets: Asset[] = apiAssets?.map(apiAsset => ({
+  const assets: Asset[] = (apiAssets?.map((apiAsset: any) => ({
     sym: apiAsset.symbol,
     name: apiAsset.name,
     price: apiAsset.currentPrice,
@@ -115,7 +115,7 @@ function MarketplacePage() {
     marketCap: apiAsset.marketCap || 0,
     volume24h: Math.random() * 1000000, // Mock volume
     verificationScore: apiAsset.verificationScore,
-  })) || ASSETS; // Fallback to static data if API fails
+  })) as unknown as Asset[]) || ASSETS; // Fallback to static data if API fails
 
   // Sample price history data
   const priceData = [

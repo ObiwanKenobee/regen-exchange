@@ -33,7 +33,7 @@ export interface Steward {
 // CREATE Steward
 export const createSteward = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       phone: z.string().min(10),
@@ -97,7 +97,7 @@ export const createSteward = createServerFn({ method: "POST" })
 // READ Steward
 export const getSteward = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     if (!db) {
       throw new Error("Database not configured");
@@ -133,8 +133,8 @@ export const getSteward = createServerFn({ method: "GET" })
         builder: 0,
       },
       ridScore: user.ridScore,
-      riusEarned: user.riuStakes.reduce((sum, stake) => sum + stake.amount, 0),
-      missionsCompleted: user.missionParticipations.filter(p => p.status === 'completed').length,
+      riusEarned: user.riuStakes.reduce((sum: number, stake: any) => sum + stake.amount, 0),
+      missionsCompleted: user.missionParticipations.filter((p: any) => p.status === 'completed').length,
       certifications: (user.certifications as string[]) || [],
       joinedAt: user.createdAt,
       lastActive: user.updatedAt,
@@ -149,7 +149,7 @@ export const getSteward = createServerFn({ method: "GET" })
 // READ All Stewards
 export const getStewards = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       location: z.string().optional(),
       skills: z.array(z.string()).optional(),
@@ -183,7 +183,7 @@ export const getStewards = createServerFn({ method: "GET" })
     });
 
     // Map users to stewards
-    const stewards: Steward[] = users.map(user => ({
+    const stewards: Steward[] = users.map((user: any) => ({
       id: user.id,
       name: user.name || user.did || "Unknown Steward",
       phone: user.mpesaNumber || "",
@@ -198,8 +198,8 @@ export const getStewards = createServerFn({ method: "GET" })
         builder: 0,
       },
       ridScore: user.ridScore,
-      riusEarned: user.riuStakes.reduce((sum, stake) => sum + stake.amount, 0),
-      missionsCompleted: user.missionParticipations.filter(p => p.status === 'completed').length,
+      riusEarned: user.riuStakes.reduce((sum: number, stake: any) => sum + stake.amount, 0),
+      missionsCompleted: user.missionParticipations.filter((p: any) => p.status === 'completed').length,
       certifications: (user.certifications as string[]) || [],
       joinedAt: user.createdAt,
       lastActive: user.updatedAt,
@@ -212,9 +212,9 @@ export const getStewards = createServerFn({ method: "GET" })
   });
 
 // UPDATE Steward
-export const updateSteward = createServerFn({ method: "PATCH" })
+export const updateSteward = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       name: z.string().optional(),
@@ -274,9 +274,9 @@ export const updateSteward = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Steward (Soft Delete)
-export const deleteSteward = createServerFn({ method: "DELETE" })
+export const deleteSteward = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     if (!db) {
       throw new Error("Database not configured");
@@ -295,7 +295,7 @@ export const deleteSteward = createServerFn({ method: "DELETE" })
 // Update Steward Reputation
 export const updateStewardReputation = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       stewardId: z.string(),
       domain: z.enum(["steward", "oracle", "research", "civic", "builder"]),

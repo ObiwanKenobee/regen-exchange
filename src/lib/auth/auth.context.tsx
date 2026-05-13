@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (did: string, signature: string, message: string) => {
     setIsLoading(true);
     try {
-      const result = await authenticateUser({ did, signature, message });
+      const result = await authenticateUser({ data: { did, signature, message } });
       localStorage.setItem("auth_token", result.token);
       setUser(result.user);
     } catch (error) {
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (did: string, email?: string, mpesaNumber?: string, walletAddress?: string) => {
     setIsLoading(true);
     try {
-      const result = await registerUser({ did, email, mpesaNumber, walletAddress });
+      const result = await registerUser({ data: { did, email, mpesaNumber, walletAddress } });
       localStorage.setItem("auth_token", result.token);
       setUser(result.user);
     } catch (error) {
@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const verifyUserDID = async (did: string, verificationMethod: string) => {
     try {
-      const result = await verifyDID({ did, verificationMethod });
+      const result = await verifyDID({ data: { did, verificationMethod } });
       if (user) {
         setUser({
           ...user,

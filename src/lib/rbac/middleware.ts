@@ -20,6 +20,7 @@ import {
   createAuditLog,
   ProtectedEndpointConfig,
   AuditLogEntry,
+  requirePermission,
 } from "./permissions";
 
 /**

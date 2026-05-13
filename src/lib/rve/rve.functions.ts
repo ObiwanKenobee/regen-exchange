@@ -341,9 +341,9 @@ export const getProposals = createServerFn({ method: "GET" })
         orderBy: { createdAt: "desc" },
       });
 
-      return proposals.map((proposal) => {
+      return proposals.map((proposal: any) => {
         const counts = proposal.votes.reduce(
-          (acc, vote) => {
+          (acc: Record<string, number>, vote: any) => {
             acc[vote.vote] = (acc[vote.vote] ?? 0) + 1;
             return acc;
           },
@@ -373,7 +373,9 @@ export const getProposals = createServerFn({ method: "GET" })
  */
 export const createOrder = createServerFn({ method: "POST" })
   .inputValidator(createOrderInput)
-  .handler(async ({ data, request }): Promise<{ id: string; status: string; message: string }> => {
+  .handler(async ({ data }): Promise<{ id: string; status: string; message: string }> => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const request = getRequest();
     const auth = await authorizeRequest(request, [Permission.EXECUTE_TRADE]);
     const userId = auth.id;
 
@@ -417,9 +419,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     try {
       await updateRIDScore({
-        userId,
-        activity: "trade",
-        impact: 2,
+        data: { userId, activity: "trade", impact: 2 },
       });
     } catch (error) {
       console.warn("Failed to update RID score:", error);
@@ -440,7 +440,9 @@ export const voteOnProposal = createServerFn({ method: "POST" })
     proposalId: z.string(),
     vote: z.enum(["for", "against", "abstain"]),
   }))
-  .handler(async ({ data, request }): Promise<{ success: boolean; message: string }> => {
+  .handler(async ({ data }): Promise<{ success: boolean; message: string }> => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const request = getRequest();
     const auth = await authorizeRequest(request);
     if (auth.ridScore < 25) {
       throw new Error("Minimum RID score of 25 required to vote");
@@ -479,9 +481,7 @@ export const voteOnProposal = createServerFn({ method: "POST" })
 
     try {
       await updateRIDScore({
-        userId: auth.id,
-        activity: "governance_vote",
-        impact: 3,
+        data: { userId: auth.id, activity: "governance_vote", impact: 3 },
       });
     } catch (error) {
       console.warn("Failed to update RID score:", error);

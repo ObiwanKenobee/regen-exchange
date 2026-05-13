@@ -59,7 +59,7 @@ export interface ImpactDashboard {
 // CREATE Impact Metric
 export const createImpactMetric = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       category: z.enum(["environmental", "social", "economic"]),
@@ -94,7 +94,7 @@ export const createImpactMetric = createServerFn({ method: "POST" })
 // READ Impact Metric
 export const getImpactMetric = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockMetric: ImpactMetric = {
@@ -125,7 +125,7 @@ export const getImpactMetric = createServerFn({ method: "GET" })
 // READ Impact Metrics (with filters)
 export const getImpactMetrics = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       category: z.enum(["environmental", "social", "economic"]).optional(),
       region: z.string().optional(),
@@ -188,9 +188,9 @@ export const getImpactMetrics = createServerFn({ method: "GET" })
   });
 
 // UPDATE Impact Metric
-export const updateImpactMetric = createServerFn({ method: "PATCH" })
+export const updateImpactMetric = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       name: z.string().optional(),
@@ -219,9 +219,9 @@ export const updateImpactMetric = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Impact Metric
-export const deleteImpactMetric = createServerFn({ method: "DELETE" })
+export const deleteImpactMetric = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = { id: data.id, deleted: true, deletedAt: new Date() };
@@ -235,7 +235,7 @@ export const deleteImpactMetric = createServerFn({ method: "DELETE" })
 // Add Data Point to Metric
 export const addMetricDataPoint = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       metricId: z.string(),
       value: z.number(),
@@ -265,7 +265,7 @@ export const addMetricDataPoint = createServerFn({ method: "POST" })
 // CREATE Impact Report
 export const createImpactReport = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       period: z.object({
@@ -306,7 +306,7 @@ export const createImpactReport = createServerFn({ method: "POST" })
 // READ Impact Report
 export const getImpactReport = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockReport: ImpactReport = {
@@ -359,7 +359,7 @@ export const getImpactReport = createServerFn({ method: "GET" })
 // READ Impact Reports
 export const getImpactReports = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       scope: z.enum(["local", "regional", "national", "global"]).optional(),
       region: z.string().optional(),
@@ -402,7 +402,7 @@ export const getImpactReports = createServerFn({ method: "GET" })
 // CREATE Impact Dashboard
 export const createImpactDashboard = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       metrics: z.array(z.string()),
@@ -429,7 +429,7 @@ export const createImpactDashboard = createServerFn({ method: "POST" })
 // READ Impact Dashboard
 export const getImpactDashboard = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockDashboard: ImpactDashboard = {
@@ -452,7 +452,7 @@ export const getImpactDashboard = createServerFn({ method: "GET" })
 // READ User Dashboards
 export const getUserDashboards = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ stewardId: z.string().optional() }))
+  .inputValidator(z.object({ stewardId: z.string().optional() }))
   .handler(async ({ data }) => {
     const stewardId = data.stewardId || "current-user";
 
@@ -479,9 +479,9 @@ export const getUserDashboards = createServerFn({ method: "GET" })
   });
 
 // UPDATE Dashboard
-export const updateImpactDashboard = createServerFn({ method: "PATCH" })
+export const updateImpactDashboard = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       name: z.string().optional(),
@@ -512,7 +512,7 @@ export const updateImpactDashboard = createServerFn({ method: "PATCH" })
 // Get Dashboard Data
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ dashboardId: z.string() }))
+  .inputValidator(z.object({ dashboardId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const dashboardData = {
@@ -565,7 +565,7 @@ export const getDashboardData = createServerFn({ method: "GET" })
 // Get Impact Leaderboard
 export const getImpactLeaderboard = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       category: z.enum(["environmental", "social", "economic"]).optional(),
       timeRange: z.enum(["7d", "30d", "90d", "1y"]).default("30d"),

@@ -52,7 +52,7 @@ export interface Mission {
 // CREATE Mission
 export const createMission = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(10),
@@ -106,7 +106,7 @@ export const createMission = createServerFn({ method: "POST" })
 // READ Mission
 export const getMission = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockMission: Mission = {
@@ -163,7 +163,7 @@ export const getMission = createServerFn({ method: "GET" })
 // READ Missions (with filters)
 export const getMissions = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       status: z.enum(["draft", "active", "completed", "cancelled"]).optional(),
       type: z.enum(["restoration", "monitoring", "education", "emergency"]).optional(),
@@ -224,9 +224,9 @@ export const getMissions = createServerFn({ method: "GET" })
   });
 
 // UPDATE Mission
-export const updateMission = createServerFn({ method: "PATCH" })
+export const updateMission = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -265,9 +265,9 @@ export const updateMission = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Mission
-export const deleteMission = createServerFn({ method: "DELETE" })
+export const deleteMission = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = { id: data.id, deleted: true, deletedAt: new Date() };
@@ -281,7 +281,7 @@ export const deleteMission = createServerFn({ method: "DELETE" })
 // Join Mission
 export const joinMission = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ missionId: z.string() }))
+  .inputValidator(z.object({ missionId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = {
@@ -305,7 +305,7 @@ export const joinMission = createServerFn({ method: "POST" })
 // Complete Mission
 export const completeMission = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       missionId: z.string(),
       evidence: z.array(z.string()), // URLs to photos/videos

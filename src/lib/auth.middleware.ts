@@ -1,5 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { getWebRequest } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import jwt from "jsonwebtoken";
 import db from "@/lib/db";
 import { RoleType } from "./rbac/roles";
@@ -23,7 +23,7 @@ export interface AuthContext {
 
 // Simple authentication middleware for server functions
 export const authMiddleware = createMiddleware().server(async ({ next }) => {
-  const request = getWebRequest();
+  const request = getRequest();
   const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -102,7 +102,7 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
 
 // Helper function to get current user from context
 export function getCurrentUser() {
-  const request = getWebRequest();
+  const request = getRequest();
   const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

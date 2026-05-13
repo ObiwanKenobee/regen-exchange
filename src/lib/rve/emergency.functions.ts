@@ -179,7 +179,7 @@ export interface ResponseTeam {
 // CREATE Emergency Event
 export const createEmergencyEvent = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -274,7 +274,7 @@ export const createEmergencyEvent = createServerFn({ method: "POST" })
 // READ Emergency Event
 export const getEmergencyEvent = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockEvent: EmergencyEvent = {
@@ -391,7 +391,7 @@ export const getEmergencyEvent = createServerFn({ method: "GET" })
 // READ Emergency Events
 export const getEmergencyEvents = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       status: z.enum(["reported", "assessing", "responding", "contained", "resolved", "monitoring"]).optional(),
       type: z.enum(["natural_disaster", "environmental_crisis", "health_emergency", "security_threat", "infrastructure_failure", "other"]).optional(),
@@ -434,9 +434,9 @@ export const getEmergencyEvents = createServerFn({ method: "GET" })
   });
 
 // UPDATE Emergency Event
-export const updateEmergencyEvent = createServerFn({ method: "PATCH" })
+export const updateEmergencyEvent = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       status: z.enum(["reported", "assessing", "responding", "contained", "resolved", "monitoring"]).optional(),
@@ -489,7 +489,7 @@ export const updateEmergencyEvent = createServerFn({ method: "PATCH" })
 // Send Emergency Alert
 export const sendEmergencyAlert = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       eventId: z.string(),
       level: z.enum(["info", "warning", "emergency"]),
@@ -520,7 +520,7 @@ export const sendEmergencyAlert = createServerFn({ method: "POST" })
 // Request Resource Allocation
 export const requestResourceAllocation = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       eventId: z.string(),
       resourceType: z.string(),
@@ -556,7 +556,7 @@ export const requestResourceAllocation = createServerFn({ method: "POST" })
 // CREATE Resource Inventory Item
 export const createResourceInventory = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["medical", "food", "water", "shelter", "transport", "equipment", "personnel", "financial"]),
       name: z.string().min(1),
@@ -606,7 +606,7 @@ export const createResourceInventory = createServerFn({ method: "POST" })
 // READ Resource Inventory
 export const getResourceInventory = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["medical", "food", "water", "shelter", "transport", "equipment", "personnel", "financial"]).optional(),
       region: z.string().optional(),
@@ -663,7 +663,7 @@ export const getResourceInventory = createServerFn({ method: "GET" })
 // Allocate Resource
 export const allocateResource = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       resourceId: z.string(),
       eventId: z.string(),
@@ -695,7 +695,7 @@ export const allocateResource = createServerFn({ method: "POST" })
 // CREATE Response Team
 export const createResponseTeam = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       type: z.enum(["medical", "search_rescue", "logistics", "communication", "assessment", "coordination"]),
@@ -742,7 +742,7 @@ export const createResponseTeam = createServerFn({ method: "POST" })
 // READ Response Teams
 export const getResponseTeams = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["medical", "search_rescue", "logistics", "communication", "assessment", "coordination"]).optional(),
       status: z.enum(["standby", "deployed", "returning", "maintenance"]).optional(),
@@ -787,7 +787,7 @@ export const getResponseTeams = createServerFn({ method: "GET" })
 // Deploy Response Team
 export const deployResponseTeam = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       teamId: z.string(),
       eventId: z.string(),
@@ -825,7 +825,7 @@ export const deployResponseTeam = createServerFn({ method: "POST" })
 // Get Emergency Response Stats
 export const getEmergencyResponseStats = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const stats = {
