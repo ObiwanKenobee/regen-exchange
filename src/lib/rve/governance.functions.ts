@@ -243,7 +243,7 @@ export const getProposals = createServerFn({ method: "GET" })
   });
 
 // UPDATE Proposal
-export const updateProposal = createServerFn({ method: "PATCH" })
+export const updateProposal = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -280,7 +280,7 @@ export const updateProposal = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Proposal
-export const deleteProposal = createServerFn({ method: "DELETE" })
+export const deleteProposal = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {

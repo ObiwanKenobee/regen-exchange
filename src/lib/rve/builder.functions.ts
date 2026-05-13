@@ -323,7 +323,7 @@ export const getBuilders = createServerFn({ method: "GET" })
   });
 
 // UPDATE Builder Profile
-export const updateBuilder = createServerFn({ method: "PATCH" })
+export const updateBuilder = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -557,7 +557,7 @@ export const getProjects = createServerFn({ method: "GET" })
   });
 
 // UPDATE Project
-export const updateProject = createServerFn({ method: "PATCH" })
+export const updateProject = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({

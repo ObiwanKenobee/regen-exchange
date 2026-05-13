@@ -212,7 +212,7 @@ export const getStewards = createServerFn({ method: "GET" })
   });
 
 // UPDATE Steward
-export const updateSteward = createServerFn({ method: "PATCH" })
+export const updateSteward = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -274,7 +274,7 @@ export const updateSteward = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Steward (Soft Delete)
-export const deleteSteward = createServerFn({ method: "DELETE" })
+export const deleteSteward = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {

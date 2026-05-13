@@ -413,7 +413,7 @@ export const getCourses = createServerFn({ method: "GET" })
   });
 
 // UPDATE Course
-export const updateCourse = createServerFn({ method: "PATCH" })
+export const updateCourse = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({

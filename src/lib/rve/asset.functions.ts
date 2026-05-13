@@ -270,7 +270,7 @@ export const getAssets = createServerFn({ method: "GET" })
   });
 
 // UPDATE Asset
-export const updateAsset = createServerFn({ method: "PATCH" })
+export const updateAsset = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -311,7 +311,7 @@ export const updateAsset = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Asset
-export const deleteAsset = createServerFn({ method: "DELETE" })
+export const deleteAsset = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {

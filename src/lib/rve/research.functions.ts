@@ -264,7 +264,7 @@ export const getResearchProjects = createServerFn({ method: "GET" })
   });
 
 // UPDATE Research Project
-export const updateResearchProject = createServerFn({ method: "PATCH" })
+export const updateResearchProject = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({

@@ -283,7 +283,7 @@ export const getCivicInitiatives = createServerFn({ method: "GET" })
   });
 
 // UPDATE Civic Initiative
-export const updateCivicInitiative = createServerFn({ method: "PATCH" })
+export const updateCivicInitiative = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({

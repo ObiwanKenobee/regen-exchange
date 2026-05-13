@@ -188,7 +188,7 @@ export const getImpactMetrics = createServerFn({ method: "GET" })
   });
 
 // UPDATE Impact Metric
-export const updateImpactMetric = createServerFn({ method: "PATCH" })
+export const updateImpactMetric = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -219,7 +219,7 @@ export const updateImpactMetric = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Impact Metric
-export const deleteImpactMetric = createServerFn({ method: "DELETE" })
+export const deleteImpactMetric = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
@@ -479,7 +479,7 @@ export const getUserDashboards = createServerFn({ method: "GET" })
   });
 
 // UPDATE Dashboard
-export const updateImpactDashboard = createServerFn({ method: "PATCH" })
+export const updateImpactDashboard = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({

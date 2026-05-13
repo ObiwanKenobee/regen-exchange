@@ -175,7 +175,7 @@ export const getOracles = createServerFn({ method: "GET" })
   });
 
 // UPDATE Oracle
-export const updateOracle = createServerFn({ method: "PATCH" })
+export const updateOracle = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -207,7 +207,7 @@ export const updateOracle = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Oracle
-export const deleteOracle = createServerFn({ method: "DELETE" })
+export const deleteOracle = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {

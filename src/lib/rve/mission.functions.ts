@@ -224,7 +224,7 @@ export const getMissions = createServerFn({ method: "GET" })
   });
 
 // UPDATE Mission
-export const updateMission = createServerFn({ method: "PATCH" })
+export const updateMission = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
@@ -265,7 +265,7 @@ export const updateMission = createServerFn({ method: "PATCH" })
   });
 
 // DELETE Mission
-export const deleteMission = createServerFn({ method: "DELETE" })
+export const deleteMission = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {

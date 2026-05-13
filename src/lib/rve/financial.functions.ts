@@ -295,7 +295,7 @@ export const getRiusToken = createServerFn({ method: "GET" })
   });
 
 // UPDATE RIUS Token Metrics
-export const updateRiusTokenMetrics = createServerFn({ method: "PATCH" })
+export const updateRiusTokenMetrics = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({

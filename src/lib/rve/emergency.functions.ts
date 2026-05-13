@@ -434,7 +434,7 @@ export const getEmergencyEvents = createServerFn({ method: "GET" })
   });
 
 // UPDATE Emergency Event
-export const updateEmergencyEvent = createServerFn({ method: "PATCH" })
+export const updateEmergencyEvent = createServerFn({ method: "POST" })
   .middleware([])
   .inputValidator(
     z.object({
