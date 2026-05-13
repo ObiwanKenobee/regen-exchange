@@ -491,7 +491,7 @@ export const createWallet = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     // Mock implementation
-    const newWallet: Wallet = {
+    const newWallet = {
       id: `wallet-${Date.now()}`,
       stewardId: "current-user", // TODO: Get from auth context
       address: `0x${Math.random().toString(16).substr(2, 40)}`, // Mock address
@@ -642,7 +642,7 @@ export const createInvestment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     // Mock implementation
-    const newInvestment: Investment = {
+    const newInvestment = {
       id: `investment-${Date.now()}`,
       investorId: "current-user", // TODO: Get from auth context
       ...data,
