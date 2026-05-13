@@ -115,7 +115,7 @@ function MarketplacePage() {
     marketCap: apiAsset.marketCap || 0,
     volume24h: Math.random() * 1000000, // Mock volume
     verificationScore: apiAsset.verificationScore,
-  })) || ASSETS; // Fallback to static data if API fails
+  })) as Asset[]) || ASSETS; // Fallback to static data if API fails
 
   // Sample price history data
   const priceData = [
