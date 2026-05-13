@@ -85,7 +85,7 @@ export function GovernanceSection() {
 
     setVotingStates(prev => ({ ...prev, [proposalId]: true }));
     try {
-      await voteOnProposal({ proposalId, vote });
+      await voteOnProposal({ data: { proposalId, vote } });
       // In a real app, you'd refresh the proposal data here
       console.log(`Voted ${vote} on ${proposalId}`);
     } catch (error) {
