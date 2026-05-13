@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Badge, Shield, Users, CheckCircle, AlertCircle, Key } from "lucide-react";
+import { Shield, Users, CheckCircle, AlertCircle, Key } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
