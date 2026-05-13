@@ -133,8 +133,8 @@ export const getSteward = createServerFn({ method: "GET" })
         builder: 0,
       },
       ridScore: user.ridScore,
-      riusEarned: user.riuStakes.reduce((sum, stake) => sum + stake.amount, 0),
-      missionsCompleted: user.missionParticipations.filter(p => p.status === 'completed').length,
+      riusEarned: user.riuStakes.reduce((sum: number, stake: any) => sum + stake.amount, 0),
+      missionsCompleted: user.missionParticipations.filter((p: any) => p.status === 'completed').length,
       certifications: (user.certifications as string[]) || [],
       joinedAt: user.createdAt,
       lastActive: user.updatedAt,
@@ -183,7 +183,7 @@ export const getStewards = createServerFn({ method: "GET" })
     });
 
     // Map users to stewards
-    const stewards: Steward[] = users.map(user => ({
+    const stewards: Steward[] = users.map((user: any) => ({
       id: user.id,
       name: user.name || user.did || "Unknown Steward",
       phone: user.mpesaNumber || "",
@@ -198,8 +198,8 @@ export const getStewards = createServerFn({ method: "GET" })
         builder: 0,
       },
       ridScore: user.ridScore,
-      riusEarned: user.riuStakes.reduce((sum, stake) => sum + stake.amount, 0),
-      missionsCompleted: user.missionParticipations.filter(p => p.status === 'completed').length,
+      riusEarned: user.riuStakes.reduce((sum: number, stake: any) => sum + stake.amount, 0),
+      missionsCompleted: user.missionParticipations.filter((p: any) => p.status === 'completed').length,
       certifications: (user.certifications as string[]) || [],
       joinedAt: user.createdAt,
       lastActive: user.updatedAt,

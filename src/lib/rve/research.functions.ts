@@ -121,7 +121,7 @@ export const createResearchProject = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     // Mock implementation
-    const newProject: ResearchProject = {
+    const newProject = {
       id: `research-${Date.now()}`,
       ...data,
       status: "planning",

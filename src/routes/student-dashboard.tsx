@@ -1313,7 +1313,7 @@ function StudentDashboard() {
                     title="Buy RIUs with M-Pesa"
                     description="Accelerate your learning journey — STK Push to instantly credit RIUs to your academy balance."
                     defaultAmount={500}
-                    purpose="student_buy_rius"
+                    purpose={"student_buy_rius" as any}
                     accountReference="RVE-STUDENT"
                   />
 
@@ -1321,7 +1321,7 @@ function StudentDashboard() {
                     title="Cash Out RIUs → M-Pesa"
                     description="Convert your earned RIUs to cash for real-world ecological projects and personal development."
                     defaultOccasion="RIU cashout - Student Rewards"
-                    purpose="student_cashout"
+                    purpose={"student_cashout" as any}
                   />
                 </div>
 
