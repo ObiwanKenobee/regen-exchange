@@ -303,7 +303,7 @@ export const getBuilders = createServerFn({ method: "GET" })
         reputation: { overall: 4.8, reliability: 4.9, quality: 4.7, innovation: 4.6 },
         availability: { status: "available", workload: 30 },
         rates: { hourly: 75, currency: "RIUS" },
-        contact: { email: "contact@tech4good.org" },
+        contact: { email: "contact@tech4good.org", socialLinks: {} },
         location: { city: "Nairobi", country: "Kenya", remote: true },
         certifications: ["Blockchain Developer"],
         joinedAt: new Date(),

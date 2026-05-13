@@ -264,7 +264,7 @@ export const getCivicInitiatives = createServerFn({ method: "GET" })
         goals: { targetParticipants: 1000, targetSignatures: 5000, successCriteria: "Collect 5,000 signatures" },
         timeline: { startDate: new Date(), endDate: new Date() },
         participants: [],
-        engagement: { totalParticipants: 245, signatures: 1847 },
+        engagement: { totalParticipants: 245, signatures: 1847, feedback: [] },
         resources: { budget: 5000, materials: [], partnerships: [] },
         outcomes: { status: "pending" },
         createdAt: new Date(),

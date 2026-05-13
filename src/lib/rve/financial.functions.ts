@@ -354,7 +354,7 @@ export const createTransaction = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     // Mock implementation
-    const newTransaction: Transaction = {
+    const newTransaction = {
       id: `tx-${Date.now()}`,
       ...data,
       fromAddress: "current-wallet", // TODO: Get from auth context

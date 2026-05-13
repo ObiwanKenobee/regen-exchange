@@ -299,6 +299,7 @@ export const PLATFORM_PILLARS: PlatformPillar[] = [
     technologies: ["Flutter", "TypeScript", "Python", "Rust SDKs"],
     relatedRoutes: [{ to: "/impact-explorer", label: "Impact Explorer" }],
     horizon: "core",
+    features: [],
   },
   {
     id: "transparency",

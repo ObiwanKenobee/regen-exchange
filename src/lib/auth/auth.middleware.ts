@@ -46,12 +46,12 @@ export const authMiddleware = createMiddleware()
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as JWTPayload;
 
-      let user = {
+      let user: any = {
         id: decoded.userId,
         did: decoded.did,
         ridScore: decoded.ridScore,
         role: RoleType.STUDENT_RESEARCHER,
-        reputationHistory: [],
+        reputationHistory: [] as any[],
         mpesaNumber: "+254712345678",
         walletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
         email: "user@example.com",

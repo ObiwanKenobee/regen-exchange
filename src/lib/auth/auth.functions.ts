@@ -161,7 +161,7 @@ export const registerUser = createServerFn({ method: "POST" })
         },
       });
     } else {
-      mockUsers.push(newUser);
+      mockUsers.push(newUser as any);
     }
 
     const token = jwt.sign(
@@ -347,7 +347,9 @@ export const issueVerifiableCredential = createServerFn({ method: "POST" })
  * Get current user from JWT token
  */
 export const getCurrentUser = createServerFn({ method: "GET" })
-  .handler(async ({ request }): Promise<any> => {
+  .handler(async (): Promise<any> => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const request = getRequest();
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new Error("No authorization token provided");

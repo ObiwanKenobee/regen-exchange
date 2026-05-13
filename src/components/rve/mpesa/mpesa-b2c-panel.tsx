@@ -45,7 +45,7 @@ export function MpesaB2cPanel({ title, description, defaultOccasion, purpose }: 
           amount: Math.floor(n),
           remarks: remarks.slice(0, 100),
           occasion: defaultOccasion.slice(0, 100),
-          purpose,
+          purpose: purpose as any,
         },
       });
       if (res.demo) {
