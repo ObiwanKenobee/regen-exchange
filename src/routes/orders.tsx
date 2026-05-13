@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, ArrowLeft, ArrowUpDown, CheckCircle2, CheckSquare, Download, ExternalLink,
-  Loader2, Radio, RefreshCw, RotateCw, Square, XCircle,
+  Activity, ArrowLeft, ArrowUpDown, ArrowUp, CheckCircle2, CheckSquare, ChevronLeft, ChevronRight,
+  Download, ExternalLink, History, Loader2, Radio, RefreshCw, RotateCw, Square, XCircle,
 } from "lucide-react";
 import { useWallet, shortHash, type Order, type OrderStatus } from "@/lib/wallet-context";
 import { ASSETS } from "@/components/rve/types";
@@ -35,10 +35,13 @@ type OrderFilters = {
   from: string;
   to: string;
   sort: SortKey;
+  pageSize: number;
 };
 
-const DEFAULT_FILTERS: OrderFilters = { asset: "All", side: "all", status: "all", from: "", to: "", sort: "newest" };
+const DEFAULT_FILTERS: OrderFilters = { asset: "All", side: "all", status: "all", from: "", to: "", sort: "newest", pageSize: 50 };
 const STATUS_RANK: Record<OrderStatus, number> = { pending: 0, failed: 1, confirmed: 2 };
+const FILTERS_KEY = "rve.orders.filters.v1";
+const PAGE_SIZES = [25, 50, 100, 200];
 
 const COLUMNS: CsvColumn[] = [
   { key: "timestamp", label: "Timestamp", defaultOn: true, alwaysOn: true },
@@ -62,21 +65,49 @@ const ROW_H = 60;
 const VIEWPORT_H = 600;
 const OVERSCAN = 6;
 
+function loadFilters(): OrderFilters {
+  if (typeof window === "undefined") return DEFAULT_FILTERS;
+  try {
+    const raw = window.localStorage.getItem(FILTERS_KEY);
+    if (!raw) return DEFAULT_FILTERS;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_FILTERS, ...parsed };
+  } catch { return DEFAULT_FILTERS; }
+}
+
 function OrderHistoryPage() {
   const {
     orders, refreshOrder, retryOrder, clearOrders, pendingCount,
     retryFailed, refreshPending, streamEnabled, setStreamEnabled,
+    setStreamFilters,
   } = useWallet();
-  const { startExport } = useExportJobs();
-  const [filters, setFilters] = useState<OrderFilters>(DEFAULT_FILTERS);
+  const { startExport, openHistory } = useExportJobs();
+  const [filters, setFilters] = useState<OrderFilters>(() => loadFilters());
+  const [page, setPage] = useState(1);
   const [csvOpen, setCsvOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [autoFollowStream, setAutoFollowStream] = useState(true);
+  const [pendingNew, setPendingNew] = useState(0);
+  const lastSeenIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
 
   const set = (patch: Partial<OrderFilters>) => setFilters((f) => ({ ...f, ...patch }));
   const assetSymbols = useMemo(() => ["All", ...ASSETS.map((a) => a.sym)], []);
+
+  // Persist filters across reloads
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try { window.localStorage.setItem(FILTERS_KEY, JSON.stringify(filters)); } catch {}
+  }, [filters]);
+
+  // Sync synthetic stream to current asset/side filter so noise respects context
+  useEffect(() => {
+    setStreamFilters({ asset: filters.asset, side: filters.side });
+  }, [filters.asset, filters.side, setStreamFilters]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [filters.asset, filters.side, filters.status, filters.from, filters.to, filters.sort, filters.pageSize]);
 
   const filtered = useMemo(() => {
     const fromTs = filters.from ? new Date(filters.from).getTime() : 0;
@@ -100,28 +131,59 @@ function OrderHistoryPage() {
     return sorted;
   }, [orders, filters]);
 
-  // Auto-scroll to top when streaming brings new rows (matches saved filter)
-  useEffect(() => {
-    if (streamEnabled && autoFollowStream && filters.sort === "newest" && scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
-    }
-  }, [orders.length, streamEnabled, autoFollowStream, filters.sort]);
+  // Server-style pagination: slice the sorted+filtered set into page windows
+  const totalFiltered = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / filters.pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * filters.pageSize;
+  const pageEnd = Math.min(totalFiltered, pageStart + filters.pageSize);
+  const pageRows = useMemo(() => filtered.slice(pageStart, pageEnd), [filtered, pageStart, pageEnd]);
 
-  // Virtualization slice
-  const totalH = filtered.length * ROW_H;
+  // Track new matching orders without jumping the table
+  useEffect(() => {
+    const topId = filtered[0]?.id ?? null;
+    if (lastSeenIdRef.current === null) {
+      lastSeenIdRef.current = topId;
+      return;
+    }
+    if (topId && topId !== lastSeenIdRef.current) {
+      // count how many new matching rows arrived since last seen
+      const idx = filtered.findIndex((o) => o.id === lastSeenIdRef.current);
+      const newCount = idx === -1 ? Math.min(filtered.length, 10) : idx;
+      if (newCount > 0) {
+        if (autoFollowStream && safePage === 1 && scrollRef.current && scrollRef.current.scrollTop < 4) {
+          // user is at top: silently follow
+          lastSeenIdRef.current = topId;
+          setPendingNew(0);
+        } else {
+          setPendingNew((n) => n + newCount);
+        }
+      }
+    }
+  }, [filtered, autoFollowStream, safePage]);
+
+  const jumpToTop = useCallback(() => {
+    setPage(1);
+    requestAnimationFrame(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; });
+    lastSeenIdRef.current = filtered[0]?.id ?? null;
+    setPendingNew(0);
+  }, [filtered]);
+
+  // Virtualization within current page
+  const totalH = pageRows.length * ROW_H;
   const startIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
   const visibleCount = Math.ceil(VIEWPORT_H / ROW_H) + OVERSCAN * 2;
-  const endIdx = Math.min(filtered.length, startIdx + visibleCount);
-  const visibleRows = filtered.slice(startIdx, endIdx);
+  const endIdx = Math.min(pageRows.length, startIdx + visibleCount);
+  const visibleRows = pageRows.slice(startIdx, endIdx);
   const padTop = startIdx * ROW_H;
 
   // Bulk selection
-  const visibleIds = useMemo(() => filtered.map((o) => o.id), [filtered]);
-  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const pageIds = useMemo(() => pageRows.map((o) => o.id), [pageRows]);
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
   const someSelected = selected.size > 0;
   const toggleAll = () => {
     if (allSelected) setSelected(new Set());
-    else setSelected(new Set(visibleIds));
+    else setSelected((s) => new Set([...s, ...pageIds]));
   };
   const toggleOne = (id: string) =>
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -147,6 +209,7 @@ function OrderHistoryPage() {
   };
 
   const exportCsv = (cols: string[], scope: "filtered" | "all", opts: { background: boolean }) => {
+    // CSV export uses the full filtered dataset (not the loaded page window)
     const source = scope === "all" ? orders : filtered;
     if (!source.length) return toast.error("No orders to export");
     const filename = `rve-orders-${scope}-${Date.now()}.csv`;
@@ -165,7 +228,7 @@ function OrderHistoryPage() {
 
   const isActivePreset = (p: OrderFilters) =>
     p.asset === filters.asset && p.side === filters.side && p.status === filters.status &&
-    p.from === filters.from && p.to === filters.to && p.sort === filters.sort;
+    p.from === filters.from && p.to === filters.to && p.sort === filters.sort && p.pageSize === filters.pageSize;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -193,6 +256,9 @@ function OrderHistoryPage() {
             <button onClick={handleRefreshAllPending} className="flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm text-accent hover:bg-accent/20">
               <RefreshCw className="h-3.5 w-3.5" /> Refresh pending
             </button>
+            <button onClick={openHistory} className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50" title="Past export jobs">
+              <History className="h-3.5 w-3.5" /> Export history
+            </button>
             <button onClick={() => setCsvOpen(true)} className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50">
               <Download className="h-3.5 w-3.5" /> Export CSV
             </button>
@@ -205,7 +271,7 @@ function OrderHistoryPage() {
 
       <main className="mx-auto max-w-[1400px] px-6 py-8">
         <div className="panel p-5">
-          <div className="grid gap-4 md:grid-cols-6">
+          <div className="grid gap-4 md:grid-cols-7">
             <Field label="Asset">
               <select value={filters.asset} onChange={(e) => set({ asset: e.target.value })} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
                 {assetSymbols.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -236,6 +302,11 @@ function OrderHistoryPage() {
                 <option value="total">Total (high → low)</option>
               </select>
             </Field>
+            <Field label="Page size">
+              <select value={filters.pageSize} onChange={(e) => set({ pageSize: Number(e.target.value) })} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+                {PAGE_SIZES.map((n) => <option key={n} value={n}>{n} / page</option>)}
+              </select>
+            </Field>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
             <PresetBar<OrderFilters>
@@ -256,12 +327,21 @@ function OrderHistoryPage() {
           </div>
         </div>
 
+        {pendingNew > 0 && (
+          <button
+            onClick={jumpToTop}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"
+          >
+            <ArrowUp className="h-3.5 w-3.5" /> {pendingNew} new matching order{pendingNew === 1 ? "" : "s"} — jump to top
+          </button>
+        )}
+
         {/* Bulk action bar */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs">
           <div className="flex items-center gap-2">
             <button onClick={toggleAll} className="flex items-center gap-1 hover:text-foreground">
               {allSelected ? <CheckSquare className="h-3.5 w-3.5 text-primary" /> : <Square className="h-3.5 w-3.5 text-muted-foreground" />}
-              {allSelected ? "Unselect all" : `Select all ${filtered.length}`}
+              {allSelected ? "Unselect page" : `Select page (${pageRows.length})`}
             </button>
             {someSelected && <button onClick={() => setSelected(new Set())} className="text-muted-foreground hover:text-destructive">Clear</button>}
           </div>
@@ -297,7 +377,7 @@ function OrderHistoryPage() {
             <div className="text-right">Action</div>
           </div>
 
-          {filtered.length === 0 ? (
+          {pageRows.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">No orders match the current filters.</div>
           ) : (
             <div
@@ -323,9 +403,18 @@ function OrderHistoryPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground">
-            <div>Virtualized • showing rows {filtered.length === 0 ? 0 : startIdx + 1}–{endIdx} of {filtered.length}</div>
-            <div>{ROW_H}px row height • {VIEWPORT_H}px viewport</div>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground">
+            <div>
+              Showing <span className="font-mono text-foreground">{totalFiltered === 0 ? 0 : pageStart + 1}–{pageEnd}</span> of <span className="font-mono text-foreground">{totalFiltered.toLocaleString()}</span> filtered
+              <span className="ml-2 text-muted-foreground/70">• page {safePage} / {totalPages}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage(1)} disabled={safePage <= 1} className="rounded border border-border px-1.5 py-0.5 disabled:opacity-40 hover:bg-muted/40">First</button>
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} className="rounded border border-border px-1 py-0.5 disabled:opacity-40 hover:bg-muted/40"><ChevronLeft className="h-3 w-3" /></button>
+              <span className="px-2 font-mono">{safePage} / {totalPages}</span>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} className="rounded border border-border px-1 py-0.5 disabled:opacity-40 hover:bg-muted/40"><ChevronRight className="h-3 w-3" /></button>
+              <button onClick={() => setPage(totalPages)} disabled={safePage >= totalPages} className="rounded border border-border px-1.5 py-0.5 disabled:opacity-40 hover:bg-muted/40">Last</button>
+            </div>
           </div>
         </div>
       </main>

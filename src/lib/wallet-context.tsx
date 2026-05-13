@@ -51,6 +51,8 @@ type Ctx = {
   refreshPending: (ids?: string[]) => number;
   streamEnabled: boolean;
   setStreamEnabled: (v: boolean) => void;
+  streamFilters: { asset: string; side: "all" | "buy" | "sell" };
+  setStreamFilters: (f: { asset: string; side: "all" | "buy" | "sell" }) => void;
 };
 
 const WalletCtx = createContext<Ctx | null>(null);
@@ -246,6 +248,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("rve.orders.stream") === "1";
   });
+  const [streamFilters, setStreamFilters] = useState<{ asset: string; side: "all" | "buy" | "sell" }>({ asset: "All", side: "all" });
+  const streamFiltersRef = useRef(streamFilters);
+  useEffect(() => { streamFiltersRef.current = streamFilters; }, [streamFilters]);
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.localStorage.setItem("rve.orders.stream", streamEnabled ? "1" : "0");
@@ -262,9 +267,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       { sym: "SOL-INF", name: "Solar Infrastructure", price: 47.85 },
     ];
     const t = setInterval(() => {
-      const a = SYM_POOL[Math.floor(Math.random() * SYM_POOL.length)];
+      const sf = streamFiltersRef.current;
+      const pool = sf.asset === "All" ? SYM_POOL : SYM_POOL.filter((s) => s.sym === sf.asset);
+      const a = (pool.length ? pool : SYM_POOL)[Math.floor(Math.random() * (pool.length || SYM_POOL.length))];
       const qty = 1 + Math.floor(Math.random() * 25);
-      const side: "buy" | "sell" = Math.random() < 0.55 ? "buy" : "sell";
+      const side: "buy" | "sell" = sf.side !== "all" ? sf.side : (Math.random() < 0.55 ? "buy" : "sell");
       const total = qty * a.price;
       const id = `ord-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
       const txHash = "0x" + randHex(64);
@@ -283,7 +290,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   return (
     <WalletCtx.Provider
-      value={{ wallet, connecting, connect, disconnect, orders, pendingCount, submitOrder, refreshOrder, retryOrder, clearOrders, retryFailed, refreshPending, streamEnabled, setStreamEnabled }}
+      value={{ wallet, connecting, connect, disconnect, orders, pendingCount, submitOrder, refreshOrder, retryOrder, clearOrders, retryFailed, refreshPending, streamEnabled, setStreamEnabled, streamFilters, setStreamFilters }}
     >
       {children}
     </WalletCtx.Provider>
