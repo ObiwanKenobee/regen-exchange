@@ -33,7 +33,7 @@ export interface Steward {
 // CREATE Steward
 export const createSteward = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       phone: z.string().min(10),
@@ -97,7 +97,7 @@ export const createSteward = createServerFn({ method: "POST" })
 // READ Steward
 export const getSteward = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     if (!db) {
       throw new Error("Database not configured");
@@ -149,7 +149,7 @@ export const getSteward = createServerFn({ method: "GET" })
 // READ All Stewards
 export const getStewards = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       location: z.string().optional(),
       skills: z.array(z.string()).optional(),
@@ -214,7 +214,7 @@ export const getStewards = createServerFn({ method: "GET" })
 // UPDATE Steward
 export const updateSteward = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       name: z.string().optional(),
@@ -276,7 +276,7 @@ export const updateSteward = createServerFn({ method: "PATCH" })
 // DELETE Steward (Soft Delete)
 export const deleteSteward = createServerFn({ method: "DELETE" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     if (!db) {
       throw new Error("Database not configured");
@@ -295,7 +295,7 @@ export const deleteSteward = createServerFn({ method: "DELETE" })
 // Update Steward Reputation
 export const updateStewardReputation = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       stewardId: z.string(),
       domain: z.enum(["steward", "oracle", "research", "civic", "builder"]),

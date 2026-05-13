@@ -115,7 +115,7 @@ export interface ForumPost {
 // CREATE Civic Initiative
 export const createCivicInitiative = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -179,7 +179,7 @@ export const createCivicInitiative = createServerFn({ method: "POST" })
 // READ Civic Initiative
 export const getCivicInitiative = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockInitiative: CivicInitiative = {
@@ -238,7 +238,7 @@ export const getCivicInitiative = createServerFn({ method: "GET" })
 // READ Civic Initiatives
 export const getCivicInitiatives = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       status: z.enum(["draft", "active", "completed", "cancelled"]).optional(),
       type: z.enum(["petition", "campaign", "event", "survey", "referendum"]).optional(),
@@ -285,7 +285,7 @@ export const getCivicInitiatives = createServerFn({ method: "GET" })
 // UPDATE Civic Initiative
 export const updateCivicInitiative = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -326,7 +326,7 @@ export const updateCivicInitiative = createServerFn({ method: "PATCH" })
 // Join Civic Initiative
 export const joinCivicInitiative = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       initiativeId: z.string(),
       role: z.enum(["organizer", "supporter", "volunteer"]).default("supporter"),
@@ -359,7 +359,7 @@ export const joinCivicInitiative = createServerFn({ method: "POST" })
 // Sign Petition
 export const signPetition = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ initiativeId: z.string() }))
+  .inputValidator(z.object({ initiativeId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = {
@@ -383,7 +383,7 @@ export const signPetition = createServerFn({ method: "POST" })
 // Vote in Referendum
 export const voteInReferendum = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       initiativeId: z.string(),
       vote: z.enum(["yes", "no", "abstain"]),
@@ -416,7 +416,7 @@ export const voteInReferendum = createServerFn({ method: "POST" })
 // CREATE Community Forum
 export const createCommunityForum = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(10),
@@ -446,7 +446,7 @@ export const createCommunityForum = createServerFn({ method: "POST" })
 // READ Community Forums
 export const getCommunityForums = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       category: z.enum(["general", "environmental", "social", "economic", "governance"]).optional(),
       isPrivate: z.boolean().optional(),
@@ -500,7 +500,7 @@ export const getCommunityForums = createServerFn({ method: "GET" })
 // CREATE Forum Post
 export const createForumPost = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       forumId: z.string(),
       title: z.string().min(1),
@@ -545,7 +545,7 @@ export const createForumPost = createServerFn({ method: "POST" })
 // READ Forum Posts
 export const getForumPosts = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       forumId: z.string(),
       limit: z.number().default(20),
@@ -611,7 +611,7 @@ export const getForumPosts = createServerFn({ method: "GET" })
 // Vote in Poll
 export const voteInPoll = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       postId: z.string(),
       optionIndex: z.number().min(0),
@@ -641,7 +641,7 @@ export const voteInPoll = createServerFn({ method: "POST" })
 // Add Reply to Post
 export const addPostReply = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       postId: z.string(),
       content: z.string().min(1),
@@ -667,7 +667,7 @@ export const addPostReply = createServerFn({ method: "POST" })
 // Like Post/Reply
 export const likeContent = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       contentId: z.string(),
       contentType: z.enum(["post", "reply"]),
@@ -698,7 +698,7 @@ export const likeContent = createServerFn({ method: "POST" })
 // Get Civic Engagement Stats
 export const getCivicEngagementStats = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const stats = {

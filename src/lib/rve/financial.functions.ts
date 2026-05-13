@@ -203,7 +203,7 @@ export interface FinancialProduct {
 // CREATE RIUS Token (Admin only)
 export const createRiusToken = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       symbol: z.string().min(2).max(10),
@@ -252,7 +252,7 @@ export const createRiusToken = createServerFn({ method: "POST" })
 // READ RIUS Token
 export const getRiusToken = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockToken: RIUSToken = {
@@ -297,7 +297,7 @@ export const getRiusToken = createServerFn({ method: "GET" })
 // UPDATE RIUS Token Metrics
 export const updateRiusTokenMetrics = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       metrics: z.object({
@@ -334,7 +334,7 @@ export const updateRiusTokenMetrics = createServerFn({ method: "PATCH" })
 // CREATE Transaction
 export const createTransaction = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["transfer", "stake", "unstake", "reward", "fee", "donation", "investment"]),
       toAddress: z.string(),
@@ -381,7 +381,7 @@ export const createTransaction = createServerFn({ method: "POST" })
 // READ Transaction
 export const getTransaction = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockTransaction: Transaction = {
@@ -429,7 +429,7 @@ export const getTransaction = createServerFn({ method: "GET" })
 // READ Transactions
 export const getTransactions = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       walletAddress: z.string().optional(),
       type: z.enum(["transfer", "stake", "unstake", "reward", "fee", "donation", "investment"]).optional(),
@@ -471,7 +471,7 @@ export const getTransactions = createServerFn({ method: "GET" })
 // CREATE Wallet
 export const createWallet = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["hot", "cold", "multisig", "smart_contract"]),
       blockchain: z.string().default("polygon"),
@@ -518,7 +518,7 @@ export const createWallet = createServerFn({ method: "POST" })
 // READ Wallet
 export const getWallet = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockWallet: Wallet = {
@@ -570,7 +570,7 @@ export const getWallet = createServerFn({ method: "GET" })
 // Stake Tokens
 export const stakeTokens = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       walletId: z.string(),
       tokenId: z.string(),
@@ -597,7 +597,7 @@ export const stakeTokens = createServerFn({ method: "POST" })
 // Claim Staking Rewards
 export const claimStakingRewards = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ walletId: z.string() }))
+  .inputValidator(z.object({ walletId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const claimResult = {
@@ -619,7 +619,7 @@ export const claimStakingRewards = createServerFn({ method: "POST" })
 // CREATE Investment
 export const createInvestment = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       projectId: z.string(),
       type: z.enum(["equity", "debt", "token", "donation", "grant"]),
@@ -670,7 +670,7 @@ export const createInvestment = createServerFn({ method: "POST" })
 // READ Investments
 export const getInvestments = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       investorId: z.string().optional(),
       projectId: z.string().optional(),
@@ -736,7 +736,7 @@ export const getInvestments = createServerFn({ method: "GET" })
 // CREATE Financial Product
 export const createFinancialProduct = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       type: z.enum(["savings", "loan", "insurance", "investment_fund", "derivative"]),
@@ -802,7 +802,7 @@ export const createFinancialProduct = createServerFn({ method: "POST" })
 // READ Financial Products
 export const getFinancialProducts = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["savings", "loan", "insurance", "investment_fund", "derivative"]).optional(),
       category: z.enum(["regenerative", "sustainable", "impact", "traditional"]).optional(),
@@ -876,7 +876,7 @@ export const getFinancialProducts = createServerFn({ method: "GET" })
 // Get Financial System Stats
 export const getFinancialSystemStats = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const stats = {

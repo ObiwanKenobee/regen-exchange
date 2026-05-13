@@ -64,7 +64,7 @@ export interface Delegate {
 // CREATE Proposal
 export const createProposal = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(5),
       description: z.string().min(20),
@@ -115,7 +115,7 @@ export const createProposal = createServerFn({ method: "POST" })
 // READ Proposal
 export const getProposal = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockProposal: Proposal = {
@@ -158,7 +158,7 @@ export const getProposal = createServerFn({ method: "GET" })
 // READ Proposals (with filters)
 export const getProposals = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       status: z.enum(["draft", "active", "passed", "rejected", "executed"]).optional(),
       type: z.enum(["policy", "funding", "technical", "constitutional"]).optional(),
@@ -245,7 +245,7 @@ export const getProposals = createServerFn({ method: "GET" })
 // UPDATE Proposal
 export const updateProposal = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -282,7 +282,7 @@ export const updateProposal = createServerFn({ method: "PATCH" })
 // DELETE Proposal
 export const deleteProposal = createServerFn({ method: "DELETE" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = { id: data.id, deleted: true, deletedAt: new Date() };
@@ -298,7 +298,7 @@ export const deleteProposal = createServerFn({ method: "DELETE" })
 // Cast Vote
 export const castVote = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       proposalId: z.string(),
       vote: z.enum(["yes", "no", "abstain"]),
@@ -328,7 +328,7 @@ export const castVote = createServerFn({ method: "POST" })
 // Get Voting Power
 export const getVotingPower = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ stewardId: z.string().optional() }))
+  .inputValidator(z.object({ stewardId: z.string().optional() }))
   .handler(async ({ data }) => {
     const stewardId = data.stewardId || "current-user"; // TODO: Get from auth context
 
@@ -361,7 +361,7 @@ export const getVotingPower = createServerFn({ method: "GET" })
 // Delegate Vote
 export const createDelegation = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       delegateId: z.string(),
       categories: z.array(z.string()).default([]),
@@ -394,7 +394,7 @@ export const createDelegation = createServerFn({ method: "POST" })
 // Get Delegations
 export const getDelegations = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       stewardId: z.string().optional(), // Defaults to current user
       activeOnly: z.boolean().default(true),
@@ -431,7 +431,7 @@ export const getDelegations = createServerFn({ method: "GET" })
 // Execute Proposal
 export const executeProposal = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ proposalId: z.string() }))
+  .inputValidator(z.object({ proposalId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = {
@@ -454,7 +454,7 @@ export const executeProposal = createServerFn({ method: "POST" })
 // Get Governance Stats
 export const getGovernanceStats = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const stats = {

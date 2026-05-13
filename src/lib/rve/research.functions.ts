@@ -97,7 +97,7 @@ export interface DataInsight {
 // CREATE Research Project
 export const createResearchProject = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -154,7 +154,7 @@ export const createResearchProject = createServerFn({ method: "POST" })
 // READ Research Project
 export const getResearchProject = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockProject: ResearchProject = {
@@ -217,7 +217,7 @@ export const getResearchProject = createServerFn({ method: "GET" })
 // READ Research Projects
 export const getResearchProjects = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       status: z.enum(["planning", "active", "completed", "published"]).optional(),
       category: z.enum(["environmental", "social", "economic", "technical"]).optional(),
@@ -266,7 +266,7 @@ export const getResearchProjects = createServerFn({ method: "GET" })
 // UPDATE Research Project
 export const updateResearchProject = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -306,7 +306,7 @@ export const updateResearchProject = createServerFn({ method: "PATCH" })
 // CREATE Intelligence Report
 export const createIntelligenceReport = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       type: z.enum(["trend", "threat", "opportunity", "risk", "policy"]),
@@ -351,7 +351,7 @@ export const createIntelligenceReport = createServerFn({ method: "POST" })
 // READ Intelligence Report
 export const getIntelligenceReport = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockReport: IntelligenceReport = {
@@ -410,7 +410,7 @@ export const getIntelligenceReport = createServerFn({ method: "GET" })
 // READ Intelligence Reports
 export const getIntelligenceReports = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["trend", "threat", "opportunity", "risk", "policy"]).optional(),
       priority: z.enum(["low", "medium", "high", "critical"]).optional(),
@@ -456,7 +456,7 @@ export const getIntelligenceReports = createServerFn({ method: "GET" })
 // CREATE Data Insight
 export const createDataInsight = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       query: z.string().min(1),
@@ -487,7 +487,7 @@ export const createDataInsight = createServerFn({ method: "POST" })
 // READ Data Insight
 export const getDataInsight = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockInsight: DataInsight = {
@@ -529,7 +529,7 @@ export const getDataInsight = createServerFn({ method: "GET" })
 // READ Data Insights
 export const getDataInsights = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       createdBy: z.string().optional(),
       isPublic: z.boolean().optional(),
@@ -566,7 +566,7 @@ export const getDataInsights = createServerFn({ method: "GET" })
 // Execute Data Query
 export const executeDataQuery = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ query: z.string().min(1) }))
+  .inputValidator(z.object({ query: z.string().min(1) }))
   .handler(async ({ data }) => {
     // Mock implementation - simulate query execution
     const mockResults = {
@@ -595,7 +595,7 @@ export const executeDataQuery = createServerFn({ method: "POST" })
 // Get Research Analytics
 export const getResearchAnalytics = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const analytics = {

@@ -159,7 +159,7 @@ export interface Collaboration {
 // CREATE Builder Profile
 export const createBuilder = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       type: z.enum(["individual", "organization", "collective"]),
@@ -215,7 +215,7 @@ export const createBuilder = createServerFn({ method: "POST" })
 // READ Builder Profile
 export const getBuilder = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockBuilder: Builder = {
@@ -278,7 +278,7 @@ export const getBuilder = createServerFn({ method: "GET" })
 // READ Builders (with filters)
 export const getBuilders = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["individual", "organization", "collective"]).optional(),
       specialization: z.string().optional(),
@@ -325,7 +325,7 @@ export const getBuilders = createServerFn({ method: "GET" })
 // UPDATE Builder Profile
 export const updateBuilder = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       specialization: z.array(z.string()).optional(),
@@ -371,7 +371,7 @@ export const updateBuilder = createServerFn({ method: "PATCH" })
 // CREATE Project
 export const createProject = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -422,7 +422,7 @@ export const createProject = createServerFn({ method: "POST" })
 // READ Project
 export const getProject = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockProject: Project = {
@@ -510,7 +510,7 @@ export const getProject = createServerFn({ method: "GET" })
 // READ Projects
 export const getProjects = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       status: z.enum(["draft", "open", "in_progress", "review", "completed", "cancelled"]).optional(),
       category: z.enum(["web_app", "mobile_app", "api", "blockchain", "ai_ml", "infrastructure", "other"]).optional(),
@@ -559,7 +559,7 @@ export const getProjects = createServerFn({ method: "GET" })
 // UPDATE Project
 export const updateProject = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       status: z.enum(["draft", "open", "in_progress", "review", "completed", "cancelled"]).optional(),
@@ -593,7 +593,7 @@ export const updateProject = createServerFn({ method: "PATCH" })
 // Apply for Project
 export const applyForProject = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       projectId: z.string(),
       proposal: z.string().min(50),
@@ -625,7 +625,7 @@ export const applyForProject = createServerFn({ method: "POST" })
 // CREATE Collaboration
 export const createCollaboration = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       title: z.string().min(1),
       description: z.string().min(20),
@@ -678,7 +678,7 @@ export const createCollaboration = createServerFn({ method: "POST" })
 // READ Collaborations
 export const getCollaborations = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["hackathon", "workshop", "mentorship", "open_source", "research"]).optional(),
       status: z.enum(["planning", "active", "completed", "cancelled"]).optional(),
@@ -736,7 +736,7 @@ export const getCollaborations = createServerFn({ method: "GET" })
 // Join Collaboration
 export const joinCollaboration = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ collaborationId: z.string() }))
+  .inputValidator(z.object({ collaborationId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = {
@@ -761,7 +761,7 @@ export const joinCollaboration = createServerFn({ method: "POST" })
 // Get Builder Network Stats
 export const getBuilderNetworkStats = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({}))
+  .inputValidator(z.object({}))
   .handler(async () => {
     // Mock implementation
     const stats = {

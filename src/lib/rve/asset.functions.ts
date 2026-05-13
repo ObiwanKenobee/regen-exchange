@@ -49,7 +49,7 @@ export interface Asset {
 // CREATE Asset
 export const createAsset = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       name: z.string().min(1),
       type: z.enum(["carbon_credit", "biodiversity_unit", "water_right", "land_right", "renewable_energy"]),
@@ -140,7 +140,7 @@ export const createAsset = createServerFn({ method: "POST" })
 // READ Asset
 export const getAsset = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     if (!db) {
       throw new Error("Database not configured");
@@ -205,7 +205,7 @@ export const getAsset = createServerFn({ method: "GET" })
 // READ Assets (with filters)
 export const getAssets = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["carbon_credit", "biodiversity_unit", "water_right", "land_right", "renewable_energy"]).optional(),
       category: z.enum(["environmental", "social", "economic"]).optional(),
@@ -272,7 +272,7 @@ export const getAssets = createServerFn({ method: "GET" })
 // UPDATE Asset
 export const updateAsset = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       name: z.string().optional(),
@@ -313,7 +313,7 @@ export const updateAsset = createServerFn({ method: "PATCH" })
 // DELETE Asset
 export const deleteAsset = createServerFn({ method: "DELETE" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = { id: data.id, deleted: true, deletedAt: new Date() };
@@ -330,7 +330,7 @@ export const deleteAsset = createServerFn({ method: "DELETE" })
 // Transfer Asset Ownership
 export const transferAssetOwnership = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       assetId: z.string(),
       fromStewardId: z.string(),
@@ -363,7 +363,7 @@ export const transferAssetOwnership = createServerFn({ method: "POST" })
 // Update Asset Valuation
 export const updateAssetValuation = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       assetId: z.string(),
       riusValue: z.number().min(0),
@@ -402,7 +402,7 @@ export const updateAssetValuation = createServerFn({ method: "POST" })
 // Verify Asset
 export const verifyAsset = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       assetId: z.string(),
       oracleId: z.string(),

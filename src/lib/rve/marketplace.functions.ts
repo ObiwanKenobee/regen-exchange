@@ -69,7 +69,7 @@ export interface Order {
 // CREATE Listing
 export const createListing = createServerFn({ method: "POST" })
   .middleware([requireRBAC([Permission.CREATE_LISTING])])
-  .validator(
+  .inputValidator(
     z.object({
       assetId: z.string(),
       type: z.enum(["sell", "buy", "auction", "swap"]),
@@ -170,7 +170,7 @@ export const createListing = createServerFn({ method: "POST" })
 // READ Listing
 export const getListing = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockListing: Listing = {
@@ -206,7 +206,7 @@ export const getListing = createServerFn({ method: "GET" })
 // READ Listings (with filters)
 export const getListings = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       type: z.enum(["sell", "buy", "auction", "swap"]).optional(),
       status: z.enum(["active", "pending", "completed", "cancelled"]).optional(),
@@ -273,7 +273,7 @@ export const getListings = createServerFn({ method: "GET" })
 // UPDATE Listing
 export const updateListing = createServerFn({ method: "PATCH" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       id: z.string(),
       quantity: z.number().positive().optional(),
@@ -312,7 +312,7 @@ export const updateListing = createServerFn({ method: "PATCH" })
 // DELETE Listing
 export const deleteListing = createServerFn({ method: "DELETE" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = { id: data.id, deleted: true, deletedAt: new Date() };
@@ -328,7 +328,7 @@ export const deleteListing = createServerFn({ method: "DELETE" })
 // CREATE Order
 export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireRBAC([Permission.EXECUTE_TRADE])])
-  .validator(
+  .inputValidator(
     z.object({
       listingId: z.string(),
       quantity: z.number().positive(),
@@ -412,7 +412,7 @@ export const createOrder = createServerFn({ method: "POST" })
 // READ Order
 export const getOrder = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(z.object({ id: z.string() }))
+  .inputValidator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const mockOrder: Order = {
@@ -445,7 +445,7 @@ export const getOrder = createServerFn({ method: "GET" })
 // READ Orders for User
 export const getUserOrders = createServerFn({ method: "GET" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       userId: z.string().optional(), // Defaults to current user
       status: z.enum(["pending", "confirmed", "fulfilled", "cancelled", "disputed"]).optional(),
@@ -491,7 +491,7 @@ export const getUserOrders = createServerFn({ method: "GET" })
 // Place Bid (for auctions)
 export const placeBid = createServerFn({ method: "POST" })
   .middleware([requireRBAC([Permission.EXECUTE_TRADE])])
-  .validator(
+  .inputValidator(
     z.object({
       listingId: z.string(),
       amount: z.number().positive(),
@@ -560,7 +560,7 @@ export const placeBid = createServerFn({ method: "POST" })
 // Confirm Order
 export const confirmOrder = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ orderId: z.string() }))
+  .inputValidator(z.object({ orderId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = {
@@ -582,7 +582,7 @@ export const confirmOrder = createServerFn({ method: "POST" })
 // Complete Delivery
 export const completeDelivery = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(
+  .inputValidator(
     z.object({
       orderId: z.string(),
       trackingId: z.string().optional(),
@@ -615,7 +615,7 @@ export const completeDelivery = createServerFn({ method: "POST" })
 // Release Escrow
 export const releaseEscrow = createServerFn({ method: "POST" })
   .middleware([])
-  .validator(z.object({ orderId: z.string() }))
+  .inputValidator(z.object({ orderId: z.string() }))
   .handler(async ({ data }) => {
     // Mock implementation
     const result = {
