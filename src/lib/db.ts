@@ -1,16 +1,37 @@
-import * as Prisma from "@prisma/client";
+type PrismaClient = import("@prisma/client").PrismaClient;
 
-let prisma: Prisma.PrismaClient | null = null;
+let prisma: PrismaClient | null = null;
+let initPrismaPromise: Promise<void> | null = null;
 
-try {
-  if (process.env.DATABASE_URL) {
-    prisma = new Prisma.PrismaClient({
-      log: ['error', 'warn'],
-    });
+async function initPrisma(): Promise<void> {
+  if (initPrismaPromise) {
+    return initPrismaPromise;
   }
-} catch (error) {
-  console.warn('Prisma client initialization failed:', error);
-  prisma = null;
+
+  initPrismaPromise = (async () => {
+    if (!process.env.DATABASE_URL) {
+      return;
+    }
+
+    try {
+      const Prisma = await import("@prisma/client");
+      prisma = new Prisma.PrismaClient({
+        log: ['error', 'warn'],
+      });
+    } catch (error) {
+      console.warn('Prisma client initialization failed:', error);
+      prisma = null;
+    }
+  })();
+
+  return initPrismaPromise;
+}
+
+void initPrisma();
+
+export async function getPrisma(): Promise<PrismaClient | null> {
+  await initPrisma();
+  return prisma;
 }
 
 export { prisma };
