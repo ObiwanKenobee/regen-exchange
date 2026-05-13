@@ -52,7 +52,16 @@ export async function handleMpesaWebhook(request: Request): Promise<Response> {
 
   const status = resultCode === "0" ? "completed" : "failed";
 
+  let linkedOrder = null;
+  if (db) {
+    linkedOrder =
+      (await db.order.findUnique({ where: { id: String(accountReference || "") } })) ??
+      (await db.order.findFirst({ where: { mpesaReference: String(accountReference || "") } }));
+  }
+
   const transactionData = {
+    userId: linkedOrder?.userId,
+    orderId: linkedOrder?.id,
     transactionId,
     amount: Number(amount || 0),
     phoneNumber: String(phone || "unknown"),
@@ -74,6 +83,8 @@ export async function handleMpesaWebhook(request: Request): Promise<Response> {
         where: { transactionId },
         create: transactionData,
         update: {
+          userId: transactionData.userId,
+          orderId: transactionData.orderId,
           amount: transactionData.amount,
           phoneNumber: transactionData.phoneNumber,
           accountReference: transactionData.accountReference,
@@ -88,6 +99,17 @@ export async function handleMpesaWebhook(request: Request): Promise<Response> {
           userAgent: transactionData.userAgent,
         },
       });
+
+      if (linkedOrder) {
+        const orderStatus = status === "completed" ? "filled" : "cancelled";
+        await db.order.update({
+          where: { id: linkedOrder.id },
+          data: {
+            status: orderStatus,
+            executedAt: status === "completed" ? new Date() : linkedOrder.executedAt,
+          },
+        });
+      }
     } else {
       console.info("M-Pesa webhook received but Prisma client is not initialized", transactionData);
     }

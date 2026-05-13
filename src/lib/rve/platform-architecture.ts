@@ -296,10 +296,18 @@ export const PLATFORM_PILLARS: PlatformPillar[] = [
     shortTitle: "APIs / SDKs",
     title: "Developer & API Ecosystem",
     purpose: "Scalability through open ecological, RIU, geospatial, oracle, and governance APIs.",
+    whyItMatters:
+      "Open developer surfaces unlock partners, accelerators, and trusted integrations for regenerative systems.",
+    features: [
+      "Open REST/GraphQL APIs",
+      "SDKs for mobile and web",
+      "Webhook and event stream support",
+      "Extensible plugin architecture",
+      "Reference app templates",
+    ],
     technologies: ["Flutter", "TypeScript", "Python", "Rust SDKs"],
     relatedRoutes: [{ to: "/impact-explorer", label: "Impact Explorer" }],
     horizon: "core",
-    features: [],
   },
   {
     id: "transparency",

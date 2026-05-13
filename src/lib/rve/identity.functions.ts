@@ -259,6 +259,7 @@ export const createTradingOrder = createServerFn({ method: "POST" })
     type: z.enum(["market", "limit"]),
     quantity: z.number().positive(),
     price: z.number().positive().optional(),
+    mpesaReference: z.string().min(1).max(100).optional(),
   }))
   .handler(async ({ data }) => {
     if (!db) {
@@ -304,6 +305,7 @@ export const createTradingOrder = createServerFn({ method: "POST" })
         quantity: data.quantity,
         price,
         status: "pending",
+        mpesaReference: data.mpesaReference,
       },
     });
 
