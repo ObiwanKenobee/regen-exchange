@@ -1,10 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import * as Prisma from "@prisma/client";
 
-let prisma: PrismaClient | null = null;
+let prisma: Prisma.PrismaClient | null = null;
 
 try {
   if (process.env.DATABASE_URL) {
-    prisma = new PrismaClient({
+    prisma = new Prisma.PrismaClient({
       log: ['error', 'warn'],
     });
   }
