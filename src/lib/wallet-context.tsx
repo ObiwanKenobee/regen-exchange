@@ -34,7 +34,12 @@ export type Order = {
 type SubmitInput = Omit<
   Order,
   "id" | "txHash" | "status" | "confirmations" | "requiredConfirmations" | "createdAt" | "block" | "explorerUrl" | "walletProvider"
->;
+> & {
+  id?: string;
+  txHash?: string;
+  createdAt?: number;
+  requiredConfirmations?: number;
+};
 
 type Ctx = {
   wallet: Wallet | null;
@@ -167,16 +172,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = () => setWallet(null);
 
   const submitOrder = (input: SubmitInput): Order => {
-    const id = `ord-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-    const txHash = "0x" + randHex(64);
+    const id = input.id ?? `ord-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+    const txHash = input.txHash ?? "0x" + randHex(64);
+    const createdAt = input.createdAt ?? Date.now();
+    const requiredConfirmations = input.requiredConfirmations ?? 3;
     const order: Order = {
       ...input,
       id,
       txHash,
       status: "pending",
       confirmations: 0,
-      requiredConfirmations: 3,
-      createdAt: Date.now(),
+      requiredConfirmations,
+      createdAt,
       explorerUrl: explorerFor(txHash),
       walletProvider: wallet?.provider ?? "Sanctum",
     };

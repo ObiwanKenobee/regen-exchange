@@ -47,30 +47,38 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
     // simulate wallet popup signing latency
     await new Promise((r) => setTimeout(r, 900));
 
+    let createdOrder;
+    try {
+      if (asset?.id) {
+        createdOrder = await createTradingOrder({
+          userId: wallet.address,
+          assetId: asset.id,
+          side,
+          type: "market",
+          quantity,
+          price: data.exec,
+        });
+      }
+    } catch (error) {
+      console.warn("Failed to persist trading order:", error);
+      toast.error("Could not submit the order to the trading engine.");
+      setStep("ticket");
+      return;
+    }
+
     const order = submitOrder({
+      id: createdOrder?.id,
       assetSym: asset.sym,
       assetName: asset.name,
       side,
       qty: quantity,
-      price: data.exec,
-      total: data.grand,
+      price: createdOrder?.price ?? data.exec,
+      total: createdOrder ? (createdOrder.price ?? data.exec) * quantity : data.grand,
       fee: data.fee,
       restorationFee: data.restorationFee,
+      requiredConfirmations: createdOrder?.status === "filled" ? 1 : 3,
     });
     setSubmittedId(order.id);
-
-    if (asset.id) {
-      createTradingOrder({
-        userId: wallet.address,
-        assetId: asset.id,
-        side,
-        type: "market",
-        quantity,
-        price: data.exec,
-      }).catch((error) => {
-        console.warn("Failed to persist trading order:", error);
-      });
-    }
 
     setStep("done");
   };

@@ -88,8 +88,10 @@ model Order {
   side                 String // buy, sell
   orderType            String    @default("market") // market, limit
   quantity             Float
+  filledQuantity       Float    @default(0)
+  remainingQuantity    Float    @default(0)
   price                Float?
-  status               String    @default("pending") // pending, filled, cancelled, rejected
+  status               String    @default("pending") // pending, partially_filled, filled, cancelled, rejected
   txHash               String?
   oracleVerificationId String?
   mpesaReference       String?
@@ -103,6 +105,25 @@ model Order {
   mpesaTransactions MPesaTransaction[]
 
   @@map("orders")
+}
+
+model Trade {
+  id           String   @id @default(cuid())
+  buyOrderId   String
+  sellOrderId  String
+  assetId      String
+  quantity     Float
+  price        Float
+  totalValue   Float
+  status       String   @default("completed")
+  executedAt   DateTime @default(now())
+
+  // Relations
+  buyOrder  Order @relation(fields: [buyOrderId], references: [id])
+  sellOrder Order @relation(fields: [sellOrderId], references: [id])
+  asset      Asset @relation(fields: [assetId], references: [id])
+
+  @@map("trades")
 }
 
 model Listing {
