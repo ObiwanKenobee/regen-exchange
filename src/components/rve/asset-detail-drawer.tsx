@@ -12,11 +12,12 @@ import {
 import { setResolution, useResolutions, type ResolutionStatus } from "@/lib/verification-resolutions";
 import { downloadCSV, toCSV } from "@/lib/csv";
 
-export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
+export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade, onMpesaTrade }: {
   asset: Asset | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onTrade: (a: Asset, side: "buy" | "sell") => void;
+  onMpesaTrade?: (a: Asset, side: "buy" | "sell") => void;
 }) {
   if (!asset) return null;
   const Icon = asset.icon;
@@ -191,6 +192,10 @@ export function AssetDetailDrawer({ asset, open, onOpenChange, onTrade }: {
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button onClick={() => onTrade(asset, "buy")} className="rounded-md bg-gradient-aurora px-4 py-3 text-sm font-semibold text-background glow-emerald">Buy {asset.sym}</button>
             <button onClick={() => onTrade(asset, "sell")} className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/20">Sell</button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => onMpesaTrade?.(asset, "buy")} className="rounded-md border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/20">Buy with M-Pesa</button>
+            <button onClick={() => onMpesaTrade?.(asset, "sell")} className="rounded-md border border-secondary/40 bg-secondary/10 px-4 py-3 text-sm font-semibold text-secondary hover:bg-secondary/20">Sell with M-Pesa</button>
           </div>
         </div>
       </SheetContent>

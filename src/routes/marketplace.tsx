@@ -39,6 +39,7 @@ import { RoadmapSection } from "@/components/rve/roadmap-section";
 import { MARKETPLACE_ROADMAP } from "@/lib/rve/marketplace-roadmap";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/marketplace")({
@@ -91,10 +92,20 @@ function MarketplacePage() {
   const [orderOpen, setOrderOpen] = useState(false);
   const [orderSide, setOrderSide] = useState<"buy" | "sell">("buy");
 
+  const [mpesaTradeAsset, setMpesaTradeAsset] = useState<Asset | null>(null);
+  const [mpesaTradeSide, setMpesaTradeSide] = useState<"buy" | "sell">("buy");
+  const [mpesaTradeOpen, setMpesaTradeOpen] = useState(false);
+
   const openOrder = (a: Asset, side: "buy" | "sell" = "buy") => {
     setOrderAsset(a);
     setOrderSide(side);
     setOrderOpen(true);
+  };
+
+  const openMpesaTrade = (a: Asset, side: "buy" | "sell") => {
+    setMpesaTradeAsset(a);
+    setMpesaTradeSide(side);
+    setMpesaTradeOpen(true);
   };
 
   // Fetch assets from server function
@@ -573,6 +584,10 @@ function MarketplacePage() {
           setDrawerOpen(false);
           setTimeout(() => openOrder(a, side), 200);
         }}
+        onMpesaTrade={(a, side) => {
+          setDrawerOpen(false);
+          setTimeout(() => openMpesaTrade(a, side), 200);
+        }}
       />
       <OrderTicket
         asset={orderAsset}
@@ -580,6 +595,58 @@ function MarketplacePage() {
         onOpenChange={setOrderOpen}
         initialSide={orderSide}
       />
+      <Sheet open={mpesaTradeOpen} onOpenChange={setMpesaTradeOpen}>
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto border-t border-border bg-card">
+          <SheetHeader>
+            <SheetTitle>
+              {mpesaTradeSide === "buy" ? "Buy with M-Pesa" : "Sell with M-Pesa"}
+            </SheetTitle>
+          </SheetHeader>
+          {mpesaTradeAsset && mpesaTradeSide === "buy" && (
+            <MpesaStkPanel
+              title={`Buy ${mpesaTradeAsset.sym} with M-Pesa`}
+              description={`Use a secure STK Push to fund a marketplace purchase for ${mpesaTradeAsset.name}.`}
+              defaultAmount={1000}
+              purpose="buy_riu"
+              accountReference={`RVE-${mpesaTradeAsset.sym}-BUY`}
+            />
+          )}
+          {mpesaTradeAsset && mpesaTradeSide === "sell" && (
+            <MpesaB2cPanel
+              title={`Sell ${mpesaTradeAsset.sym} to M-Pesa`}
+              description={`Initiate an off-ramp payout after ${mpesaTradeAsset.name} sale settlement.`}
+              defaultOccasion={`${mpesaTradeAsset.sym} off-ramp`}
+              purpose="sell_riu_offramp"
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+      <Sheet open={mpesaTradeOpen} onOpenChange={setMpesaTradeOpen}>
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto border-t border-border bg-card">
+          <SheetHeader>
+            <SheetTitle>
+              {mpesaTradeSide === "buy" ? "Buy with M-Pesa" : "Sell with M-Pesa"}
+            </SheetTitle>
+          </SheetHeader>
+          {mpesaTradeAsset && mpesaTradeSide === "buy" && (
+            <MpesaStkPanel
+              title={`Buy ${mpesaTradeAsset.sym} with M-Pesa`}
+              description={`Pay into treasury via STK Push for ${mpesaTradeAsset.name} trading.`}
+              defaultAmount={1000}
+              purpose="buy_riu"
+              accountReference={`RVE-${mpesaTradeAsset.sym}-BUY`}
+            />
+          )}
+          {mpesaTradeAsset && mpesaTradeSide === "sell" && (
+            <MpesaB2cPanel
+              title={`Sell ${mpesaTradeAsset.sym} to M-Pesa`}
+              description={`Initiate payout after ${mpesaTradeAsset.name} sale settlement.`}
+              defaultOccasion={`${mpesaTradeAsset.sym} off-ramp`}
+              purpose="sell_riu_offramp"
+            />
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Implementation Roadmap */}
       <div className="mt-14">
