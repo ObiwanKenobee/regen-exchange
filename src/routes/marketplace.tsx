@@ -109,13 +109,14 @@ function MarketplacePage() {
   };
 
   // Fetch assets from server function
-  const { data: apiAssets, isLoading: assetsLoading } = useQuery({
+  const { data: apiAssets } = useQuery({
     queryKey: ["assets"],
     queryFn: () => getAssets(),
   });
 
   // Convert API assets to component format
   const assets: Asset[] = (apiAssets?.map((apiAsset: any) => ({
+    id: apiAsset.id,
     sym: apiAsset.symbol,
     name: apiAsset.name,
     price: apiAsset.currentPrice,
@@ -127,6 +128,31 @@ function MarketplacePage() {
     volume24h: Math.random() * 1000000, // Mock volume
     verificationScore: apiAsset.verificationScore,
   })) as unknown as Asset[]) || ASSETS; // Fallback to static data if API fails
+
+  const selectedAssetId = drawerAsset?.id ?? assets[0]?.id ?? null;
+  const { data: orderBook } = useQuery({
+    queryKey: ["orderBook", selectedAssetId],
+    queryFn: () => getOrderBook({ assetId: selectedAssetId! }),
+    enabled: Boolean(selectedAssetId),
+  });
+
+  const orderBookBids = orderBook?.bids ?? [
+    { price: 1.045, quantity: 12500, orders: 3 },
+    { price: 1.042, quantity: 8200, orders: 5 },
+    { price: 1.04, quantity: 15600, orders: 2 },
+    { price: 1.038, quantity: 9300, orders: 1 },
+    { price: 1.035, quantity: 18700, orders: 2 },
+  ];
+
+  const orderBookAsks = orderBook?.asks ?? [
+    { price: 1.048, quantity: 11200, orders: 2 },
+    { price: 1.05, quantity: 15800, orders: 4 },
+    { price: 1.052, quantity: 9200, orders: 2 },
+    { price: 1.055, quantity: 13400, orders: 1 },
+    { price: 1.058, quantity: 7800, orders: 2 },
+  ];
+
+  const currentSpread = orderBook ? orderBook.spread : 0.003;
 
   // Sample price history data
   const priceData = [
@@ -248,40 +274,28 @@ function MarketplacePage() {
                     {/* Bids */}
                     <div className="space-y-1">
                       <div className="text-xs text-slate-400 mb-2">Bids (Buy Orders)</div>
-                      {[
-                        { price: 1.045, volume: 12500, total: 13062.5 },
-                        { price: 1.042, volume: 8200, total: 8544.4 },
-                        { price: 1.040, volume: 15600, total: 16224.0 },
-                        { price: 1.038, volume: 9300, total: 9643.4 },
-                        { price: 1.035, volume: 18700, total: 19354.5 },
-                      ].map((bid, i) => (
+                      {orderBookBids.map((bid, i) => (
                         <div key={i} className="flex justify-between text-sm py-1 px-2 rounded bg-emerald-500/10 border border-emerald-500/20">
                           <span className="text-emerald-400 font-mono">${bid.price.toFixed(3)}</span>
-                          <span className="text-slate-300">{bid.volume.toLocaleString()}</span>
-                          <span className="text-slate-400 font-mono">${bid.total.toFixed(1)}</span>
+                          <span className="text-slate-300">{bid.quantity.toLocaleString()}</span>
+                          <span className="text-slate-400 font-mono">${(bid.price * bid.quantity).toFixed(1)}</span>
                         </div>
                       ))}
                     </div>
 
                     {/* Spread */}
                     <div className="text-center py-2 text-xs text-slate-400">
-                      Spread: $0.003 (0.29%)
+                      Spread: ${currentSpread.toFixed(3)} ({orderBook ? `${((currentSpread / (orderBook.lastPrice || 1)) * 100).toFixed(2)}%` : `0.29%`})
                     </div>
 
                     {/* Asks */}
                     <div className="space-y-1">
                       <div className="text-xs text-slate-400 mb-2">Asks (Sell Orders)</div>
-                      {[
-                        { price: 1.048, volume: 11200, total: 11737.6 },
-                        { price: 1.050, volume: 15800, total: 16590.0 },
-                        { price: 1.052, volume: 9200, total: 9668.4 },
-                        { price: 1.055, volume: 13400, total: 14117.0 },
-                        { price: 1.058, volume: 7800, total: 8240.4 },
-                      ].map((ask, i) => (
+                      {orderBookAsks.map((ask, i) => (
                         <div key={i} className="flex justify-between text-sm py-1 px-2 rounded bg-red-500/10 border border-red-500/20">
                           <span className="text-red-400 font-mono">${ask.price.toFixed(3)}</span>
-                          <span className="text-slate-300">{ask.volume.toLocaleString()}</span>
-                          <span className="text-slate-400 font-mono">${ask.total.toFixed(1)}</span>
+                          <span className="text-slate-300">{ask.quantity.toLocaleString()}</span>
+                          <span className="text-slate-400 font-mono">${(ask.price * ask.quantity).toFixed(1)}</span>
                         </div>
                       ))}
                     </div>
@@ -621,33 +635,6 @@ function MarketplacePage() {
           )}
         </SheetContent>
       </Sheet>
-      <Sheet open={mpesaTradeOpen} onOpenChange={setMpesaTradeOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto border-t border-border bg-card">
-          <SheetHeader>
-            <SheetTitle>
-              {mpesaTradeSide === "buy" ? "Buy with M-Pesa" : "Sell with M-Pesa"}
-            </SheetTitle>
-          </SheetHeader>
-          {mpesaTradeAsset && mpesaTradeSide === "buy" && (
-            <MpesaStkPanel
-              title={`Buy ${mpesaTradeAsset.sym} with M-Pesa`}
-              description={`Pay into treasury via STK Push for ${mpesaTradeAsset.name} trading.`}
-              defaultAmount={1000}
-              purpose="buy_riu"
-              accountReference={`RVE-${mpesaTradeAsset.sym}-BUY`}
-            />
-          )}
-          {mpesaTradeAsset && mpesaTradeSide === "sell" && (
-            <MpesaB2cPanel
-              title={`Sell ${mpesaTradeAsset.sym} to M-Pesa`}
-              description={`Initiate payout after ${mpesaTradeAsset.name} sale settlement.`}
-              defaultOccasion={`${mpesaTradeAsset.sym} off-ramp`}
-              purpose="sell_riu_offramp"
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
       {/* Implementation Roadmap */}
       <div className="mt-14">
         <RoadmapSection

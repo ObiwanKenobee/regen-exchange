@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle2, ExternalLink, Info, Loader2, ShieldCheck } from "lucide-react";
 import { useWallet, shortHash, type Order } from "@/lib/wallet-context";
+import { createTradingOrder } from "@/lib/rve/identity.functions";
 import type { Asset } from "./types";
 
 type Side = "buy" | "sell";
@@ -45,6 +46,7 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
     setStep("signing");
     // simulate wallet popup signing latency
     await new Promise((r) => setTimeout(r, 900));
+
     const order = submitOrder({
       assetSym: asset.sym,
       assetName: asset.name,
@@ -56,6 +58,20 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
       restorationFee: data.restorationFee,
     });
     setSubmittedId(order.id);
+
+    if (asset.id) {
+      createTradingOrder({
+        userId: wallet.address,
+        assetId: asset.id,
+        side,
+        type: "market",
+        quantity,
+        price: data.exec,
+      }).catch((error) => {
+        console.warn("Failed to persist trading order:", error);
+      });
+    }
+
     setStep("done");
   };
 

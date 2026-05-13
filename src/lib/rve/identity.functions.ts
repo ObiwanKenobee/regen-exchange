@@ -261,23 +261,66 @@ export const createTradingOrder = createServerFn({ method: "POST" })
     price: z.number().positive().optional(),
   }))
   .handler(async ({ data }) => {
-    // Mock order creation - in production, this would interact with trading engine
-    const order: TradingOrder = {
-      id: `order-${Date.now()}`,
-      userId: data.userId,
-      assetId: data.assetId,
-      side: data.side,
-      type: data.type,
-      quantity: data.quantity,
-      price: data.price,
-      status: "pending",
-      filledQuantity: 0,
-      remainingQuantity: data.quantity,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    if (!db) {
+      return {
+        id: `order-${Date.now()}`,
+        userId: data.userId,
+        assetId: data.assetId,
+        side: data.side,
+        type: data.type,
+        quantity: data.quantity,
+        price: data.price,
+        status: "pending",
+        filledQuantity: 0,
+        remainingQuantity: data.quantity,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
 
-    return order;
+    const asset = await db.asset.findUnique({ where: { id: data.assetId } });
+    if (!asset) {
+      throw new Error("Asset not found");
+    }
+
+    let user = await db.user.findFirst({ where: { walletAddress: data.userId } });
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          walletAddress: data.userId,
+          role: "student_researcher",
+          ridScore: 0,
+        },
+      });
+    }
+
+    const price = data.price ?? asset.currentPrice;
+    const order = await db.order.create({
+      data: {
+        userId: user.id,
+        assetId: asset.id,
+        side: data.side,
+        orderType: data.type,
+        quantity: data.quantity,
+        price,
+        status: "pending",
+      },
+    });
+
+    return {
+      id: order.id,
+      userId: user.id,
+      assetId: asset.id,
+      side: order.side as TradingOrder["side"],
+      type: order.orderType as TradingOrder["type"],
+      quantity: order.quantity,
+      price: order.price ?? undefined,
+      status: order.status as TradingOrder["status"],
+      filledQuantity: 0,
+      remainingQuantity: order.quantity,
+      createdAt: order.createdAt,
+      updatedAt: order.createdAt,
+    };
   });
 
 export const getOrderBook = createServerFn({ method: "GET" })
@@ -286,25 +329,69 @@ export const getOrderBook = createServerFn({ method: "GET" })
     depth: z.number().min(1).max(50).optional(),
   }))
   .handler(async ({ data }) => {
-    // Mock order book data
-    const orderBook = {
-      assetId: data.assetId,
-      bids: [
-        { price: 25.50, quantity: 100, orders: 3 },
-        { price: 25.45, quantity: 250, orders: 5 },
-        { price: 25.40, quantity: 150, orders: 2 },
-      ],
-      asks: [
-        { price: 25.60, quantity: 80, orders: 2 },
-        { price: 25.65, quantity: 120, orders: 4 },
-        { price: 25.70, quantity: 200, orders: 6 },
-      ],
-      spread: 0.10,
-      lastPrice: 25.55,
-      volume24h: 1250,
+    if (!db) {
+      return {
+        assetId: data.assetId,
+        bids: [
+          { price: 25.5, quantity: 100, orders: 3 },
+          { price: 25.45, quantity: 250, orders: 5 },
+          { price: 25.4, quantity: 150, orders: 2 },
+        ],
+        asks: [
+          { price: 25.6, quantity: 80, orders: 2 },
+          { price: 25.65, quantity: 120, orders: 4 },
+          { price: 25.7, quantity: 200, orders: 6 },
+        ],
+        spread: 0.1,
+        lastPrice: 25.55,
+        volume24h: 1250,
+      };
+    }
+
+    const asset = await db.asset.findUnique({ where: { id: data.assetId } });
+    if (!asset) {
+      throw new Error("Asset not found");
+    }
+
+    const pendingOrders = await db.order.findMany({
+      where: {
+        assetId: data.assetId,
+        status: "pending",
+      },
+      orderBy: [{ price: "desc" }, { createdAt: "asc" }],
+    });
+
+    const aggregateSide = (side: "buy" | "sell") => {
+      const grouped = pendingOrders
+        .filter((order) => order.side === side)
+        .reduce((acc: Array<{ price: number; quantity: number; orders: number }>, order) => {
+          const price = order.price ?? asset.currentPrice;
+          const existing = acc.find((entry) => entry.price === price);
+          if (existing) {
+            existing.quantity += order.quantity;
+            existing.orders += 1;
+          } else {
+            acc.push({ price, quantity: order.quantity, orders: 1 });
+          }
+          return acc;
+        }, []);
+
+      return grouped.sort((a, b) => (side === "buy" ? b.price - a.price : a.price - b.price));
     };
 
-    return orderBook;
+    const bids = aggregateSide("buy").slice(0, data.depth ?? 10);
+    const asks = aggregateSide("sell").slice(0, data.depth ?? 10);
+    const spread = bids.length && asks.length ? Math.max(0, asks[0].price - bids[0].price) : 0;
+    const volume24h = pendingOrders.reduce((acc, order) => acc + order.quantity, 0);
+
+    return {
+      assetId: data.assetId,
+      bids,
+      asks,
+      spread,
+      lastPrice: asset.currentPrice,
+      volume24h,
+    };
   });
 
 export const executeTrade = createServerFn({ method: "POST" })

@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { TreePine, Waves, Leaf, Droplets, Compass, Zap } from "lucide-react";
 
 export type Asset = {
+  id?: string;
   sym: string;
   name: string;
   price: number;
