@@ -1,6 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import jwt from "jsonwebtoken";
 import db from "@/lib/db";
+import { RoleType } from "@/lib/rbac/roles";
 
 interface JWTPayload {
   userId: string;
@@ -15,6 +16,7 @@ export interface AuthContext {
     id: string;
     did: string;
     ridScore: number;
+    role: RoleType;
     reputationHistory: any[];
     mpesaNumber?: string;
     walletAddress?: string;
@@ -48,6 +50,7 @@ export const authMiddleware = createMiddleware()
         id: decoded.userId,
         did: decoded.did,
         ridScore: decoded.ridScore,
+        role: RoleType.STUDENT_RESEARCHER,
         reputationHistory: [],
         mpesaNumber: "+254712345678",
         walletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",

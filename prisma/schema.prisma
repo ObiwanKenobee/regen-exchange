@@ -180,41 +180,6 @@ model RIUStake {
   @@map("riu_stakes")
 }
 
-model GovernanceProposal {
-  id                String   @id @default(cuid())
-  title             String
-  description       String
-  proposerId        String
-  contractAddress   String?
-  executionData     Json?
-  status            String   @default("active") // active, passed, rejected, executed
-  votingStartsAt    DateTime?
-  votingEndsAt      DateTime?
-  createdAt         DateTime @default(now())
-
-  // Relations
-  proposer          User     @relation(fields: [proposerId], references: [id])
-  votes             GovernanceVote[]
-
-  @@map("governance_proposals")
-}
-
-model GovernanceVote {
-  id            String @id @default(cuid())
-  proposalId    String
-  userId        String
-  vote          String // for, against, abstain
-  votingPower   Float
-  votedAt       DateTime @default(now())
-
-  // Relations
-  proposal      GovernanceProposal @relation(fields: [proposalId], references: [id])
-  user          User               @relation(fields: [userId], references: [id])
-
-  @@unique([proposalId, userId])
-  @@map("governance_votes")
-}
-
 model Sensor {
   id            String   @id @default(cuid())
   type          String   // air_quality, soil_moisture, water_level, weather
@@ -416,4 +381,56 @@ model GovernanceVote {
 
   @@unique([proposalId, userId])
   @@map("governance_votes")
+}
+
+// RBAC & Compliance Models
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String
+  userRole      String   // Role at time of action
+  action        String   // API endpoint or operation name
+  resourceType  String   // User, Asset, Mission, etc.
+  resourceId    String?
+  result        String   @default("success") // success, denied, error
+  details       Json?    // Additional context
+  timestamp     DateTime @default(now())
+  ipAddress     String?
+  userAgent     String?
+
+  @@index([userId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model Role {
+  id            String   @id @default(cuid())
+  name          String   @unique // super_admin, city_operator, etc.
+  title         String   // Display name
+  description   String?  // Role description
+  permissions   Json     // Array of permission strings
+  tier          String   // admin, operator, contributor, participant
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model DIDCredential {
+  id            String   @id @default(cuid())
+  did           String
+  userId        String   @unique
+  credentialType String  // ecological_reputation, verified_researcher, etc.
+  credentialData Json    // Verifiable credential data
+  issuedAt      DateTime
+  expiresAt     DateTime?
+  revokedAt     DateTime?
+  issuer        String   // DID of issuer
+  proofData     Json?    // Cryptographic proof
+  createdAt     DateTime @default(now())
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@map("did_credentials")
 }

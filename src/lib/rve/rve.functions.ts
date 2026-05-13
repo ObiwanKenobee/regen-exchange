@@ -1,8 +1,86 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAuthMiddleware, requireRIDScoreMiddleware } from "../auth/auth.middleware";
+import { createRBACContext, isEndpointAccessible } from "@/lib/rbac/permissions";
+import { Permission, RoleType } from "@/lib/rbac/roles";
 import { updateRIDScore } from "../auth/auth.functions";
 import db from "@/lib/db";
+
+interface AuthPayload {
+  userId: string;
+  did?: string;
+  email?: string;
+  walletAddress?: string;
+  mpesaNumber?: string;
+  ridScore?: number;
+  role?: RoleType;
+}
+
+interface AuthState {
+  id: string;
+  role: RoleType;
+  ridScore: number;
+  email?: string;
+  walletAddress?: string;
+  mpesaNumber?: string;
+}
+
+async function decodeJwt(token: string): Promise<AuthPayload> {
+  const jwt = await import("jsonwebtoken");
+  return jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as AuthPayload;
+}
+
+async function resolveAuthState(request: Request): Promise<AuthState> {
+  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("Authentication required");
+  }
+
+  const token = authHeader.substring(7);
+  const decoded = await decodeJwt(token);
+  if (!decoded?.userId) {
+    throw new Error("Invalid authentication token");
+  }
+
+  const authState: AuthState = {
+    id: decoded.userId,
+    role: decoded.role ?? RoleType.STUDENT_RESEARCHER,
+    ridScore: decoded.ridScore ?? 0,
+    email: decoded.email,
+    walletAddress: decoded.walletAddress,
+    mpesaNumber: decoded.mpesaNumber,
+  };
+
+  if (db) {
+    const dbUser = await db.user.findUnique({ where: { id: authState.id } });
+    if (dbUser) {
+      authState.role = (dbUser.role as RoleType) ?? authState.role;
+      authState.ridScore = dbUser.ridScore;
+      authState.email = dbUser.email ?? authState.email;
+      authState.walletAddress = dbUser.walletAddress ?? authState.walletAddress;
+      authState.mpesaNumber = dbUser.mpesaNumber ?? authState.mpesaNumber;
+    }
+  }
+
+  return authState;
+}
+
+async function authorizeRequest(
+  request: Request,
+  requiredPermissions: Permission[] = []
+): Promise<AuthState> {
+  const authState = await resolveAuthState(request);
+  if (requiredPermissions.length > 0) {
+    const rbacContext = createRBACContext(authState.id, authState.role);
+    const authorized = isEndpointAccessible(rbacContext, {
+      requiredPermissions,
+      requireAll: true,
+    });
+    if (!authorized) {
+      throw new Error("Access denied: insufficient permissions");
+    }
+  }
+  return authState;
+}
 
 // Mock data - will be replaced with database queries
 const mockAssets = [
@@ -294,10 +372,11 @@ export const getProposals = createServerFn({ method: "GET" })
  * Create a new order
  */
 export const createOrder = createServerFn({ method: "POST" })
-  .middleware([requireAuthMiddleware])
   .inputValidator(createOrderInput)
-  .handler(async ({ data, context }): Promise<{ id: string; status: string; message: string }> => {
-    const userId = context.user!.id;
+  .handler(async ({ data, request }): Promise<{ id: string; status: string; message: string }> => {
+    const auth = await authorizeRequest(request, [Permission.EXECUTE_TRADE]);
+    const userId = auth.id;
+
     const orderId = Math.random().toString(36).substr(2, 9);
     let status = "pending";
 
@@ -357,13 +436,15 @@ export const createOrder = createServerFn({ method: "POST" })
  * Vote on governance proposal
  */
 export const voteOnProposal = createServerFn({ method: "POST" })
-  .middleware([requireAuthMiddleware, requireRIDScoreMiddleware(25)])
   .inputValidator(z.object({
     proposalId: z.string(),
     vote: z.enum(["for", "against", "abstain"]),
   }))
-  .handler(async ({ data, context }): Promise<{ success: boolean; message: string }> => {
-    const userId = context.user!.id;
+  .handler(async ({ data, request }): Promise<{ success: boolean; message: string }> => {
+    const auth = await authorizeRequest(request);
+    if (auth.ridScore < 25) {
+      throw new Error("Minimum RID score of 25 required to vote");
+    }
 
     if (db) {
       const proposal = await db.governanceProposal.findUnique({ where: { id: data.proposalId } });
@@ -375,7 +456,7 @@ export const voteOnProposal = createServerFn({ method: "POST" })
         where: {
           proposalId_userId: {
             proposalId: data.proposalId,
-            userId,
+            userId: auth.id,
           },
         },
       });
@@ -387,18 +468,18 @@ export const voteOnProposal = createServerFn({ method: "POST" })
       await db.governanceVote.create({
         data: {
           proposalId: data.proposalId,
-          userId,
+          userId: auth.id,
           vote: data.vote,
-          votingPower: context.user!.ridScore,
+          votingPower: auth.ridScore,
         },
       });
     } else {
-      console.log(`User ${userId} voted ${data.vote} on proposal ${data.proposalId}`);
+      console.log(`User ${auth.id} voted ${data.vote} on proposal ${data.proposalId}`);
     }
 
     try {
       await updateRIDScore({
-        userId,
+        userId: auth.id,
         activity: "governance_vote",
         impact: 3,
       });

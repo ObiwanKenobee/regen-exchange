@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import db from "@/lib/db";
-import { authMiddleware, requireAuth } from "@/lib/auth.middleware";
+import { requireRBAC, Permission } from "@/lib/rbac";
 
 // Marketplace Types
 export interface Listing {
@@ -68,7 +68,7 @@ export interface Order {
 
 // CREATE Listing
 export const createListing = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
+  .middleware([requireRBAC([Permission.CREATE_LISTING])])
   .validator(
     z.object({
       assetId: z.string(),
@@ -94,14 +94,15 @@ export const createListing = createServerFn({ method: "POST" })
       expiresIn: z.number().default(30), // days
     })
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     if (!db) {
       throw new Error("Database not configured");
     }
 
-    // Get authenticated user
-    const user = requireAuth();
-    const sellerId = user.id;
+    const sellerId = (context as any)?.rbac?.userId;
+    if (!sellerId) {
+      throw new Error("Authentication required");
+    }
     const expiresAt = new Date(Date.now() + data.expiresIn * 24 * 60 * 60 * 1000);
     const auctionData = data.auction
       ? {
@@ -111,50 +112,56 @@ export const createListing = createServerFn({ method: "POST" })
           bids: [] as Array<{ bidderId: string; amount: number; bidTime: Date }>,
         }
       : null;
-    // TODO: Persist via Prisma when schema is ready.
-    const listing = {
-      id: `listing-${Date.now()}`,
-      assetId: data.assetId,
-      sellerId,
-      type: data.type,
-      status: "active" as const,
-      quantity: data.quantity,
-      unit: data.unit,
-      price: data.price.rius,
-      usdPrice: data.price.usd,
-      conditions: data.conditions,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      expiresAt,
-    };
 
-    // Map to Listing interface
+    const savedListing = await db.listing.create({
+      data: {
+        assetId: data.assetId,
+        sellerId,
+        type: data.type,
+        status: "active",
+        quantity: data.quantity,
+        unit: data.unit,
+        price: data.price.rius,
+        usdPrice: data.price.usd,
+        conditions: data.conditions,
+        auctionData: auctionData ? {
+          startPrice: auctionData.startPrice,
+          reservePrice: auctionData.reservePrice,
+          endTime: auctionData.endTime,
+          bids: auctionData.bids,
+        } : null,
+        expiresAt,
+      },
+    });
+
     const newListing: Listing = {
-      id: listing.id,
-      assetId: listing.assetId,
-      sellerId: listing.sellerId,
-      type: listing.type as Listing['type'],
-      status: listing.status as Listing['status'],
-      quantity: listing.quantity,
-      unit: listing.unit,
+      id: savedListing.id,
+      assetId: savedListing.assetId,
+      sellerId: savedListing.sellerId,
+      type: savedListing.type as Listing["type"],
+      status: savedListing.status as Listing["status"],
+      quantity: savedListing.quantity,
+      unit: savedListing.unit,
       price: {
-        rius: listing.price,
-        usd: listing.usdPrice || undefined,
+        rius: savedListing.price,
+        usd: savedListing.usdPrice || undefined,
         currency: "RIUS",
       },
-      conditions: (listing.conditions as any) || {
+      conditions: (savedListing.conditions as any) || {
         minQuality: "C",
         certifications: [],
       },
-      auction: auctionData ? {
-        startPrice: auctionData.startPrice,
-        reservePrice: auctionData.reservePrice,
-        endTime: auctionData.endTime,
-        bids: auctionData.bids,
-      } : undefined,
-      createdAt: listing.createdAt,
-      updatedAt: listing.updatedAt,
-      expiresAt: listing.expiresAt,
+      auction: savedListing.auctionData
+        ? {
+            startPrice: savedListing.auctionData.startPrice,
+            reservePrice: savedListing.auctionData.reservePrice,
+            endTime: new Date(savedListing.auctionData.endTime),
+            bids: (savedListing.auctionData.bids as any) || [],
+          }
+        : undefined,
+      createdAt: savedListing.createdAt,
+      updatedAt: savedListing.updatedAt,
+      expiresAt: savedListing.expiresAt,
     };
 
     return newListing;
@@ -320,7 +327,7 @@ export const deleteListing = createServerFn({ method: "DELETE" })
 
 // CREATE Order
 export const createOrder = createServerFn({ method: "POST" })
-  .middleware([])
+  .middleware([requireRBAC([Permission.EXECUTE_TRADE])])
   .validator(
     z.object({
       listingId: z.string(),
@@ -329,17 +336,60 @@ export const createOrder = createServerFn({ method: "POST" })
       bidAmount: z.number().min(0).optional(), // For auctions
     })
   )
-  .handler(async ({ data }) => {
-    // Mock implementation
+  .handler(async ({ data, context }) => {
+    const buyerId = (context as any)?.rbac?.userId;
+    if (!buyerId) {
+      throw new Error("Authentication required");
+    }
+
+    if (db) {
+      const listing = await db.listing.findUnique({ where: { id: data.listingId } });
+      if (!listing) {
+        throw new Error("Listing not found");
+      }
+
+      const order = await db.order.create({
+        data: {
+          userId: buyerId,
+          assetId: listing.assetId,
+          side: "buy",
+          orderType: data.type,
+          quantity: data.quantity,
+          price: listing.price,
+          status: "pending",
+        },
+      });
+
+      return {
+        id: order.id,
+        listingId: order.assetId ? data.listingId : data.listingId,
+        buyerId,
+        sellerId: listing.sellerId,
+        type: order.orderType as Order["type"],
+        status: order.status as Order["status"],
+        quantity: order.quantity,
+        price: { rius: order.price ?? 0, usd: undefined },
+        escrow: {
+          amount: order.quantity * (order.price ?? 0),
+          released: false,
+        },
+        delivery: {
+          status: "pending",
+        },
+        createdAt: order.createdAt,
+        updatedAt: order.createdAt,
+      };
+    }
+
     const mockListing = {
       sellerId: "steward-1",
       price: { rius: 500, usd: 100 },
-    }; // TODO: Get from database
+    };
 
     const newOrder: Order = {
       id: `order-${Date.now()}`,
       listingId: data.listingId,
-      buyerId: "current-user", // TODO: Get from auth context
+      buyerId,
       sellerId: mockListing.sellerId,
       type: data.type,
       status: "pending",
@@ -355,9 +405,6 @@ export const createOrder = createServerFn({ method: "POST" })
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-
-    // TODO: Save order and hold escrow
-    // const order = await db.order.create({ data: newOrder });
 
     return newOrder;
   });
@@ -443,30 +490,71 @@ export const getUserOrders = createServerFn({ method: "GET" })
 
 // Place Bid (for auctions)
 export const placeBid = createServerFn({ method: "POST" })
-  .middleware([])
+  .middleware([requireRBAC([Permission.EXECUTE_TRADE])])
   .validator(
     z.object({
       listingId: z.string(),
       amount: z.number().positive(),
     })
   )
-  .handler(async ({ data }) => {
-    // Mock implementation
-    const result = {
+  .handler(async ({ data, context }) => {
+    const bidderId = (context as any)?.rbac?.userId;
+    if (!bidderId) {
+      throw new Error("Authentication required");
+    }
+
+    if (db) {
+      const listing = await db.listing.findUnique({ where: { id: data.listingId } });
+      if (!listing) {
+        throw new Error("Listing not found");
+      }
+      if (listing.type !== "auction" || !listing.auctionData) {
+        throw new Error("Listing is not an auction");
+      }
+
+      const auctionData = listing.auctionData as any;
+      const bids = Array.isArray(auctionData.bids) ? auctionData.bids : [];
+      const highestBid = bids.reduce((max: number, bid: any) => Math.max(max, bid.amount ?? 0), 0);
+      if (data.amount <= highestBid) {
+        throw new Error("Bid amount must exceed current highest bid");
+      }
+
+      const newBid = {
+        bidId: `bid-${Date.now()}`,
+        bidderId,
+        amount: data.amount,
+        bidTime: new Date(),
+      };
+      bids.push(newBid);
+
+      await db.listing.update({
+        where: { id: data.listingId },
+        data: {
+          auctionData: {
+            ...auctionData,
+            bids,
+          },
+        },
+      });
+
+      return {
+        listingId: data.listingId,
+        bidderId,
+        amount: data.amount,
+        bidTime: newBid.bidTime,
+        bidId: newBid.bidId,
+        isHighest: true,
+      };
+    }
+
+    return {
       listingId: data.listingId,
-      bidderId: "current-user",
+      bidderId,
       amount: data.amount,
       bidTime: new Date(),
       bidId: `bid-${Date.now()}`,
       isHighest: true,
     };
-
-    // TODO: Place bid on auction listing
-    // - Validate bid amount > current highest
-    // - Add bid to listing
-    // - Notify other bidders if outbid
-
-    return result;
   });
 
 // Confirm Order

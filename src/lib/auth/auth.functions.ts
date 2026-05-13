@@ -9,6 +9,7 @@ const mockUsers = [
   {
     id: "user-123",
     did: "did:rve:1234567890123456789012345678901234567890",
+    role: "student_researcher",
     ridScore: 85.5,
     reputationHistory: [
       { date: "2024-01-01", score: 80.0, reason: "Initial verification" },
@@ -93,6 +94,7 @@ export const authenticateUser = createServerFn({ method: "POST" })
         userId: user.id,
         did: user.did,
         ridScore: user.ridScore,
+        role: (user.role as string) || "student_researcher",
       },
       process.env.JWT_SECRET || "fallback-secret",
       { expiresIn: "24h" }
@@ -108,6 +110,7 @@ export const authenticateUser = createServerFn({ method: "POST" })
         mpesaNumber: user.mpesaNumber,
         walletAddress: user.walletAddress,
         email: user.email,
+        role: (user.role as string) || "student_researcher",
       }
     };
   });
@@ -133,6 +136,7 @@ export const registerUser = createServerFn({ method: "POST" })
     const newUser = {
       id: `user-${Date.now()}`,
       did: data.did,
+      role: "student_researcher",
       ridScore: 50.0,
       reputationHistory: [
         { date: new Date().toISOString(), score: 50.0, reason: "Account creation" }
@@ -165,6 +169,7 @@ export const registerUser = createServerFn({ method: "POST" })
         userId: newUser.id,
         did: newUser.did,
         ridScore: newUser.ridScore,
+        role: "student_researcher",
       },
       process.env.JWT_SECRET || "fallback-secret",
       { expiresIn: "24h" }
@@ -180,6 +185,7 @@ export const registerUser = createServerFn({ method: "POST" })
         mpesaNumber: newUser.mpesaNumber,
         walletAddress: newUser.walletAddress,
         email: newUser.email,
+        role: "student_researcher",
       }
     };
   });
@@ -240,11 +246,101 @@ export const verifyDID = createServerFn({ method: "POST" })
       }
     }
 
+    if (db) {
+      await db.didCredential.create({
+        data: {
+          did: data.did,
+          userId: existingUser?.id || `user-${Date.now()}`,
+          credentialType: "did_verification",
+          credentialData: {
+            subject: data.did,
+            verificationMethod: data.verificationMethod,
+            trustIndicators,
+          },
+          issuedAt: new Date(),
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+          issuer: process.env.DID_ISSUER || "did:rve:issuer:ecosystem",
+          proofData: {
+            type: "Ed25519Signature2020",
+            created: new Date().toISOString(),
+            proofPurpose: "assertionMethod",
+          },
+        },
+      });
+    }
+
     return {
       verified: true,
       ridScore,
       trustIndicators,
     };
+  });
+
+/**
+ * Issue a verifiable credential for an authenticated user
+ */
+export const issueVerifiableCredential = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    userId: z.string(),
+    credentialType: z.string(),
+    issuer: z.string().optional(),
+    expiresInHours: z.number().optional().default(8760),
+    subjectAttributes: z.record(z.any()).optional(),
+  }))
+  .handler(async ({ data }): Promise<{ credential: any }> => {
+    const user = db ? await db.user.findUnique({ where: { id: data.userId } }) : mockUsers.find(u => u.id === data.userId);
+    if (!user) {
+      throw new Error("User not found for credential issuance");
+    }
+
+    const issuedAt = new Date();
+    const expiresAt = new Date(issuedAt.getTime() + data.expiresInHours * 60 * 60 * 1000);
+    const issuer = data.issuer || process.env.DID_ISSUER || "did:rve:issuer:ecosystem";
+    const credentialData = {
+      id: `urn:uuid:${crypto.randomUUID()}`,
+      type: ["VerifiableCredential", data.credentialType],
+      issuer,
+      issuanceDate: issuedAt.toISOString(),
+      expirationDate: expiresAt.toISOString(),
+      credentialSubject: {
+        id: user.did,
+        ...data.subjectAttributes,
+      },
+    };
+
+    const proofData = {
+      type: "Ed25519Signature2020",
+      created: issuedAt.toISOString(),
+      proofPurpose: "assertionMethod",
+      verificationMethod: `${issuer}#keys-1`,
+      proofValue: "mock-proof-value",
+    };
+
+    const storedCredential = db ? await db.didCredential.create({
+      data: {
+        did: user.did,
+        userId: user.id,
+        credentialType: data.credentialType,
+        credentialData,
+        issuedAt,
+        expiresAt,
+        issuer,
+        proofData,
+      },
+    }) : {
+      id: `mock-${Date.now()}`,
+      did: user.did,
+      userId: user.id,
+      credentialType: data.credentialType,
+      credentialData,
+      issuedAt,
+      expiresAt,
+      issuer,
+      proofData,
+      createdAt: issuedAt,
+    };
+
+    return { credential: storedCredential };
   });
 
 /**
@@ -282,6 +378,7 @@ export const getCurrentUser = createServerFn({ method: "GET" })
         mpesaNumber: user.mpesaNumber,
         walletAddress: user.walletAddress,
         email: user.email,
+        role: (user.role as string) || "student_researcher",
       };
     } catch (error) {
       throw new Error("Invalid token");

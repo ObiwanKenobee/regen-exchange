@@ -1,49 +1,140 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getWebRequest } from "@tanstack/react-start/server";
+import jwt from "jsonwebtoken";
+import db from "@/lib/db";
+import { RoleType } from "./rbac/roles";
+
+export interface AuthUser {
+  id: string;
+  did: string;
+  name?: string;
+  email?: string;
+  walletAddress?: string;
+  mpesaNumber?: string;
+  ridScore: number;
+  reputationHistory: any[];
+  role: RoleType;
+}
+
+export interface AuthContext {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+}
 
 // Simple authentication middleware for server functions
 export const authMiddleware = createMiddleware().server(async ({ next }) => {
   const request = getWebRequest();
+  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
 
-  // Check for authentication header (Bearer token)
-  const authHeader = request.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new Error("Authentication required");
+    return next({
+      context: {
+        user: null,
+        isAuthenticated: false,
+      } as AuthContext,
+    });
   }
 
-  const token = authHeader.substring(7); // Remove "Bearer "
+  const token = authHeader.substring(7);
 
-  // TODO: Validate JWT token and extract user ID
-  // For now, we'll use a simple token validation
-  if (!token || token.length < 10) {
-    throw new Error("Invalid authentication token");
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as {
+      userId: string;
+      did: string;
+      email?: string;
+      walletAddress?: string;
+      mpesaNumber?: string;
+      ridScore?: number;
+      role?: RoleType;
+      iat?: number;
+      exp?: number;
+    };
+
+    const userId = decoded.userId;
+    if (!userId) {
+      throw new Error("Invalid authentication token");
+    }
+
+    let user: AuthUser = {
+      id: userId,
+      did: decoded.did || `did:rve:${userId}`,
+      name: undefined,
+      email: decoded.email,
+      walletAddress: decoded.walletAddress,
+      mpesaNumber: decoded.mpesaNumber,
+      ridScore: decoded.ridScore ?? 0,
+      reputationHistory: [],
+      role: decoded.role ?? RoleType.STUDENT_RESEARCHER,
+    };
+
+    if (db) {
+      const dbUser = await db.user.findUnique({ where: { id: userId } });
+      if (dbUser) {
+        user = {
+          id: dbUser.id,
+          did: dbUser.did ?? user.did,
+          name: dbUser.name ?? undefined,
+          email: dbUser.email ?? undefined,
+          walletAddress: dbUser.walletAddress ?? undefined,
+          mpesaNumber: dbUser.mpesaNumber ?? undefined,
+          ridScore: dbUser.ridScore,
+          reputationHistory: (dbUser.reputationHistory as any[]) ?? [],
+          role: (dbUser.role as RoleType) ?? user.role,
+        };
+      }
+    }
+
+    return next({
+      context: {
+        user,
+        isAuthenticated: true,
+      } as AuthContext,
+    });
+  } catch (error) {
+    return next({
+      context: {
+        user: null,
+        isAuthenticated: false,
+      } as AuthContext,
+    });
   }
-
-  // Extract user ID from token (simplified - in production use proper JWT verification)
-  const userId = token.split("-")[1]; // Assuming token format: "rve-{userId}-{timestamp}"
-
-  if (!userId) {
-    throw new Error("Invalid user ID in token");
-  }
-
-  // Add user context to the request
-  return next({
-    context: {
-      userId,
-      token,
-    },
-  });
 });
 
 // Helper function to get current user from context
 export function getCurrentUser() {
-  // This would be used in server functions to get the authenticated user
-  // For now, return a placeholder
-  return {
-    id: "temp-user-id",
-    did: "did:rve:temp",
-    name: "Current User",
-  };
+  const request = getWebRequest();
+  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as {
+      userId: string;
+      did: string;
+      email?: string;
+      walletAddress?: string;
+      mpesaNumber?: string;
+      ridScore?: number;
+      role?: RoleType;
+    };
+
+    return {
+      id: decoded.userId,
+      did: decoded.did || `did:rve:${decoded.userId}`,
+      email: decoded.email,
+      walletAddress: decoded.walletAddress,
+      mpesaNumber: decoded.mpesaNumber,
+      ridScore: decoded.ridScore ?? 0,
+      reputationHistory: [],
+      role: decoded.role ?? RoleType.STUDENT_RESEARCHER,
+    } as AuthUser;
+  } catch {
+    return null;
+  }
 }
 
 // Helper function to require authentication in server functions
@@ -54,3 +145,22 @@ export function requireAuth() {
   }
   return user;
 }
+
+export const requireAuthMiddleware = createMiddleware()
+  .middleware([authMiddleware])
+  .server(async ({ next, context }) => {
+    if (!context.isAuthenticated || !context.user) {
+      throw new Error("Authentication required");
+    }
+    return await next({ context });
+  });
+
+export const requireRIDScoreMiddleware = (minScore: number) =>
+  createMiddleware()
+    .middleware([requireAuthMiddleware])
+    .server(async ({ next, context }) => {
+      if (context.user!.ridScore < minScore) {
+        throw new Error(`Minimum RID score of ${minScore} required`);
+      }
+      return await next({ context });
+    });

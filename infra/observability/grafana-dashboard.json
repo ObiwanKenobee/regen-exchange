@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Atlas Sanctum Platform Health",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "15s",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "API latency",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "fieldConfig": { "defaults": { "unit": "ms" } },
+        "targets": [ { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))" } ]
+      },
+      {
+        "type": "stat",
+        "title": "Verification uptime",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "fieldConfig": { "defaults": { "unit": "percent" } },
+        "targets": [ { "expr": "100 - (sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100)" } ]
+      },
+      {
+        "type": "stat",
+        "title": "M-Pesa callbacks",
+        "gridPos": { "x": 0, "y": 4, "w": 6, "h": 4 },
+        "targets": [ { "expr": "sum(rate(mpesa_webhook_requests_total[5m]))" } ]
+      },
+      {
+        "type": "stat",
+        "title": "Audit log events",
+        "gridPos": { "x": 6, "y": 4, "w": 6, "h": 4 },
+        "targets": [ { "expr": "sum(rate(audit_log_events_total[5m]))" } ]
+      }
+    ]
+  },
+  "overwrite": false
+}

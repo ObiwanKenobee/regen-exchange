@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atlas-backend
+  labels:
+    app: atlas-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: atlas-backend
+  template:
+    metadata:
+      labels:
+        app: atlas-backend
+    spec:
+      containers:
+        - name: atlas-backend
+          image: ghcr.io/atlas-humanitarian/atlas-sanctum:latest
+          ports:
+            - containerPort: 8787
+          env:
+            - name: DATABASE_URL
+              value: "${DATABASE_URL}"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: atlas-secrets
+                  key: jwt-secret
+            - name: MPESA_CONSUMER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: atlas-secrets
+                  key: mpesa-consumer-key
+            - name: MPESA_CONSUMER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: atlas-secrets
+                  key: mpesa-consumer-secret
+            - name: MPESA_SHORTCODE
+              valueFrom:
+                secretKeyRef:
+                  name: atlas-secrets
+                  key: mpesa-shortcode
+            - name: MPESA_PASSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: atlas-secrets
+                  key: mpesa-passkey
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 10
+            periodSeconds: 20
+      imagePullSecrets:
+        - name: atlas-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: atlas-backend-service
+spec:
+  selector:
+    app: atlas-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8787
+  type: ClusterIP

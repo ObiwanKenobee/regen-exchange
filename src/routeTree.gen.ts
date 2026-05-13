@@ -10,10 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudentDashboardRouteImport } from './routes/student-dashboard'
+import { Route as ResearchHubRouteImport } from './routes/research-hub'
 import { Route as RefiRouteImport } from './routes/refi'
 import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OracleRouteImport } from './routes/oracle'
+import { Route as ObservabilityRouteImport } from './routes/observability'
 import { Route as NairobiTwinRouteImport } from './routes/nairobi-twin'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as InstitutionalEsgRouteImport } from './routes/institutional-esg'
@@ -28,6 +30,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/student-dashboard',
   path: '/student-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResearchHubRoute = ResearchHubRouteImport.update({
+  id: '/research-hub',
+  path: '/research-hub',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RefiRoute = RefiRouteImport.update({
@@ -48,6 +55,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const OracleRoute = OracleRouteImport.update({
   id: '/oracle',
   path: '/oracle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ObservabilityRoute = ObservabilityRouteImport.update({
+  id: '/observability',
+  path: '/observability',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NairobiTwinRoute = NairobiTwinRouteImport.update({
@@ -112,10 +124,12 @@ export interface FileRoutesByFullPath {
   '/institutional-esg': typeof InstitutionalEsgRoute
   '/marketplace': typeof MarketplaceRoute
   '/nairobi-twin': typeof NairobiTwinRoute
+  '/observability': typeof ObservabilityRoute
   '/oracle': typeof OracleRoute
   '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
+  '/research-hub': typeof ResearchHubRoute
   '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesByTo {
@@ -129,10 +143,12 @@ export interface FileRoutesByTo {
   '/institutional-esg': typeof InstitutionalEsgRoute
   '/marketplace': typeof MarketplaceRoute
   '/nairobi-twin': typeof NairobiTwinRoute
+  '/observability': typeof ObservabilityRoute
   '/oracle': typeof OracleRoute
   '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
+  '/research-hub': typeof ResearchHubRoute
   '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesById {
@@ -147,10 +163,12 @@ export interface FileRoutesById {
   '/institutional-esg': typeof InstitutionalEsgRoute
   '/marketplace': typeof MarketplaceRoute
   '/nairobi-twin': typeof NairobiTwinRoute
+  '/observability': typeof ObservabilityRoute
   '/oracle': typeof OracleRoute
   '/orders': typeof OrdersRoute
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
+  '/research-hub': typeof ResearchHubRoute
   '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRouteTypes {
@@ -166,10 +184,12 @@ export interface FileRouteTypes {
     | '/institutional-esg'
     | '/marketplace'
     | '/nairobi-twin'
+    | '/observability'
     | '/oracle'
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/research-hub'
     | '/student-dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,10 +203,12 @@ export interface FileRouteTypes {
     | '/institutional-esg'
     | '/marketplace'
     | '/nairobi-twin'
+    | '/observability'
     | '/oracle'
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/research-hub'
     | '/student-dashboard'
   id:
     | '__root__'
@@ -200,10 +222,12 @@ export interface FileRouteTypes {
     | '/institutional-esg'
     | '/marketplace'
     | '/nairobi-twin'
+    | '/observability'
     | '/oracle'
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/research-hub'
     | '/student-dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -218,10 +242,12 @@ export interface RootRouteChildren {
   InstitutionalEsgRoute: typeof InstitutionalEsgRoute
   MarketplaceRoute: typeof MarketplaceRoute
   NairobiTwinRoute: typeof NairobiTwinRoute
+  ObservabilityRoute: typeof ObservabilityRoute
   OracleRoute: typeof OracleRoute
   OrdersRoute: typeof OrdersRoute
   PlatformArchitectureRoute: typeof PlatformArchitectureRoute
   RefiRoute: typeof RefiRoute
+  ResearchHubRoute: typeof ResearchHubRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
 }
 
@@ -232,6 +258,13 @@ declare module '@tanstack/react-router' {
       path: '/student-dashboard'
       fullPath: '/student-dashboard'
       preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/research-hub': {
+      id: '/research-hub'
+      path: '/research-hub'
+      fullPath: '/research-hub'
+      preLoaderRoute: typeof ResearchHubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refi': {
@@ -260,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/oracle'
       fullPath: '/oracle'
       preLoaderRoute: typeof OracleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/observability': {
+      id: '/observability'
+      path: '/observability'
+      fullPath: '/observability'
+      preLoaderRoute: typeof ObservabilityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nairobi-twin': {
@@ -346,12 +386,24 @@ const rootRouteChildren: RootRouteChildren = {
   InstitutionalEsgRoute: InstitutionalEsgRoute,
   MarketplaceRoute: MarketplaceRoute,
   NairobiTwinRoute: NairobiTwinRoute,
+  ObservabilityRoute: ObservabilityRoute,
   OracleRoute: OracleRoute,
   OrdersRoute: OrdersRoute,
   PlatformArchitectureRoute: PlatformArchitectureRoute,
   RefiRoute: RefiRoute,
+  ResearchHubRoute: ResearchHubRoute,
   StudentDashboardRoute: StudentDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -5,14 +5,17 @@
  * role-based access control on all API operations.
  */
 
+import { createMiddleware } from "@tanstack/react-start";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
+import db from "@/lib/db";
+import { authMiddleware } from "@/lib/auth.middleware";
 import { RoleType, Permission } from "./roles";
 import {
   RBACContext,
   createRBACContext,
-  requirePermission,
-  requireAnyPermission,
-  requireAllPermissions,
+  hasAnyPermission,
+  hasAllPermissions,
   isEndpointAccessible,
   createAuditLog,
   ProtectedEndpointConfig,
@@ -20,24 +23,53 @@ import {
 } from "./permissions";
 
 /**
- * Extract RBAC context from request
- * In production, this would parse JWT and extract user role
+ * Extract RBAC context from request headers.
+ * Supports JWT authentication and Prisma-backed user role resolution.
  */
 export async function extractRBACContext(headers: Headers): Promise<RBACContext> {
-  // TODO: In production, parse JWT from Authorization header
-  // and fetch user role from database
-  const authHeader = headers.get("authorization");
-  if (!authHeader) {
+  const authHeader = headers.get("authorization") || headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     throw new Error("Missing authorization header");
   }
 
-  // Placeholder implementation
-  // In production: decode JWT, fetch user from DB, create context
-  const userId = "user_123"; // Extract from JWT
-  const role = RoleType.STUDENT_RESEARCHER; // Fetch from DB
+  const token = authHeader.substring(7);
+  const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as {
+    userId?: string;
+    role?: RoleType;
+  };
+
+  const userId = decoded?.userId;
+  if (!userId) {
+    throw new Error("Invalid authentication token");
+  }
+
+  const dbUser = db ? await db.user.findUnique({ where: { id: userId } }) : null;
+  const role =
+    (dbUser?.role as RoleType | undefined) ?? decoded.role ?? RoleType.STUDENT_RESEARCHER;
 
   return createRBACContext(userId, role);
 }
+
+export const rbacContextMiddleware = createMiddleware()
+  .middleware([authMiddleware])
+  .server(async ({ next, context }) => {
+    const authUser = (context as any)?.user;
+    if (!authUser || (context as any)?.isAuthenticated !== true) {
+      return next({ context });
+    }
+
+    const role = authUser.role as RoleType | undefined;
+    if (!authUser.id || !role) {
+      return next({ context });
+    }
+
+    return next({
+      context: {
+        ...context,
+        rbac: createRBACContext(authUser.id, role),
+      },
+    });
+  });
 
 /**
  * Protect a server function with RBAC
@@ -48,15 +80,18 @@ export async function protectEndpoint(
   config: ProtectedEndpointConfig,
   action?: string
 ): Promise<void> {
-  if (!isEndpointAccessible(context, config)) {
-    const auditLog = createAuditLog(
-      context,
-      action || "unauthorized_access",
-      "api_endpoint",
-      undefined,
-      "denied"
-    );
-    // TODO: Log to audit table
+  const authorized = isEndpointAccessible(context, config);
+  const auditLog = createAuditLog(
+    context,
+    action || "protected_endpoint",
+    "api_endpoint",
+    undefined,
+    authorized ? "success" : "denied"
+  );
+
+  await logAuditEvent(auditLog);
+
+  if (!authorized) {
     throw new Error(`Access denied: insufficient permissions`);
   }
 }
@@ -90,22 +125,35 @@ export const RBACContextSchema = z.object({
  *   .handler(async (args) => { ... })
  * ```
  */
-export function requireRBAC(requiredPermissions: Permission[]) {
-  return async (args: any) => {
-    // Extract context from request context
-    // This would be populated by middleware earlier in the stack
-    const context = args.context?.rbac as RBACContext;
+export function requireRBAC(requiredPermissions: Permission[], requireAll: boolean = true) {
+  return createMiddleware()
+    .middleware([rbacContextMiddleware])
+    .server(async ({ next, context }) => {
+      const rbacContext = (context as any)?.rbac as RBACContext | undefined;
+      if (!rbacContext) {
+        throw new Error("RBAC context not found in request");
+      }
 
-    if (!context) {
-      throw new Error("RBAC context not found in request");
-    }
+      const authorized = requireAll
+        ? hasAllPermissions(rbacContext, requiredPermissions)
+        : hasAnyPermission(rbacContext, requiredPermissions);
 
-    for (const permission of requiredPermissions) {
-      requirePermission(context, permission, "server_function");
-    }
+      const auditLog = createAuditLog(
+        rbacContext,
+        "requireRBAC",
+        "api_endpoint",
+        undefined,
+        authorized ? "success" : "denied",
+        { requiredPermissions, requireAll }
+      );
+      await logAuditEvent(auditLog);
 
-    return args;
-  };
+      if (!authorized) {
+        throw new Error(`Access denied: insufficient permissions`);
+      }
+
+      return await next({ context });
+    });
 }
 
 /**
@@ -248,6 +296,21 @@ export const PROTECTED_ENDPOINTS: Record<string, ProtectedAPIEndpoint> = {
 export async function logAuditEvent(
   auditLog: AuditLogEntry
 ): Promise<void> {
-  // TODO: Insert into audit_log table
-  console.log("[AUDIT]", auditLog);
+  if (!db) {
+    console.log("[AUDIT]", auditLog);
+    return;
+  }
+
+  await db.auditLog.create({
+    data: {
+      userId: auditLog.userId,
+      userRole: auditLog.userRole,
+      action: auditLog.action,
+      resourceType: auditLog.resourceType,
+      resourceId: auditLog.resourceId,
+      result: auditLog.result,
+      details: auditLog.details,
+      timestamp: auditLog.timestamp,
+    },
+  });
 }
