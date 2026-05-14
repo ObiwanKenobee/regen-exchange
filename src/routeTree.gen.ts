@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudentDashboardRouteImport } from './routes/student-dashboard'
+import { Route as ResidentialHomesRouteImport } from './routes/residential-homes'
 import { Route as ResearchHubRouteImport } from './routes/research-hub'
 import { Route as RefiRouteImport } from './routes/refi'
 import { Route as PlatformArchitectureRouteImport } from './routes/platform-architecture'
@@ -23,7 +24,6 @@ import { Route as ImpactExplorerRouteImport } from './routes/impact-explorer'
 import { Route as IdentityRouteImport } from './routes/identity'
 import { Route as GovernanceRouteImport } from './routes/governance'
 import { Route as EcoIntelligenceRouteImport } from './routes/eco-intelligence'
-import { Route as ResidentialHomesRouteImport } from './routes/residential-homes'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as IndexRouteImport } from './routes/index'
@@ -31,6 +31,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/student-dashboard',
   path: '/student-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResidentialHomesRoute = ResidentialHomesRouteImport.update({
+  id: '/residential-homes',
+  path: '/residential-homes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResearchHubRoute = ResearchHubRouteImport.update({
@@ -98,11 +103,6 @@ const EcoIntelligenceRoute = EcoIntelligenceRouteImport.update({
   path: '/eco-intelligence',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResidentialHomesRoute = ResidentialHomesRouteImport.update({
-  id: '/residential-homes',
-  path: '/residential-homes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CommunityRoute = CommunityRouteImport.update({
   id: '/community',
   path: '/community',
@@ -124,7 +124,6 @@ export interface FileRoutesByFullPath {
   '/command-center': typeof CommandCenterRoute
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
-  '/residential-homes': typeof ResidentialHomesRoute
   '/governance': typeof GovernanceRoute
   '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
@@ -137,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
   '/research-hub': typeof ResearchHubRoute
+  '/residential-homes': typeof ResidentialHomesRoute
   '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesByTo {
@@ -144,7 +144,6 @@ export interface FileRoutesByTo {
   '/command-center': typeof CommandCenterRoute
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
-  '/residential-homes': typeof ResidentialHomesRoute
   '/governance': typeof GovernanceRoute
   '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
@@ -157,6 +156,7 @@ export interface FileRoutesByTo {
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
   '/research-hub': typeof ResearchHubRoute
+  '/residential-homes': typeof ResidentialHomesRoute
   '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesById {
@@ -165,7 +165,6 @@ export interface FileRoutesById {
   '/command-center': typeof CommandCenterRoute
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
-  '/residential-homes': typeof ResidentialHomesRoute
   '/governance': typeof GovernanceRoute
   '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
@@ -178,6 +177,7 @@ export interface FileRoutesById {
   '/platform-architecture': typeof PlatformArchitectureRoute
   '/refi': typeof RefiRoute
   '/research-hub': typeof ResearchHubRoute
+  '/residential-homes': typeof ResidentialHomesRoute
   '/student-dashboard': typeof StudentDashboardRoute
 }
 export interface FileRouteTypes {
@@ -198,8 +198,8 @@ export interface FileRouteTypes {
     | '/orders'
     | '/platform-architecture'
     | '/refi'
-    | '/residential-homes'
     | '/research-hub'
+    | '/residential-homes'
     | '/student-dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -207,7 +207,6 @@ export interface FileRouteTypes {
     | '/command-center'
     | '/community'
     | '/eco-intelligence'
-    | '/residential-homes'
     | '/governance'
     | '/identity'
     | '/impact-explorer'
@@ -220,6 +219,7 @@ export interface FileRouteTypes {
     | '/platform-architecture'
     | '/refi'
     | '/research-hub'
+    | '/residential-homes'
     | '/student-dashboard'
   id:
     | '__root__'
@@ -227,7 +227,6 @@ export interface FileRouteTypes {
     | '/command-center'
     | '/community'
     | '/eco-intelligence'
-    | '/residential-homes'
     | '/governance'
     | '/identity'
     | '/impact-explorer'
@@ -240,6 +239,7 @@ export interface FileRouteTypes {
     | '/platform-architecture'
     | '/refi'
     | '/research-hub'
+    | '/residential-homes'
     | '/student-dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -258,9 +258,9 @@ export interface RootRouteChildren {
   OracleRoute: typeof OracleRoute
   OrdersRoute: typeof OrdersRoute
   PlatformArchitectureRoute: typeof PlatformArchitectureRoute
-  ResidentialHomesRoute: typeof ResidentialHomesRoute
   RefiRoute: typeof RefiRoute
   ResearchHubRoute: typeof ResearchHubRoute
+  ResidentialHomesRoute: typeof ResidentialHomesRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
 }
 
@@ -271,6 +271,13 @@ declare module '@tanstack/react-router' {
       path: '/student-dashboard'
       fullPath: '/student-dashboard'
       preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/residential-homes': {
+      id: '/residential-homes'
+      path: '/residential-homes'
+      fullPath: '/residential-homes'
+      preLoaderRoute: typeof ResidentialHomesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/research-hub': {
@@ -364,13 +371,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EcoIntelligenceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/residential-homes': {
-      id: '/residential-homes'
-      path: '/residential-homes'
-      fullPath: '/residential-homes'
-      preLoaderRoute: typeof ResidentialHomesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/community': {
       id: '/community'
       path: '/community'
@@ -412,6 +412,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformArchitectureRoute: PlatformArchitectureRoute,
   RefiRoute: RefiRoute,
   ResearchHubRoute: ResearchHubRoute,
+  ResidentialHomesRoute: ResidentialHomesRoute,
   StudentDashboardRoute: StudentDashboardRoute,
 }
 export const routeTree = rootRouteImport

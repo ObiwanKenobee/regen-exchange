@@ -1,4 +1,4 @@
-import { ArrowUpRight, Droplet, Flame, Home, Leaf, ShieldCheck, Sparkles, Waves, Zap } from "lucide-react";
+import { ArrowUpRight, Droplet, Flame, Leaf, ShieldCheck, Sparkles, Waves, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DashSectionHeader, MetricTile, TagRow } from "@/components/rve/dashboard-shell";
 
