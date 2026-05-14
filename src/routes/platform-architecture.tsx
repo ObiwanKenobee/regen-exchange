@@ -9,6 +9,16 @@ import {
 import { RegenerativeIdentityLayer } from "@/components/rve/regenerative-identity-layer";
 import { AIOracleVerificationEngine } from "@/components/rve/ai-oracle-verification-engine";
 import {
+  DataInfrastructurePanel,
+  IdentityTrustPanel,
+  MarketplaceLifecyclePanel,
+  GovernanceCoordinationPanel,
+  SettlementPanel,
+  OperationsObservabilityPanel,
+  IntegrationPanel,
+  CollaborationPanel,
+} from "@/components/rve/rve-system-panels";
+import {
   PLATFORM_PILLARS,
   type PlatformPillar,
 } from "@/lib/rve/platform-architecture";
@@ -165,6 +175,28 @@ function PlatformArchitecturePage() {
             <h3 className="text-lg font-semibold mb-4">2. AI Oracle Verification Engine</h3>
             <AIOracleVerificationEngine />
           </div>
+        </div>
+      </div>
+
+      <div className="mt-14">
+        <DashSectionHeader
+          eyebrow="System readiness"
+          title="Built-out infrastructure modules"
+          desc="Operational and financial system components that complete RVE's data, marketplace, settlement, trust, integration, and collaboration stack."
+        />
+
+        <div className="grid gap-8 xl:grid-cols-2">
+          <DataInfrastructurePanel />
+          <IdentityTrustPanel />
+          <OperationsObservabilityPanel />
+          <GovernanceCoordinationPanel />
+        </div>
+
+        <div className="mt-10 grid gap-8 xl:grid-cols-2">
+          <MarketplaceLifecyclePanel />
+          <SettlementPanel />
+          <IntegrationPanel />
+          <CollaborationPanel />
         </div>
       </div>
 

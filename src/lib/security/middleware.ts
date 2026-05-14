@@ -1,5 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { renderErrorPage } from "../error-page";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 80;
@@ -20,11 +21,19 @@ function getClientIp(request: Request): string {
 }
 
 export function applySecurityHeaders(response: Response): Response {
+  if (!response) {
+    console.error("applySecurityHeaders: response is undefined");
+    return new Response(renderErrorPage(), {
+      status: 500,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+
   const headers = response.headers;
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "DENY");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()");
+  headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()" );
   headers.set(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
@@ -34,8 +43,24 @@ export function applySecurityHeaders(response: Response): Response {
 }
 
 export const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
-  const response = await next();
-  return applySecurityHeaders(response);
+  console.log("[middleware] securityHeadersMiddleware start");
+  const nextResult = await next();
+  const response = nextResult instanceof Response ? nextResult : nextResult.response;
+  if (!response) {
+    console.error("[middleware] securityHeadersMiddleware: next() returned no response");
+    return new Response(renderErrorPage(), {
+      status: 500,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+  console.log("[middleware] securityHeadersMiddleware got response", response.status);
+  const securedResponse = applySecurityHeaders(response);
+  return nextResult instanceof Response
+    ? securedResponse
+    : {
+        ...nextResult,
+        response: securedResponse,
+      };
 });
 
 export const rateLimitMiddleware = createMiddleware().server(async ({ next }) => {
@@ -63,10 +88,32 @@ export const rateLimitMiddleware = createMiddleware().server(async ({ next }) =>
     }
   }
 
-  const response = await next();
+  console.log("[middleware] rateLimitMiddleware before next");
+  const nextResult = await next();
+  const response = nextResult instanceof Response ? nextResult : nextResult.response;
+  if (!response) {
+    console.error("[middleware] rateLimitMiddleware: next() returned no response");
+    const errorResponse = new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+    return nextResult instanceof Response
+      ? errorResponse
+      : {
+          ...nextResult,
+          response: errorResponse,
+        };
+  }
+  console.log("[middleware] rateLimitMiddleware got response", response.status);
+
   response.headers.set("X-RateLimit-Limit", String(RATE_LIMIT_MAX_REQUESTS));
   response.headers.set("X-RateLimit-Remaining", String(Math.max(0, (clientRequests.get(ip)?.count ?? 0) - 1)));
-  return response;
+  return nextResult instanceof Response
+    ? response
+    : {
+        ...nextResult,
+        response,
+      };
 });
 
 export const csrfProtectionMiddleware = createMiddleware().server(async ({ next }) => {

@@ -1,6 +1,6 @@
 type PrismaClient = import("@prisma/client").PrismaClient;
 
-import { getRequiredEnv, isTlsDatabaseUrl } from "./security/env";
+import { getOptionalEnv, isTlsDatabaseUrl } from "./security/env";
 
 let prisma: PrismaClient | null = null;
 let initPrismaPromise: Promise<void> | null = null;
@@ -11,7 +11,13 @@ async function initPrisma(): Promise<void> {
   }
 
   initPrismaPromise = (async () => {
-    const databaseUrl = getRequiredEnv("DATABASE_URL");
+    const databaseUrl = getOptionalEnv("DATABASE_URL");
+
+    if (!databaseUrl) {
+      console.warn("DATABASE_URL is not configured. Prisma client will remain disabled.");
+      prisma = null;
+      return;
+    }
 
     if (process.env.NODE_ENV === "production" && !isTlsDatabaseUrl(databaseUrl)) {
       console.warn(
