@@ -1,12 +1,13 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import jwt from "jsonwebtoken";
 import db from "@/lib/db";
 import { RoleType } from "./rbac/roles";
+import { verifyJwt } from "./key-rotation";
 
 export interface AuthUser {
   id: string;
   did: string;
+  tenantId?: string;
   name?: string;
   email?: string;
   walletAddress?: string;
@@ -38,9 +39,10 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
   const token = authHeader.substring(7);
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as {
+    const decoded = verifyJwt(token) as {
       userId: string;
       did: string;
+      tenantId?: string;
       email?: string;
       walletAddress?: string;
       mpesaNumber?: string;
@@ -58,6 +60,7 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
     let user: AuthUser = {
       id: userId,
       did: decoded.did || `did:rve:${userId}`,
+      tenantId: decoded.tenantId,
       name: undefined,
       email: decoded.email,
       walletAddress: decoded.walletAddress,
@@ -73,6 +76,7 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
         user = {
           id: dbUser.id,
           did: dbUser.did ?? user.did,
+          tenantId: (dbUser as any).tenantId ?? user.tenantId,
           name: dbUser.name ?? undefined,
           email: dbUser.email ?? undefined,
           walletAddress: dbUser.walletAddress ?? undefined,
@@ -112,9 +116,10 @@ export function getCurrentUser() {
   const token = authHeader.substring(7);
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as {
+    const decoded = verifyJwt(token) as {
       userId: string;
       did: string;
+      tenantId?: string;
       email?: string;
       walletAddress?: string;
       mpesaNumber?: string;
@@ -125,6 +130,7 @@ export function getCurrentUser() {
     return {
       id: decoded.userId,
       did: decoded.did || `did:rve:${decoded.userId}`,
+      tenantId: decoded.tenantId,
       email: decoded.email,
       walletAddress: decoded.walletAddress,
       mpesaNumber: decoded.mpesaNumber,

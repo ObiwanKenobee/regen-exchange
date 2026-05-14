@@ -14,6 +14,7 @@ import {
 
 export const DASHBOARD_HUB_LINKS = [
   { to: "/platform-architecture", label: "Architecture" },
+  { to: "/residential-homes", label: "Residential Homes" },
   { to: "/command-center", label: "Command Center" },
   { to: "/marketplace", label: "RIU Marketplace" },
   { to: "/nairobi-twin", label: "Nairobi Twin" },

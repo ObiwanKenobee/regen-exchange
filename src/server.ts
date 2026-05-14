@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { handleMpesaWebhook } from "./lib/mpesa/mpesa.webhook";
+import { applySecurityHeaders } from "./lib/security/middleware";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -72,12 +73,13 @@ export default {
     try {
       const url = new URL(request.url);
       if (url.pathname === "/api/mpesa/webhook" && request.method === "POST") {
-        return await handleMpesaWebhook(request);
+        const webhookResponse = await handleMpesaWebhook(request);
+        return applySecurityHeaders(webhookResponse);
       }
 
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();

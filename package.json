@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "audit": "npm audit --audit-level=moderate",
+    "security:scan": "npm audit --audit-level=moderate",
     "generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"
   },

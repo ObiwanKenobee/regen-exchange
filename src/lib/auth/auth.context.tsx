@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { authenticateUser, registerUser, getCurrentUser, verifyDID } from "../auth/auth.functions";
+import { clearAuthToken, getAuthToken, setAuthToken } from "../auth/session";
 
 interface User {
   id: string;
@@ -44,15 +45,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = getAuthToken();
         if (token) {
-          // Set authorization header for subsequent requests
           const currentUser = await getCurrentUser();
           setUser(currentUser);
         }
       } catch (error) {
         console.warn("Failed to restore session:", error);
-        localStorage.removeItem("auth_token");
+        clearAuthToken();
       } finally {
         setIsLoading(false);
       }
@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const result = await authenticateUser({ data: { did, signature, message } });
-      localStorage.setItem("auth_token", result.token);
+      setAuthToken(result.token);
       setUser(result.user);
     } catch (error) {
       console.error("Login failed:", error);
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const result = await registerUser({ data: { did, email, mpesaNumber, walletAddress } });
-      localStorage.setItem("auth_token", result.token);
+      setAuthToken(result.token);
       setUser(result.user);
     } catch (error) {
       console.error("Registration failed:", error);
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("auth_token");
+    clearAuthToken();
     setUser(null);
   };
 

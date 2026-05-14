@@ -1,5 +1,7 @@
 type PrismaClient = import("@prisma/client").PrismaClient;
 
+import { getRequiredEnv, isTlsDatabaseUrl } from "./security/env";
+
 let prisma: PrismaClient | null = null;
 let initPrismaPromise: Promise<void> | null = null;
 
@@ -9,17 +11,26 @@ async function initPrisma(): Promise<void> {
   }
 
   initPrismaPromise = (async () => {
-    if (!process.env.DATABASE_URL) {
-      return;
+    const databaseUrl = getRequiredEnv("DATABASE_URL");
+
+    if (process.env.NODE_ENV === "production" && !isTlsDatabaseUrl(databaseUrl)) {
+      console.warn(
+        "Production DATABASE_URL should enforce TLS (sslmode=require or ssl=true)."
+      );
     }
 
     try {
       const Prisma = await import("@prisma/client");
       prisma = new Prisma.PrismaClient({
-        log: ['error', 'warn'],
+        log: ["error", "warn"],
+        datasources: {
+          db: {
+            url: databaseUrl,
+          },
+        },
       });
     } catch (error) {
-      console.warn('Prisma client initialization failed:', error);
+      console.warn("Prisma client initialization failed:", error);
       prisma = null;
     }
   })();

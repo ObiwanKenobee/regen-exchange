@@ -1,6 +1,11 @@
 import { createMiddleware, createStart } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import {
+  csrfProtectionMiddleware,
+  rateLimitMiddleware,
+  securityHeadersMiddleware,
+} from "./lib/security/middleware";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -18,5 +23,10 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [
+    errorMiddleware,
+    securityHeadersMiddleware,
+    rateLimitMiddleware,
+    csrfProtectionMiddleware,
+  ],
 }));

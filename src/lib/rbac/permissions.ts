@@ -7,21 +7,83 @@
 
 import { RoleType, Permission, roleHasPermission, ROLE_PERMISSIONS } from "./roles";
 
+export interface ABACPolicy {
+  attribute: string;
+  operator: "equals" | "in" | "contains" | "exists";
+  value?: unknown;
+}
+
 export interface RBACContext {
   userId: string;
   role: RoleType;
   permissions: Permission[];
+  tenantId?: string;
+  attributes?: Record<string, unknown>;
 }
 
 /**
  * Create RBAC context from user role
  */
-export function createRBACContext(userId: string, role: RoleType): RBACContext {
+export function createRBACContext(
+  userId: string,
+  role: RoleType,
+  attributes: Record<string, unknown> = {}
+): RBACContext {
   return {
     userId,
     role,
     permissions: ROLE_PERMISSIONS[role] || [],
+    tenantId: attributes.tenantId as string | undefined,
+    attributes,
   };
+}
+
+export function evaluateABAC(
+  context: RBACContext,
+  policies: ABACPolicy[] = []
+): boolean {
+  if (!policies || policies.length === 0) {
+    return true;
+  }
+
+  for (const policy of policies) {
+    const actual = context.attributes?.[policy.attribute];
+    switch (policy.operator) {
+      case "equals":
+        if (actual !== policy.value) return false;
+        break;
+      case "in":
+        if (!Array.isArray(policy.value)) return false;
+        if (!policy.value.includes(actual)) return false;
+        break;
+      case "contains":
+        if (Array.isArray(actual)) {
+          if (!actual.includes(policy.value)) return false;
+        } else if (typeof actual === "string" && typeof policy.value === "string") {
+          if (!actual.includes(policy.value)) return false;
+        } else {
+          return false;
+        }
+        break;
+      case "exists":
+        if (actual === undefined || actual === null) return false;
+        break;
+      default:
+        return false;
+    }
+  }
+
+  return true;
+}
+
+export function requireABAC(
+  context: RBACContext,
+  policies: ABACPolicy[],
+  action: string
+): void {
+  if (!evaluateABAC(context, policies)) {
+    throw new Error(`Unauthorized by ABAC policy for action "${action}"`);
+  }
 }
 
 /**

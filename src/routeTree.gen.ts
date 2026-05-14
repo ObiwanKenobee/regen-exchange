@@ -23,6 +23,7 @@ import { Route as ImpactExplorerRouteImport } from './routes/impact-explorer'
 import { Route as IdentityRouteImport } from './routes/identity'
 import { Route as GovernanceRouteImport } from './routes/governance'
 import { Route as EcoIntelligenceRouteImport } from './routes/eco-intelligence'
+import { Route as ResidentialHomesRouteImport } from './routes/residential-homes'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as IndexRouteImport } from './routes/index'
@@ -97,6 +98,11 @@ const EcoIntelligenceRoute = EcoIntelligenceRouteImport.update({
   path: '/eco-intelligence',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResidentialHomesRoute = ResidentialHomesRouteImport.update({
+  id: '/residential-homes',
+  path: '/residential-homes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CommunityRoute = CommunityRouteImport.update({
   id: '/community',
   path: '/community',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/command-center': typeof CommandCenterRoute
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
+  '/residential-homes': typeof ResidentialHomesRoute
   '/governance': typeof GovernanceRoute
   '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/command-center': typeof CommandCenterRoute
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
+  '/residential-homes': typeof ResidentialHomesRoute
   '/governance': typeof GovernanceRoute
   '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/command-center': typeof CommandCenterRoute
   '/community': typeof CommunityRoute
   '/eco-intelligence': typeof EcoIntelligenceRoute
+  '/residential-homes': typeof ResidentialHomesRoute
   '/governance': typeof GovernanceRoute
   '/identity': typeof IdentityRoute
   '/impact-explorer': typeof ImpactExplorerRoute
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/platform-architecture'
     | '/refi'
+    | '/residential-homes'
     | '/research-hub'
     | '/student-dashboard'
   fileRoutesByTo: FileRoutesByTo
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/command-center'
     | '/community'
     | '/eco-intelligence'
+    | '/residential-homes'
     | '/governance'
     | '/identity'
     | '/impact-explorer'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/command-center'
     | '/community'
     | '/eco-intelligence'
+    | '/residential-homes'
     | '/governance'
     | '/identity'
     | '/impact-explorer'
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   OracleRoute: typeof OracleRoute
   OrdersRoute: typeof OrdersRoute
   PlatformArchitectureRoute: typeof PlatformArchitectureRoute
+  ResidentialHomesRoute: typeof ResidentialHomesRoute
   RefiRoute: typeof RefiRoute
   ResearchHubRoute: typeof ResearchHubRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/eco-intelligence'
       fullPath: '/eco-intelligence'
       preLoaderRoute: typeof EcoIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/residential-homes': {
+      id: '/residential-homes'
+      path: '/residential-homes'
+      fullPath: '/residential-homes'
+      preLoaderRoute: typeof ResidentialHomesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {

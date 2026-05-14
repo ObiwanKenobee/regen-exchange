@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import db from "@/lib/db";
+import { signJwt, verifyJwt } from "../key-rotation";
 
 // Mock user database - used only when DATABASE_URL is not configured
 const mockUsers = [
@@ -41,9 +41,30 @@ const didDocumentSchema = z.object({
 interface JWTPayload {
   userId: string;
   did: string;
+  tenantId?: string;
   ridScore: number;
+  role: string;
   iat: number;
   exp: number;
+}
+
+function issueAuthToken(user: { id: string; did: string; ridScore: number; role: string; tenantId?: string }) {
+  return signJwt(
+    {
+      userId: user.id,
+      did: user.did,
+      tenantId: user.tenantId,
+      ridScore: user.ridScore,
+      role: user.role,
+    },
+    {
+      expiresIn: "1h",
+    }
+  );
+}
+
+function decodeAuthToken(token: string): JWTPayload {
+  return verifyJwt<JWTPayload>(token);
 }
 
 // Input validation schemas
@@ -51,6 +72,7 @@ const loginInput = z.object({
   did: z.string(),
   signature: z.string(),
   message: z.string(),
+  tenantId: z.string().optional(),
 });
 
 const registerInput = z.object({
@@ -58,6 +80,7 @@ const registerInput = z.object({
   email: z.string().email().optional(),
   mpesaNumber: z.string().optional(),
   walletAddress: z.string().optional(),
+  tenantId: z.string().optional(),
 });
 
 const verifyDIDInput = z.object({
@@ -89,16 +112,12 @@ export const authenticateUser = createServerFn({ method: "POST" })
       throw new Error("Invalid signature");
     }
 
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        did: user.did,
-        ridScore: user.ridScore,
-        role: (user.role as string) || "student_researcher",
-      },
-      process.env.JWT_SECRET || "fallback-secret",
-      { expiresIn: "24h" }
-    );
+    const token = issueAuthToken({
+      id: user.id,
+      did: user.did,
+      ridScore: user.ridScore,
+      role: (user.role as string) || "student_researcher",
+    });
 
     return {
       token,
@@ -164,16 +183,13 @@ export const registerUser = createServerFn({ method: "POST" })
       mockUsers.push(newUser as any);
     }
 
-    const token = jwt.sign(
-      {
-        userId: newUser.id,
-        did: newUser.did,
-        ridScore: newUser.ridScore,
-        role: "student_researcher",
-      },
-      process.env.JWT_SECRET || "fallback-secret",
-      { expiresIn: "24h" }
-    );
+    const token = issueAuthToken({
+      id: newUser.id,
+      did: newUser.did,
+      ridScore: newUser.ridScore,
+      role: "student_researcher",
+      tenantId: data.tenantId,
+    });
 
     return {
       token,
@@ -358,7 +374,7 @@ export const getCurrentUser = createServerFn({ method: "GET" })
     const token = authHeader.substring(7);
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as JWTPayload;
+      const decoded = decodeAuthToken(token);
 
       let user = null;
       if (db) {

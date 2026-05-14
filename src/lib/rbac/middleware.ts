@@ -7,10 +7,10 @@
 
 import { createMiddleware } from "@tanstack/react-start";
 import { z } from "zod";
-import jwt from "jsonwebtoken";
 import db from "@/lib/db";
 import { authMiddleware } from "@/lib/auth.middleware";
 import { RoleType, Permission } from "./roles";
+import { verifyJwt } from "../key-rotation";
 import {
   RBACContext,
   createRBACContext,
@@ -34,10 +34,7 @@ export async function extractRBACContext(headers: Headers): Promise<RBACContext>
   }
 
   const token = authHeader.substring(7);
-  const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as {
-    userId?: string;
-    role?: RoleType;
-  };
+  const decoded = verifyJwt<{ userId?: string; role?: RoleType }>(token);
 
   const userId = decoded?.userId;
   if (!userId) {
@@ -67,7 +64,10 @@ export const rbacContextMiddleware = createMiddleware()
     return next({
       context: {
         ...context,
-        rbac: createRBACContext(authUser.id, role),
+        rbac: createRBACContext(authUser.id, role, {
+          tenantId: authUser.tenantId,
+          role: authUser.role,
+        }),
       },
     });
   });
@@ -311,6 +311,8 @@ export async function logAuditEvent(
       resourceId: auditLog.resourceId,
       result: auditLog.result,
       details: auditLog.details,
+      ipAddress: auditLog.details?.ipAddress as string | undefined,
+      userAgent: auditLog.details?.userAgent as string | undefined,
       timestamp: auditLog.timestamp,
     },
   });
