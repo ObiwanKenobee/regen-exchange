@@ -99,6 +99,122 @@ function PillarCard({ p }: { p: PlatformPillar }) {
   );
 }
 
+function IntegralCalculusSection() {
+  return (
+    <div className="panel panel-glow mb-10 p-6">
+      <div className="space-y-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-aurora text-background">
+            <Layers className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-[0.25em] text-secondary">Mathematical foundation</div>
+            <h2 className="mt-2 text-lg font-semibold">Integral calculus is the hidden architecture behind RVE</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              RVE is fundamentally about accumulation across space, time, ecology, energy, economics, and human behavior. Integral calculus
+              measures the total change, cumulative impact, distributed system behavior, and continuous transformation that define regenerative systems.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+            <h3 className="text-base font-semibold">Ecological accumulation modeling</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Pollution, carbon absorption, water flow, biodiversity growth, heat, and waste are continuous systems. Integrals let RVE compute total exposure,
+              cumulative flood volume, ecosystem recovery, and city-scale thermal load.
+            </p>
+            <div className="mt-4 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+              <div className="font-medium">Urban heat accumulation</div>
+              <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">Q = ∫ₐ T(x, y) dA</pre>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Total thermal load across a geographic area drives climate planning, heatwave forecasting, and public health analysis.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+            <h3 className="text-base font-semibold">Flood intelligence systems</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Flooding is accumulated rainfall, runoff, drainage saturation, and terrain dynamics over time. RVE uses time integration to transform flow rates into volumes.
+            </p>
+            <div className="mt-4 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+              <div className="font-medium">Volume of water flow</div>
+              <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">V = ∫ₜ₁ᵗ₂ Q(t) dt</pre>
+              <p className="mt-2 text-xs text-muted-foreground">
+                This is the basis for flood prediction, drainage optimization, and river overflow simulations.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+            <h3 className="text-base font-semibold">Carbon and RIU verification</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Carbon restoration is cumulative. Forests and restoration projects sequester carbon over time, so RVE treats sequestration as an integral process.
+            </p>
+            <div className="mt-4 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+              <div className="font-medium">Carbon sequestration</div>
+              <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">C = ∫ₜ₀ᵗₙ r(t) dt</pre>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Total sequestered carbon feeds RIU valuation, ecological credit issuance, and restoration economics.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+            <h3 className="text-base font-semibold">Digital twin simulations</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The Nairobi digital twin depends on spatial integration, vector fields, and continuous dynamics. Cities are not discrete snapshots — they are continuous dynamic systems.
+            </p>
+            <div className="mt-4 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+              <div className="font-medium">Pollution distribution</div>
+              <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">P = ∫ᵥ ρ(x, y, z) dV</pre>
+              <p className="mt-2 text-xs text-muted-foreground">
+                This models pollutant spread, air quality zones, and exposure risk across urban volumes.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+            <h3 className="text-base font-semibold">AI, sensor networks, and environmental economics</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Modern AI, IoT, and ecological economics all rely on continuous accumulation: loss functions, energy usage, pollution exposure, and long-term value flow.
+            </p>
+            <div className="mt-4 space-y-3 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+              <div>
+                <div className="font-medium">Energy use</div>
+                <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">E = ∫ₜ₁ᵗ₂ P(t) dt</pre>
+              </div>
+              <div>
+                <div className="font-medium">Economic value</div>
+                <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">E = ∫₀ᵀ v(t) dt</pre>
+              </div>
+              <div>
+                <div className="font-medium">Health exposure</div>
+                <pre className="mt-2 whitespace-pre-wrap text-xs text-foreground">D = ∫₀ᵀ e(t) dt</pre>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+            <h3 className="text-base font-semibold">Civilization-scale insight</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              RVE is not measuring isolated events. It measures accumulated regenerative transformation over time — and that is the essence of integral thinking.
+            </p>
+            <div className="mt-4 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+              <p className="text-xs text-muted-foreground">
+                Differential calculus explains instantaneous change; integrals explain cumulative reality. RVE is an accumulated intelligence system, ecological memory, and regenerative economy.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlatformArchitecturePage() {
   const core = PLATFORM_PILLARS.filter((p) => p.horizon === "core");
   const future = PLATFORM_PILLARS.filter((p) => p.horizon === "future");
@@ -132,6 +248,8 @@ function PlatformArchitecturePage() {
           </div>
         </div>
       </div>
+
+      <IntegralCalculusSection />
 
       <DashSectionHeader
         eyebrow="Production scope"
