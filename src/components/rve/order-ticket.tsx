@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle2, ExternalLink, Info, Loader2, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { useWallet, shortHash, type Order } from "@/lib/wallet-context";
 import { createTradingOrder } from "@/lib/rve/identity.functions";
 import type { Asset } from "./types";
@@ -16,35 +17,59 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
 }) {
   const { wallet, submitOrder, orders } = useWallet();
   const [side, setSide] = useState<Side>(initialSide);
+  const [orderType, setOrderType] = useState<"market" | "limit">("market");
+  const [limitPrice, setLimitPrice] = useState("0");
   const [qty, setQty] = useState("10");
   const [step, setStep] = useState<"ticket" | "confirm" | "signing" | "done">("ticket");
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const liveOrder: Order | undefined = submittedId ? orders.find((o) => o.id === submittedId) : undefined;
 
   const quantity = Math.max(0, parseFloat(qty) || 0);
+  const limitPriceValue = Math.max(0, parseFloat(limitPrice) || asset?.price || 0);
+  const limitPriceValid = orderType === "limit" ? limitPriceValue > 0 : true;
   const data = useMemo(() => {
     if (!asset) return null;
-    // Naive price impact based on size vs liquidity
-    const sizeUSD = quantity * asset.price;
+    const executionPrice = orderType === "limit" ? limitPriceValue : asset.price;
+    const sizeUSD = quantity * executionPrice;
     const impact = Math.min(8, (sizeUSD / (asset.liquidity * 1_000_000)) * 100);
     const slippage = impact * 0.6;
-    const exec = side === "buy" ? asset.price * (1 + impact / 100) : asset.price * (1 - impact / 100);
+    const exec = side === "buy" ? executionPrice * (1 + impact / 100) : executionPrice * (1 - impact / 100);
     const total = exec * quantity;
     const fee = total * 0.0025;
     const restorationFee = total * 0.005;
-    return { sizeUSD, impact, slippage, exec, total, fee, restorationFee, grand: side === "buy" ? total + fee + restorationFee : total - fee - restorationFee };
-  }, [asset, quantity, side]);
+    return {
+      sizeUSD,
+      impact,
+      slippage,
+      exec,
+      total,
+      fee,
+      restorationFee,
+      grand: side === "buy" ? total + fee + restorationFee : total - fee - restorationFee,
+      executionPrice,
+    };
+  }, [asset, quantity, side, orderType, limitPriceValue]);
 
   if (!asset || !data) return null;
   const Icon = asset.icon;
   const high = data.impact > 2;
 
-  const reset = () => { setStep("ticket"); setQty("10"); setSubmittedId(null); };
+  const reset = () => { setStep("ticket"); setQty("10"); setOrderType("market"); setLimitPrice(asset?.price.toFixed(2) ?? "0"); setSubmittedId(null); };
+
+  useEffect(() => {
+    if (!asset) return;
+    setOrderType("market");
+    setLimitPrice(asset.price.toFixed(2));
+    setSide(initialSide);
+  }, [asset, initialSide]);
 
   const sign = async () => {
-    if (!wallet) return;
+    if (!wallet || !data) return;
+    if (orderType === "limit" && !limitPriceValid) {
+      toast.error("Enter a valid limit price before submitting.");
+      return;
+    }
     setStep("signing");
-    // simulate wallet popup signing latency
     await new Promise((r) => setTimeout(r, 900));
 
     let createdOrder;
@@ -54,9 +79,9 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
           userId: wallet.address,
           assetId: asset.id,
           side,
-          type: "market",
+          type: orderType,
           quantity,
-          price: data.exec,
+          price: orderType === "limit" ? limitPriceValue : undefined,
         });
       }
     } catch (error) {
@@ -95,7 +120,7 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
 
         {step === "ticket" && (
           <div className="space-y-4">
-            <div className="flex rounded-md bg-muted/40 p-1 text-sm">
+            <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/40 p-1 text-sm">
               {(["buy", "sell"] as Side[]).map((s) => (
                 <button key={s} onClick={() => setSide(s)} className={`flex-1 rounded px-3 py-1.5 font-medium capitalize transition ${side === s ? (s === "buy" ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive") : "text-muted-foreground"}`}>
                   {s}
@@ -103,15 +128,53 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
               ))}
             </div>
 
+            <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-muted/30 p-4">
+              <button
+                type="button"
+                onClick={() => setOrderType("market")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${orderType === "market" ? "bg-primary/15 text-primary" : "text-muted-foreground"}`}
+              >
+                Market
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderType("limit")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${orderType === "limit" ? "bg-primary/15 text-primary" : "text-muted-foreground"}`}
+              >
+                Limit
+              </button>
+              <div className="ml-auto text-xs text-muted-foreground">Selected: {orderType.toUpperCase()}</div>
+            </div>
+
             <div className="rounded-lg border border-border bg-muted/30 p-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Quantity</span><span>Mid ${asset.price.toFixed(2)}</span></div>
-              <div className="mt-2 flex items-baseline gap-2">
+              <label htmlFor="order-qty" className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Quantity</span>
+                <span>Mid ${asset.price.toFixed(2)}</span>
+              </label>
+              <div className="mt-2 flex items-baseline gap-2 w-full">
                 <input
+                  id="order-qty"
                   type="number" min={0} step={0.01} value={qty} onChange={(e) => setQty(e.target.value)}
+                  placeholder="0.00"
                   className="w-full bg-transparent font-mono text-3xl outline-none"
                 />
                 <span className="text-sm text-muted-foreground">{asset.sym}</span>
               </div>
+              {orderType === "limit" && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/70 p-3">
+                  <label htmlFor="order-limit-price" className="text-xs text-muted-foreground">Limit price</label>
+                  <input
+                    id="order-limit-price"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={limitPrice}
+                    onChange={(e) => setLimitPrice(e.target.value)}
+                    className="w-full max-w-[180px] rounded-md border border-border bg-background px-3 py-2 text-sm outline-none"
+                  />
+                  <span className="text-xs text-muted-foreground">USD</span>
+                </div>
+              )}
               <div className="mt-1 flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">≈ ${data.sizeUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                 <div className="flex gap-1">
@@ -138,12 +201,17 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
             )}
 
             <button
-              disabled={!wallet || quantity <= 0}
+              disabled={!wallet || quantity <= 0 || !limitPriceValid}
               onClick={() => setStep("confirm")}
               className={`w-full rounded-md px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${side === "buy" ? "bg-gradient-aurora text-background glow-emerald" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}`}
             >
               {!wallet ? "Connect a wallet to trade" : `Review ${side === "buy" ? "Buy" : "Sell"}`}
             </button>
+            {!limitPriceValid && orderType === "limit" && (
+              <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                Limit orders require a price greater than zero.
+              </div>
+            )}
           </div>
         )}
 
@@ -218,7 +286,7 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
                 onClick={() => { onOpenChange(false); setTimeout(() => onViewOrders?.(), 200); }}
                 className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted/50"
               >
-                View all orders
+                View order history
               </button>
               <button onClick={() => onOpenChange(false)} className="rounded-md bg-gradient-aurora px-4 py-2 text-sm font-semibold text-background">Done</button>
             </div>

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownRight,
@@ -32,11 +32,12 @@ import {
 import { MpesaB2cPanel } from "@/components/rve/mpesa/mpesa-b2c-panel";
 import { MpesaStkPanel } from "@/components/rve/mpesa/mpesa-stk-panel";
 import { OrderTicket } from "@/components/rve/order-ticket";
-import { ASSETS, type Asset } from "@/components/rve/types";
+import { ASSETS, ECOSYSTEMS, type Asset } from "@/components/rve/types";
 import { getAssets } from "@/lib/rve/rve.functions";
 import { getOrderBook } from "@/lib/rve/identity.functions";
 import { RoadmapSection } from "@/components/rve/roadmap-section";
 import { MARKETPLACE_ROADMAP } from "@/lib/rve/marketplace-roadmap";
+import { useWallet, shortAddr } from "@/lib/wallet-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -86,15 +87,27 @@ function getAssetIcon(type: string) {
 }
 
 function MarketplacePage() {
+  const { wallet, connect, disconnect, pendingCount, orders } = useWallet();
   const [drawerAsset, setDrawerAsset] = useState<Asset | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [orderAsset, setOrderAsset] = useState<Asset | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [orderSide, setOrderSide] = useState<"buy" | "sell">("buy");
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [marketEcosystem, setMarketEcosystem] = useState<(typeof ECOSYSTEMS)[number]>("All");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [mpesaTradeAsset, setMpesaTradeAsset] = useState<Asset | null>(null);
   const [mpesaTradeSide, setMpesaTradeSide] = useState<"buy" | "sell">("buy");
   const [mpesaTradeOpen, setMpesaTradeOpen] = useState(false);
+
+  const totalOrders = orders.length;
+  const shortAddress = wallet?.address ? shortAddr(wallet.address) : null;
+  const goToOrders = () => {
+    if (typeof window === "undefined") return;
+    window.history.pushState({}, "", "/orders");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  };
 
   const openOrder = (a: Asset, side: "buy" | "sell" = "buy") => {
     setOrderAsset(a);
@@ -116,24 +129,52 @@ function MarketplacePage() {
 
   // Convert API assets to component format
   const assets: Asset[] = (apiAssets?.map((apiAsset: any) => ({
-    id: apiAsset.id,
+    id: apiAsset.id ?? apiAsset.symbol,
     sym: apiAsset.symbol,
     name: apiAsset.name,
     price: apiAsset.currentPrice,
-    change: Math.random() * 10 - 5, // Mock change for now
+    change: Math.random() * 10 - 5,
     icon: getAssetIcon(apiAsset.type),
-    type: apiAsset.type,
-    description: apiAsset.description || "",
-    marketCap: apiAsset.marketCap || 0,
-    volume24h: Math.random() * 1000000, // Mock volume
-    verificationScore: apiAsset.verificationScore,
-  })) as unknown as Asset[]) || ASSETS; // Fallback to static data if API fails
+    ecosystem: apiAsset.ecosystem || apiAsset.type || "Forest",
+    region: apiAsset.region || "Global",
+    vol: apiAsset.volume24h ? `${Math.round(apiAsset.volume24h)}M` : "—",
+    liquidity: apiAsset.marketCap ? Math.round(apiAsset.marketCap / 1_000_000) : 0,
+    verification: apiAsset.verificationScore ?? 85,
+    hectares: apiAsset.hectares ?? 0,
+    story: apiAsset.description || "Verified nature-backed asset with destination-based impact monitoring.",
+  })) as unknown as Asset[]) || ASSETS;
 
-  const selectedAssetId = drawerAsset?.id ?? assets[0]?.id ?? null;
+  const filteredAssets = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+    return assets.filter((asset) => {
+      const matchesEcosystem = marketEcosystem === "All" || asset.ecosystem === marketEcosystem;
+      const matchesSearch =
+        !normalized ||
+        asset.sym.toLowerCase().includes(normalized) ||
+        asset.name.toLowerCase().includes(normalized) ||
+        asset.region.toLowerCase().includes(normalized);
+      return matchesEcosystem && matchesSearch;
+    });
+  }, [assets, marketEcosystem, searchTerm]);
+
+  useEffect(() => {
+    if (!filteredAssets.length) return;
+    if (selectedAssetId === null || !filteredAssets.some((asset) => asset.id === selectedAssetId || asset.sym === selectedAssetId)) {
+      const first = filteredAssets[0];
+      setSelectedAssetId(first.id ?? first.sym);
+    }
+  }, [filteredAssets, selectedAssetId]);
+
+  const selectedAsset = useMemo(
+    () => filteredAssets.find((asset) => asset.id === selectedAssetId || asset.sym === selectedAssetId) ?? filteredAssets[0] ?? assets[0],
+    [filteredAssets, selectedAssetId, assets],
+  );
+
+  const assetIdForOrderBook = selectedAsset?.id ?? selectedAsset?.sym ?? "";
   const { data: orderBook } = useQuery({
-    queryKey: ["orderBook", selectedAssetId],
-    queryFn: () => getOrderBook({ assetId: selectedAssetId! }),
-    enabled: Boolean(selectedAssetId),
+    queryKey: ["orderBook", assetIdForOrderBook],
+    queryFn: () => getOrderBook({ assetId: assetIdForOrderBook, depth: 10 }),
+    enabled: Boolean(assetIdForOrderBook),
   });
 
   const orderBookBids = orderBook?.bids ?? [
@@ -174,12 +215,20 @@ function MarketplacePage() {
       title="RIU Marketplace Dashboard"
       description="Order books, live pricing, ecological categories, liquidity pools, and advanced impact analytics — the exchange layer for verified Earth value."
       actions={
-        <Link
-          to="/"
-          className="rounded-md border border-border bg-background/60 px-4 py-2 text-sm font-medium backdrop-blur hover:bg-muted/50"
-        >
-          Classic exchange view
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/orders"
+            className="rounded-md border border-border bg-background/60 px-4 py-2 text-sm font-medium backdrop-blur hover:bg-muted/50"
+          >
+            Order history
+          </Link>
+          <Link
+            to="/"
+            className="rounded-md border border-border bg-background/60 px-4 py-2 text-sm font-medium backdrop-blur hover:bg-muted/50"
+          >
+            Classic exchange view
+          </Link>
+        </div>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -269,17 +318,24 @@ function MarketplacePage() {
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Order Book */}
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200 mb-4">Order Book - AMZ-CO₂</h3>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">Order Book — {selectedAsset?.sym ?? "Asset"}</h3>
                   <div className="space-y-2">
                     {/* Bids */}
                     <div className="space-y-1">
                       <div className="text-xs text-slate-400 mb-2">Bids (Buy Orders)</div>
                       {orderBookBids.map((bid, i) => (
-                        <div key={i} className="flex justify-between text-sm py-1 px-2 rounded bg-emerald-500/10 border border-emerald-500/20">
-                          <span className="text-emerald-400 font-mono">${bid.price.toFixed(3)}</span>
-                          <span className="text-slate-300">{bid.quantity.toLocaleString()}</span>
-                          <span className="text-slate-400 font-mono">${(bid.price * bid.quantity).toFixed(1)}</span>
-                        </div>
+                        <button
+                          key={`bid-${i}`}
+                          type="button"
+                          onClick={() => selectedAsset && openOrder(selectedAsset, "sell")}
+                          className="w-full rounded border border-emerald-500/20 bg-emerald-500/10 p-2 text-left text-sm transition hover:bg-emerald-500/15"
+                        >
+                          <div className="flex justify-between">
+                            <span className="text-emerald-400 font-mono">${bid.price.toFixed(3)}</span>
+                            <span className="text-slate-300">{bid.quantity.toLocaleString()} RIU</span>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-400">{bid.orders} bids • ${ (bid.price * bid.quantity).toFixed(1) }</div>
+                        </button>
                       ))}
                     </div>
 
@@ -292,11 +348,18 @@ function MarketplacePage() {
                     <div className="space-y-1">
                       <div className="text-xs text-slate-400 mb-2">Asks (Sell Orders)</div>
                       {orderBookAsks.map((ask, i) => (
-                        <div key={i} className="flex justify-between text-sm py-1 px-2 rounded bg-red-500/10 border border-red-500/20">
-                          <span className="text-red-400 font-mono">${ask.price.toFixed(3)}</span>
-                          <span className="text-slate-300">{ask.quantity.toLocaleString()}</span>
-                          <span className="text-slate-400 font-mono">${(ask.price * ask.quantity).toFixed(1)}</span>
-                        </div>
+                        <button
+                          key={`ask-${i}`}
+                          type="button"
+                          onClick={() => selectedAsset && openOrder(selectedAsset, "buy")}
+                          className="w-full rounded border border-red-500/20 bg-red-500/10 p-2 text-left text-sm transition hover:bg-red-500/15"
+                        >
+                          <div className="flex justify-between">
+                            <span className="text-red-400 font-mono">${ask.price.toFixed(3)}</span>
+                            <span className="text-slate-300">{ask.quantity.toLocaleString()} RIU</span>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-400">{ask.orders} asks • ${ (ask.price * ask.quantity).toFixed(1) }</div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -407,16 +470,28 @@ function MarketplacePage() {
               <BookOpen className="h-4 w-4 text-primary" />
               Live order book — top of book
             </div>
-            <div className="flex flex-wrap gap-1 text-xs">
-              {["All", "Carbon", "Water", "Bio", "Cultural", "Urban"].map((t, i) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {ECOSYSTEMS.map((ecosystem) => (
                 <button
-                  key={t}
+                  key={ecosystem}
+                  onClick={() => setMarketEcosystem(ecosystem)}
                   type="button"
-                  className={`rounded px-2 py-1 ${i === 0 ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`rounded px-2 py-1 text-xs transition ${ecosystem === marketEcosystem ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  {t}
+                  {ecosystem}
                 </button>
               ))}
+            </div>
+          </div>
+          <div className="border-b border-border/60 px-5 py-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search asset symbol, name, or region"
+                className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+              />
+              <div className="text-xs text-muted-foreground">{filteredAssets.length} assets</div>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -426,22 +501,24 @@ function MarketplacePage() {
                   <th className="px-5 py-3 text-left font-normal">Asset</th>
                   <th className="px-3 py-3 text-right font-normal">Price</th>
                   <th className="px-3 py-3 text-right font-normal">24h</th>
-                  <th className="px-3 py-3 text-right font-normal">Depth</th>
+                  <th className="px-3 py-3 text-right font-normal">Liquidity</th>
                   <th className="px-5 py-3 text-right font-normal" />
                 </tr>
               </thead>
               <tbody>
-                {assets.map((a) => {
+                {filteredAssets.map((a) => {
                   const up = a.change >= 0;
                   const I = a.icon;
+                  const isSelected = a.id === selectedAsset?.id || a.sym === selectedAsset?.sym;
                   return (
                     <tr
                       key={a.sym}
                       onClick={() => {
+                        setSelectedAssetId(a.id ?? a.sym);
                         setDrawerAsset(a);
                         setDrawerOpen(true);
                       }}
-                      className="cursor-pointer border-b border-border/40 transition hover:bg-muted/20"
+                      className={`cursor-pointer border-b border-border/40 transition hover:bg-muted/20 ${isSelected ? "bg-primary/5" : ""}`}
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
@@ -468,25 +545,14 @@ function MarketplacePage() {
                           {a.change.toFixed(1)}%
                         </span>
                       </td>
-                      <td className="px-3 py-4">
-                        <div className="ml-auto flex h-6 w-20 items-end gap-0.5">
-                          {Array.from({ length: 10 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="flex-1 rounded-sm bg-gradient-to-t from-primary/40 to-secondary/60"
-                              style={{
-                                height: `${25 + Math.abs(Math.sin(i + a.price)) * 75}%`,
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </td>
+                      <td className="px-3 py-4 text-right font-mono">${a.liquidity}M</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setSelectedAssetId(a.id ?? a.sym);
                               openOrder(a, "buy");
                             }}
                             className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20"
@@ -497,6 +563,7 @@ function MarketplacePage() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setSelectedAssetId(a.id ?? a.sym);
                               openOrder(a, "sell");
                             }}
                             className="rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/20"
@@ -516,23 +583,96 @@ function MarketplacePage() {
         <div className="space-y-6 lg:col-span-4">
           <div className="panel p-5">
             <DashSectionHeader
-              eyebrow="Portfolio"
-              title="Your book (demo)"
-              desc="Positions, hedges, and retirement queue for carbon offsets."
+              eyebrow="Selected asset"
+              title={selectedAsset?.name ?? "Market overview"}
+              desc={`Live pricing, verification score and order book depth for ${selectedAsset?.sym ?? "the selected asset"}.`}
             />
-            <div className="space-y-2 font-mono text-xs">
-              <div className="flex justify-between border-b border-border/40 py-2">
-                <span className="text-muted-foreground">AMZ-CO₂</span>
-                <span className="text-primary">+42,000 RIU</span>
+            <div className="grid gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/20 p-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Price</div>
+                  <div className="font-mono text-lg">${selectedAsset?.price.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Verification</div>
+                  <div className="font-mono text-lg">{selectedAsset?.verification}%</div>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-border/40 py-2">
-                <span className="text-muted-foreground">H₂O-SEC</span>
-                <span className="text-secondary">+18,200 RIU</span>
+              <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/20 p-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Region</div>
+                  <div>{selectedAsset?.region}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Liquidity</div>
+                  <div>${selectedAsset?.liquidity}M</div>
+                </div>
               </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">Retirement pending</span>
-                <span className="text-accent">3,100 tCO₂e</span>
+              <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm leading-relaxed text-muted-foreground">
+                {selectedAsset?.story}
               </div>
+              <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Market depth (top 5 bids / asks)</span>
+                  <span className="font-mono text-secondary">{orderBook?.volume24h ?? "—"} vol</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="panel p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Wallet summary</div>
+                <p className="text-xs text-muted-foreground">Connected trading account and order activity.</p>
+              </div>
+              {wallet ? (
+                <button
+                  type="button"
+                  onClick={disconnect}
+                  className="rounded-md border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-muted/50"
+                >
+                  Disconnect
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => connect("Sanctum")}
+                  className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/15"
+                >
+                  Connect wallet
+                </button>
+              )}
+            </div>
+            <div className="mt-4 grid gap-3 text-sm">
+              <div className="rounded-lg border border-border bg-muted/20 p-4">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Wallet address</div>
+                <div className="mt-2 font-mono">{wallet ? shortAddress : "No wallet connected"}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Balance</div>
+                  <div className="mt-2 font-mono">{wallet ? `${wallet.balanceRGN.toFixed(2)} RGN` : "—"}</div>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">USD value</div>
+                  <div className="mt-2 font-mono">{wallet ? `$${wallet.balanceUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "—"}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Open orders</div>
+                  <div className="mt-2 font-mono">{pendingCount}</div>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Order history</div>
+                  <div className="mt-2 font-mono">{totalOrders}</div>
+                </div>
+              </div>
+              {!wallet && (
+                <div className="rounded-lg border border-dashed border-border bg-muted/10 p-4 text-xs text-muted-foreground">
+                  Connect a wallet to place orders and see settlement tracking in your order history.
+                </div>
+              )}
             </div>
           </div>
           <div className="panel p-5">
@@ -608,6 +748,7 @@ function MarketplacePage() {
         open={orderOpen}
         onOpenChange={setOrderOpen}
         initialSide={orderSide}
+        onViewOrders={goToOrders}
       />
       <Sheet open={mpesaTradeOpen} onOpenChange={setMpesaTradeOpen}>
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto border-t border-border bg-card">
