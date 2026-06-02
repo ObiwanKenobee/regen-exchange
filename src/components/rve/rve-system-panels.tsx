@@ -154,7 +154,7 @@ export function IdentityTrustPanel() {
 export function MarketplaceLifecyclePanel() {
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ["rve-asset-registry"],
-    queryFn: () => getAssets({ limit: 6 }),
+    queryFn: () => getAssets({ data: { limit: 6 } }),
   });
 
   const marketScore = useMemo(() => {
@@ -394,7 +394,7 @@ export function IntegrationPanel() {
 export function OperationsObservabilityPanel() {
   const { data: orders = [] } = useQuery({
     queryKey: ["rve-observability-orders"],
-    queryFn: () => getOrders({ limit: 10 }),
+    queryFn: () => getOrders({ data: { limit: 10 } }),
   });
 
   return (

@@ -35,13 +35,16 @@ export function getSigningKey(kid?: string): string {
 export function signJwt(payload: string | object | Buffer, options?: SignOptions & { kid?: string }) {
   const kid = options?.kid || getOptionalEnv("JWT_KID") || "current";
   const secret = getSigningKey(kid);
-  return jwt.sign(payload, secret, {
-    ...options,
+  const { kid: _ignored, ...rest } = options ?? {};
+  const signOptions: SignOptions = {
+    ...rest,
     header: {
-      ...(options?.header ?? {}),
+      alg: (rest.algorithm as any) ?? "HS256",
+      ...(rest.header ?? {}),
       kid,
     },
-  });
+  };
+  return jwt.sign(payload, secret, signOptions);
 }
 
 export function verifyJwt<T extends JwtPayload = JwtPayload>(token: string): T {

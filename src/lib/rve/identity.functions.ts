@@ -698,7 +698,7 @@ export const createTradingOrder = createServerFn({ method: "POST" })
         }),
       ]);
 
-      trades.push(createdTrade);
+      void createdTrade;
       remainingQuantity -= matchQuantity;
       executedAt = now;
       order = updatedOrder;
@@ -786,8 +786,8 @@ export const getOrderBook = createServerFn({ method: "GET" })
 
     const aggregateSide = (side: "buy" | "sell") => {
       const grouped = pendingOrders
-        .filter((order) => order.side === side)
-        .reduce((acc: Array<{ price: number; quantity: number; orders: number }>, order) => {
+        .filter((order: any) => order.side === side)
+        .reduce((acc: Array<{ price: number; quantity: number; orders: number }>, order: any) => {
           const price = order.price ?? asset.currentPrice;
           const existing = acc.find((entry) => entry.price === price);
           if (existing) {
@@ -799,7 +799,7 @@ export const getOrderBook = createServerFn({ method: "GET" })
           return acc;
         }, []);
 
-      return grouped.sort((a, b) => (side === "buy" ? b.price - a.price : a.price - b.price));
+      return grouped.sort((a: { price: number }, b: { price: number }) => (side === "buy" ? b.price - a.price : a.price - b.price));
     };
 
     const bids = aggregateSide("buy").slice(0, data.depth ?? 10);
@@ -812,7 +812,7 @@ export const getOrderBook = createServerFn({ method: "GET" })
         status: { in: ["filled", "partially_filled"] },
         createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
-    }).then((result) => result._sum.quantity ?? 0);
+    }).then((result: any) => result._sum.quantity ?? 0);
 
     return {
       assetId: data.assetId,

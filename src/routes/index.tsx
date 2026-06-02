@@ -102,10 +102,10 @@ function RVEDashboard() {
               { l: "Verification", h: "#verification" },
               { l: "Gov", to: "/governance" as const },
             ].map((n) =>
-              "to" in n ? (
+              "to" in n && n.to ? (
                 <Link
                   key={n.l}
-                  to={n.to}
+                  to={n.to as "/governance"}
                   className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
                 >
                   {n.l}
