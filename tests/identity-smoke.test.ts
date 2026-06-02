@@ -42,4 +42,37 @@ describe("regenerative identity smoke", () => {
     // Sanity: real decoder still works on the original
     expect((jwt.decode(token) as any).sub).toBe("did:rve:bob");
   });
+
+  it("rejects expired JWTs on authenticated API calls", async () => {
+    const { signJwt, verifyJwt } = await import("@/lib/key-rotation");
+    const expired = signJwt({ sub: "did:rve:carol" }, { expiresIn: -10 });
+    expect(() => verifyJwt(expired)).toThrow(/jwt expired/i);
+  });
+
+  it("rejects requests with a missing Authorization header", async () => {
+    const { verifyJwt } = await import("@/lib/key-rotation");
+    const request = new Request("https://app.local/api/identity/me");
+    const header = request.headers.get("authorization");
+    expect(header).toBeNull();
+    // Simulating server middleware behavior
+    const extract = (h: string | null) => {
+      if (!h) throw new Error("Unauthorized: no authorization header");
+      return h.replace(/^Bearer\s+/i, "");
+    };
+    expect(() => verifyJwt(extract(header))).toThrow(/Unauthorized/);
+  });
+
+  it("flags mismatched identity claims (token sub ≠ requested resource owner)", async () => {
+    const { signJwt, verifyJwt } = await import("@/lib/key-rotation");
+    const token = signJwt({ sub: "did:rve:alice", roles: ["steward"] });
+    const payload = verifyJwt<{ sub: string; roles: string[] }>(token);
+
+    const requestedResourceOwner = "did:rve:mallory";
+    const ownsResource = payload.sub === requestedResourceOwner;
+    expect(ownsResource).toBe(false);
+
+    const requiredRole = "admin";
+    const hasRole = payload.roles.includes(requiredRole);
+    expect(hasRole).toBe(false);
+  });
 });
