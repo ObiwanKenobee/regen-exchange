@@ -13,7 +13,9 @@
     "audit": "npm audit --audit-level=moderate",
     "security:scan": "npm audit --audit-level=moderate",
     "generate": "prisma generate",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "postinstall": "prisma generate",
   "dependencies": {
