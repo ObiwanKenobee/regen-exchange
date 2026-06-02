@@ -173,7 +173,7 @@ function MarketplacePage() {
   const assetIdForOrderBook = selectedAsset?.id ?? selectedAsset?.sym ?? "";
   const { data: orderBook } = useQuery({
     queryKey: ["orderBook", assetIdForOrderBook],
-    queryFn: () => getOrderBook({ assetId: assetIdForOrderBook, depth: 10 }),
+    queryFn: () => getOrderBook({ data: { assetId: assetIdForOrderBook, depth: 10 } }),
     enabled: Boolean(assetIdForOrderBook),
   });
 
@@ -323,7 +323,7 @@ function MarketplacePage() {
                     {/* Bids */}
                     <div className="space-y-1">
                       <div className="text-xs text-slate-400 mb-2">Bids (Buy Orders)</div>
-                      {orderBookBids.map((bid, i) => (
+                      {orderBookBids.map((bid: any, i: number) => (
                         <button
                           key={`bid-${i}`}
                           type="button"
@@ -347,7 +347,7 @@ function MarketplacePage() {
                     {/* Asks */}
                     <div className="space-y-1">
                       <div className="text-xs text-slate-400 mb-2">Asks (Sell Orders)</div>
-                      {orderBookAsks.map((ask, i) => (
+                      {orderBookAsks.map((ask: any, i: number) => (
                         <button
                           key={`ask-${i}`}
                           type="button"

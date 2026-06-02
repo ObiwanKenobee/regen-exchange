@@ -76,12 +76,14 @@ export function OrderTicket({ asset, open, onOpenChange, initialSide = "buy", on
     try {
       if (asset?.id) {
         createdOrder = await createTradingOrder({
-          userId: wallet.address,
-          assetId: asset.id,
-          side,
-          type: orderType,
-          quantity,
-          price: orderType === "limit" ? limitPriceValue : undefined,
+          data: {
+            userId: wallet.address,
+            assetId: asset.id,
+            side,
+            type: orderType,
+            quantity,
+            price: orderType === "limit" ? limitPriceValue : undefined,
+          },
         });
       }
     } catch (error) {
