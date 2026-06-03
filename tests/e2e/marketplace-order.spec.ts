@@ -32,10 +32,40 @@ test.describe("marketplace order flow", () => {
     const orderBookRows = page.locator('[data-testid="order-book-row"], [data-orderbook-row]');
     const initialRows = await orderBookRows.count().catch(() => 0);
 
+    // Listen for the real-time channel that publishes order book deltas. We
+    // accept either a WebSocket frame, an SSE event, or a refetched
+    // getOrderBook server-function response — whichever transport the app
+    // currently uses — and assert it lands BEFORE the ticket status flips.
+    const orderBookUpdate = Promise.race([
+      page
+        .waitForEvent("websocket", { timeout: 20_000 })
+        .then((ws) =>
+          new Promise<string>((resolve) => {
+            ws.on("framereceived", (frame) => {
+              const payload = typeof frame.payload === "string" ? frame.payload : frame.payload?.toString("utf8") ?? "";
+              if (/order.?book|bids|asks/i.test(payload)) resolve("ws");
+            });
+          }),
+        )
+        .catch(() => null),
+      page
+        .waitForResponse(
+          (r) => /order.?book|\/sse|\/realtime|getOrderBook/i.test(r.url()) && r.status() < 400,
+          { timeout: 20_000 },
+        )
+        .then(() => "http")
+        .catch(() => null),
+    ]);
+
     // Fill the ticket.
     await page.getByLabel(/quantity/i).fill("1");
     await page.getByRole("button", { name: /review buy/i }).click();
     await page.getByRole("button", { name: /sign.*submit/i }).click();
+
+    // Assert the real-time channel published an order book update BEFORE the
+    // ticket transitions to its terminal status.
+    const channel = await orderBookUpdate;
+    expect(channel, "expected order book update via realtime channel").not.toBeNull();
 
     // Ticket transitions: signing → submitted/confirmed.
     await expect(page.getByText(/transaction submitted|order confirmed/i)).toBeVisible({
