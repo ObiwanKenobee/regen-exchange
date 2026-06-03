@@ -6,6 +6,8 @@ const BASE_URL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
+  // Default retries; per-test fixtures upgrade this for network-flagged tests
+  // (see tests/e2e/fixtures.ts -> retryByFailureType).
   retries: process.env.CI ? 2 : 1,
   fullyParallel: false,
   reporter: process.env.CI
