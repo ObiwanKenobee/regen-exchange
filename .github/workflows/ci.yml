@@ -49,3 +49,53 @@ jobs:
         run: bunx vitest run
       - name: Build
         run: bun run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Cache bun store
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Generate Prisma client
+        run: bun run generate
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+      - name: Build app
+        run: bun run build
+      - name: Run Playwright E2E tests
+        run: bun run test:e2e
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 14
+      - name: Upload Playwright traces & videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results
+          retention-days: 14
