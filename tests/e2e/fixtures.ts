@@ -138,3 +138,29 @@ export { expect };
 
 /** Tag a test as network-bound — gets +1 retry on top of the project default. */
 export const networkBound = { tag: "@network" as const };
+
+/**
+ * Variant test runner for network-bound suites: records a HAR file per test
+ * and grants an extra retry budget so transient network blips don't fail CI.
+ * Use in a file with:
+ *
+ *   import { networkTest as test, expect } from "./fixtures";
+ *   test.describe.configure({ retries: 4 });
+ */
+export const networkTest = test.extend({
+  context: async ({ browser }, use, info) => {
+    const harPath = join(info.outputDir, `${artifactBase(info)}.har`);
+    mkdirSync(dirname(harPath), { recursive: true });
+    const ctx = await browser.newContext({
+      recordHar: { path: harPath, mode: "minimal" },
+    });
+    await use(ctx);
+    await ctx.close();
+    if (info.status !== "passed" && existsSync(harPath)) {
+      await info.attach(`${artifactBase(info)}.har`, {
+        path: harPath,
+        contentType: "application/json",
+      });
+    }
+  },
+});
