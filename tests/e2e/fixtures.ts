@@ -1,5 +1,5 @@
 import { test as base, expect, type TestInfo } from "@playwright/test";
-import { mkdirSync, writeFileSync, existsSync, renameSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 /**
@@ -86,7 +86,7 @@ export const test = base.extend<{
   },
 });
 
-test.afterEach(async ({ realtimeEvents, context }, info) => {
+test.afterEach(async ({ realtimeEvents }, info) => {
   if (info.status === "passed" || info.status === "skipped") return;
 
   const base = artifactBase(info);
@@ -98,36 +98,24 @@ test.afterEach(async ({ realtimeEvents, context }, info) => {
   });
 
   // 2) Attach failure classification.
+  const cls = classifyFailure(info);
   await info.attach(`${base}-failure-class.txt`, {
-    body: Buffer.from(classifyFailure(info)),
+    body: Buffer.from(cls),
     contentType: "text/plain",
   });
 
-  // 3) For network failures, write a HAR alongside the trace.
-  //    (Network recording was enabled by the per-test newContext below.)
-  try {
-    const harPath = join(info.outputDir, `${base}.har`);
-    mkdirSync(dirname(harPath), { recursive: true });
-    // @ts-expect-error -- harPath is a private-ish hook; we fall back gracefully.
-    if (typeof context._writeHar === "function") await context._writeHar(harPath);
-  } catch {
-    // Best-effort; missing HAR shouldn't fail the run.
-  }
-
-  // 4) Rename auto-saved trace/video to the consistent naming scheme.
+  // 3) Copy auto-saved trace/video to a consistently-named sibling so
+  //    artifacts uploaded by CI are easy to correlate by test + attempt.
   for (const att of info.attachments) {
     if (!att.path || !existsSync(att.path)) continue;
     const ext = att.path.split(".").pop();
-    if (!ext) continue;
-    if (["zip", "webm", "png", "har"].includes(ext)) {
-      const target = join(dirname(att.path), `${base}.${ext}`);
-      if (target !== att.path && !existsSync(target)) {
-        try {
-          renameSync(att.path, target);
-          att.path = target;
-        } catch {
-          // ignore
-        }
+    if (!ext || !["zip", "webm", "png", "har"].includes(ext)) continue;
+    const target = join(dirname(att.path), `${base}.${ext}`);
+    if (target !== att.path && !existsSync(target)) {
+      try {
+        copyFileSync(att.path, target);
+      } catch {
+        // best-effort
       }
     }
   }
