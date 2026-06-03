@@ -27,6 +27,7 @@ import { Route as EcoIntelligenceRouteImport } from './routes/eco-intelligence'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicTradeExecuteRouteImport } from './routes/api/public/trade-execute'
 
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/student-dashboard',
@@ -118,6 +119,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTradeExecuteRoute = ApiPublicTradeExecuteRouteImport.update({
+  id: '/api/public/trade-execute',
+  path: '/api/public/trade-execute',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/research-hub': typeof ResearchHubRoute
   '/residential-homes': typeof ResidentialHomesRoute
   '/student-dashboard': typeof StudentDashboardRoute
+  '/api/public/trade-execute': typeof ApiPublicTradeExecuteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/research-hub': typeof ResearchHubRoute
   '/residential-homes': typeof ResidentialHomesRoute
   '/student-dashboard': typeof StudentDashboardRoute
+  '/api/public/trade-execute': typeof ApiPublicTradeExecuteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/research-hub': typeof ResearchHubRoute
   '/residential-homes': typeof ResidentialHomesRoute
   '/student-dashboard': typeof StudentDashboardRoute
+  '/api/public/trade-execute': typeof ApiPublicTradeExecuteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/research-hub'
     | '/residential-homes'
     | '/student-dashboard'
+    | '/api/public/trade-execute'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/research-hub'
     | '/residential-homes'
     | '/student-dashboard'
+    | '/api/public/trade-execute'
   id:
     | '__root__'
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/research-hub'
     | '/residential-homes'
     | '/student-dashboard'
+    | '/api/public/trade-execute'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   ResearchHubRoute: typeof ResearchHubRoute
   ResidentialHomesRoute: typeof ResidentialHomesRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
+  ApiPublicTradeExecuteRoute: typeof ApiPublicTradeExecuteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/trade-execute': {
+      id: '/api/public/trade-execute'
+      path: '/api/public/trade-execute'
+      fullPath: '/api/public/trade-execute'
+      preLoaderRoute: typeof ApiPublicTradeExecuteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResearchHubRoute: ResearchHubRoute,
   ResidentialHomesRoute: ResidentialHomesRoute,
   StudentDashboardRoute: StudentDashboardRoute,
+  ApiPublicTradeExecuteRoute: ApiPublicTradeExecuteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
