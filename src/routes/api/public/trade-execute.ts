@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import {
   NonceStore,
   verifyTradeRequest,
@@ -22,34 +23,46 @@ function getSecret(): string {
   return process.env.TRADE_EXEC_SECRET || "dev-trade-secret";
 }
 
-function reasonToStatus(reason: string): number {
-  switch (reason) {
-    case "bad_signature":
-      return 401;
-    case "expired":
-      return 410;
-    case "future":
-      return 400;
-    case "replayed":
-      return 409;
-    default:
-      return 400;
-  }
+type ErrorCode =
+  | "bad_signature"
+  | "expired"
+  | "future"
+  | "replayed"
+  | "invalid_json"
+  | "invalid_request";
+
+const ERROR_TABLE: Record<ErrorCode, { status: number; message: string }> = {
+  bad_signature: { status: 401, message: "Signature verification failed" },
+  expired: { status: 410, message: "Request timestamp is outside the allowed window" },
+  future: { status: 400, message: "Request timestamp is too far in the future" },
+  replayed: { status: 409, message: "Nonce has already been used" },
+  invalid_json: { status: 400, message: "Request body is not valid JSON" },
+  invalid_request: { status: 400, message: "Request body failed schema validation" },
+};
+
+function errorResponse(code: ErrorCode, correlationId: string) {
+  const { status, message } = ERROR_TABLE[code];
+  return Response.json(
+    { ok: false, error: { code, message, correlationId } },
+    { status, headers: { "x-correlation-id": correlationId } },
+  );
 }
 
 export const Route = createFileRoute("/api/public/trade-execute")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const correlationId =
+          request.headers.get("x-correlation-id") || randomUUID();
         let json: unknown;
         try {
           json = await request.json();
         } catch {
-          return Response.json({ ok: false, error: "invalid_json" }, { status: 400 });
+          return errorResponse("invalid_json", correlationId);
         }
         const parsed = SignedRequestSchema.safeParse(json);
         if (!parsed.success) {
-          return Response.json({ ok: false, error: "invalid_request" }, { status: 400 });
+          return errorResponse("invalid_request", correlationId);
         }
         const result = verifyTradeRequest(
           getSecret(),
@@ -57,12 +70,12 @@ export const Route = createFileRoute("/api/public/trade-execute")({
           nonces,
         );
         if (!result.ok) {
-          return Response.json(
-            { ok: false, error: result.reason },
-            { status: reasonToStatus(result.reason) },
-          );
+          return errorResponse(result.reason as ErrorCode, correlationId);
         }
-        return Response.json({ ok: true });
+        return Response.json(
+          { ok: true, correlationId },
+          { headers: { "x-correlation-id": correlationId } },
+        );
       },
     },
   },
