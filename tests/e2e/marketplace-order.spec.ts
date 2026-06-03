@@ -1,4 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { networkTest as test, expect } from "./fixtures";
+
+test.describe.configure({ retries: process.env.CI ? 4 : 1 });
 
 /**
  * End-to-end: place an order in the marketplace UI and verify the order book
@@ -12,7 +14,7 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("marketplace order flow", () => {
-  test("place order → order book updates → ticket status → trade execution", async ({ page }) => {
+  test("place order → order book updates → ticket status → trade execution", async ({ page, realtimeEvents }) => {
     await page.goto("/marketplace");
 
     // Connect wallet (mock connector exposed by the wallet context).
@@ -32,40 +34,24 @@ test.describe("marketplace order flow", () => {
     const orderBookRows = page.locator('[data-testid="order-book-row"], [data-orderbook-row]');
     const initialRows = await orderBookRows.count().catch(() => 0);
 
-    // Listen for the real-time channel that publishes order book deltas. We
-    // accept either a WebSocket frame, an SSE event, or a refetched
-    // getOrderBook server-function response — whichever transport the app
-    // currently uses — and assert it lands BEFORE the ticket status flips.
-    const orderBookUpdate = Promise.race([
-      page
-        .waitForEvent("websocket", { timeout: 20_000 })
-        .then((ws) =>
-          new Promise<string>((resolve) => {
-            ws.on("framereceived", (frame) => {
-              const payload = typeof frame.payload === "string" ? frame.payload : frame.payload?.toString("utf8") ?? "";
-              if (/order.?book|bids|asks/i.test(payload)) resolve("ws");
-            });
-          }),
-        )
-        .catch(() => null),
-      page
-        .waitForResponse(
-          (r) => /order.?book|\/sse|\/realtime|getOrderBook/i.test(r.url()) && r.status() < 400,
-          { timeout: 20_000 },
-        )
-        .then(() => "http")
-        .catch(() => null),
-    ]);
+    // Deterministic realtime sync: wait for a specific order-book diff event
+    // identified by its monotonic sequence number (`seq`). We snapshot the
+    // last-seen seq before placing the order, then wait until we observe a
+    // diff with a strictly greater seq for the same asset on the realtime
+    // channel (WebSocket frame or SSE response).
+    const lastSeqBefore = lastOrderBookSeq(realtimeEvents);
+    const orderBookDiff = waitForOrderBookDiff(page, lastSeqBefore, 20_000);
 
     // Fill the ticket.
     await page.getByLabel(/quantity/i).fill("1");
     await page.getByRole("button", { name: /review buy/i }).click();
     await page.getByRole("button", { name: /sign.*submit/i }).click();
 
-    // Assert the real-time channel published an order book update BEFORE the
-    // ticket transitions to its terminal status.
-    const channel = await orderBookUpdate;
-    expect(channel, "expected order book update via realtime channel").not.toBeNull();
+    // Assert the realtime channel published a NEWER diff (seq > before)
+    // before the ticket transitions to its terminal status.
+    const diff = await orderBookDiff;
+    expect(diff, "expected order book diff via realtime channel").not.toBeNull();
+    expect(diff!.seq).toBeGreaterThan(lastSeqBefore);
 
     // Ticket transitions: signing → submitted/confirmed.
     await expect(page.getByText(/transaction submitted|order confirmed/i)).toBeVisible({
@@ -82,3 +68,74 @@ test.describe("marketplace order flow", () => {
     expect(finalRows).toBeGreaterThanOrEqual(initialRows);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Realtime helpers — sequence-number aware
+// ---------------------------------------------------------------------------
+
+function tryParseSeq(raw: string): number | null {
+  try {
+    const obj = JSON.parse(raw);
+    const seq =
+      typeof obj?.seq === "number"
+        ? obj.seq
+        : typeof obj?.sequence === "number"
+          ? obj.sequence
+          : typeof obj?.data?.seq === "number"
+            ? obj.data.seq
+            : null;
+    if (typeof seq === "number" && /order.?book|bids|asks|diff/i.test(raw)) return seq;
+  } catch {
+    // Non-JSON frames are ignored.
+  }
+  return null;
+}
+
+function lastOrderBookSeq(events: { preview: string }[]): number {
+  let max = 0;
+  for (const e of events) {
+    const s = tryParseSeq(e.preview);
+    if (s !== null && s > max) max = s;
+  }
+  return max;
+}
+
+async function waitForOrderBookDiff(
+  page: import("@playwright/test").Page,
+  afterSeq: number,
+  timeoutMs: number,
+): Promise<{ seq: number; transport: "ws" | "http" } | null> {
+  return await Promise.race<Promise<{ seq: number; transport: "ws" | "http" } | null>>([
+    new Promise((resolve) => {
+      page.on("websocket", (ws) => {
+        ws.on("framereceived", (frame) => {
+          const raw = typeof frame.payload === "string" ? frame.payload : frame.payload?.toString("utf8") ?? "";
+          const seq = tryParseSeq(raw);
+          if (seq !== null && seq > afterSeq) resolve({ seq, transport: "ws" });
+        });
+      });
+    }),
+    page
+      .waitForResponse(
+        async (r) => {
+          if (!/order.?book|\/sse|\/realtime|getOrderBook/i.test(r.url())) return false;
+          if (r.status() >= 400) return false;
+          try {
+            const body = await r.text();
+            const seq = tryParseSeq(body);
+            return seq !== null && seq > afterSeq;
+          } catch {
+            return false;
+          }
+        },
+        { timeout: timeoutMs },
+      )
+      .then(async (r) => {
+        const body = await r.text();
+        const seq = tryParseSeq(body) ?? afterSeq + 1;
+        return { seq, transport: "http" as const };
+      })
+      .catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+  ]);
+}
