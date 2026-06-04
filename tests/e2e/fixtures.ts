@@ -50,6 +50,7 @@ function artifactBase(info: TestInfo): string {
 export const test = base.extend<{
   realtimeEvents: RealtimeEvent[];
   failureClass: FailureClass;
+  correlationIds: string[];
 }>({
   // Per-test ring buffer of realtime events. Tests push into this; the
   // afterEach hook below attaches the last 200 to the report on failure.
@@ -80,13 +81,25 @@ export const test = base.extend<{
     await use(buf);
   },
 
+  // Capture every x-correlation-id returned by the trade-execute API so
+  // tests can cross-check the ID surfaced in the ticket's execution record
+  // against the server's authoritative log identifier.
+  correlationIds: async ({ page }, use) => {
+    const ids: string[] = [];
+    page.on("response", (res) => {
+      const id = res.headers()["x-correlation-id"];
+      if (id && /trade-execute|order/i.test(res.url())) ids.push(id);
+    });
+    await use(ids);
+  },
+
   // Expose the classified failure type to tests/hooks via fixture.
   failureClass: async ({}, use, info) => {
     await use(classifyFailure(info));
   },
 });
 
-test.afterEach(async ({ realtimeEvents }, info) => {
+test.afterEach(async ({ realtimeEvents, correlationIds }, info) => {
   if (info.status === "passed" || info.status === "skipped") return;
 
   const base = artifactBase(info);
@@ -103,6 +116,15 @@ test.afterEach(async ({ realtimeEvents }, info) => {
     body: Buffer.from(cls),
     contentType: "text/plain",
   });
+
+  // 2b) Attach observed trade correlation IDs so the HTML report links
+  //     the failing test to the server's log identifier(s).
+  if (correlationIds.length) {
+    await info.attach(`${base}-correlation-ids.json`, {
+      body: Buffer.from(JSON.stringify(correlationIds, null, 2)),
+      contentType: "application/json",
+    });
+  }
 
   // 3) Copy auto-saved trace/video to a consistently-named sibling so
   //    artifacts uploaded by CI are easy to correlate by test + attempt.
