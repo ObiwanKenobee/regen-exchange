@@ -15,7 +15,8 @@ import { signTradeRequest } from "../../src/lib/security/trade-signature";
 
 const SECRET = process.env.TRADE_EXEC_SECRET || "dev-trade-secret";
 const ENDPOINT = "/api/public/trade-execute";
-const N = Number(process.env.E2E_LOAD_N ?? 20);
+const N = Number(process.env.E2E_LOAD_N ?? 100);
+const STREAM_HOLD_MS = Number(process.env.E2E_LOAD_STREAM_MS ?? 5_000);
 
 test.describe.configure({ retries: 1 });
 
@@ -34,9 +35,21 @@ test("concurrent order placement remains consistent", async ({ baseURL }) => {
   const expectedBuyQty = orders.filter((o) => o.side === "buy").reduce((s, o) => s + o.qty, 0);
   const expectedSellQty = expectedTotalQty - expectedBuyQty;
 
+  // Stagger the burst across STREAM_HOLD_MS to keep the realtime channel
+  // under sustained load (not a single instantaneous spike).
+  const gap = Math.max(1, Math.floor(STREAM_HOLD_MS / Math.max(1, N)));
   const responses = await Promise.all(
-    requests.map((r) => ctx.post(ENDPOINT, { data: r })),
+    requests.map(
+      (r, i) =>
+        new Promise<Awaited<ReturnType<typeof ctx.post>>>((resolve) => {
+          setTimeout(() => resolve(ctx.post(ENDPOINT, { data: r })), i * gap);
+        }),
+    ),
   );
+
+  // Keep the connection open a bit longer so any trailing diffs land
+  // before we sample the order book.
+  await new Promise((r) => setTimeout(r, 1_000));
 
   const bodies = await Promise.all(responses.map((r) => r.json()));
 
