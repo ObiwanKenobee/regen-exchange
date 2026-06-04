@@ -21,14 +21,18 @@ test.describe.configure({ retries: 1 });
 
 test("concurrent order placement remains consistent", async ({ baseURL }) => {
   const ctx = await pwRequest.newContext({ baseURL });
-  const requests = Array.from({ length: N }, (_, i) =>
-    signTradeRequest(SECRET, {
-      orderId: `load-${Date.now()}-${i}`,
-      side: i % 2 === 0 ? "buy" : "sell",
-      qty: 1 + (i % 5),
-      price: 100 + i,
-    }),
-  );
+  // Build a deterministic order set so aggregate liquidity is easy to verify.
+  // Each side gets N/2 orders with a known total quantity.
+  const orders = Array.from({ length: N }, (_, i) => ({
+    orderId: `load-${Date.now()}-${i}`,
+    side: (i % 2 === 0 ? "buy" : "sell") as "buy" | "sell",
+    qty: 1 + (i % 5),
+    price: 100 + i,
+  }));
+  const requests = orders.map((o) => signTradeRequest(SECRET, o));
+  const expectedTotalQty = orders.reduce((s, o) => s + o.qty, 0);
+  const expectedBuyQty = orders.filter((o) => o.side === "buy").reduce((s, o) => s + o.qty, 0);
+  const expectedSellQty = expectedTotalQty - expectedBuyQty;
 
   const responses = await Promise.all(
     requests.map((r) => ctx.post(ENDPOINT, { data: r })),
@@ -48,11 +52,52 @@ test("concurrent order placement remains consistent", async ({ baseURL }) => {
   const ids = new Set(bodies.map((b) => b.correlationId));
   expect(ids.size).toBe(N);
 
-  // Order-book consistency check: after the burst, the public order book
-  // endpoint (if present) should still respond 2xx and return parseable JSON.
+  // No correlationId should be reused across requests (would indicate a
+  // shared cache key / dedupe collision under concurrency).
+  expect(ids.size).toBe(bodies.length);
+
+  // ---- Aggregate order-book consistency ---------------------------------
+  // After the burst, the public order book endpoint (if present) should
+  // satisfy the conservation law:
+  //
+  //   sum(fills.qty) + sum(remainingLiquidity.qty) === expectedTotalQty
+  //
+  // and no trade id should appear more than once.
   const book = await ctx.get("/api/public/order-book").catch(() => null);
   if (book && book.status() < 400) {
     const json = await book.json().catch(() => null);
     expect(json, "order book should be parseable JSON").not.toBeNull();
+
+    const fills: Array<{ id?: string; qty?: number; side?: string }> =
+      json?.fills ?? json?.trades ?? [];
+    const remaining: Array<{ qty?: number; side?: string }> = [
+      ...(json?.bids ?? []),
+      ...(json?.asks ?? []),
+    ];
+
+    // Only enforce the conservation check if the endpoint actually reports
+    // quantities — keeps the smoke green on environments where the order
+    // book is a stub but still flags real regressions where it isn't.
+    const fillTotal = fills.reduce((s, f) => s + (Number(f.qty) || 0), 0);
+    const remTotal = remaining.reduce((s, r) => s + (Number(r.qty) || 0), 0);
+    if (fillTotal + remTotal > 0) {
+      expect(
+        fillTotal + remTotal,
+        `conservation: fills(${fillTotal}) + remaining(${remTotal}) should equal submitted(${expectedTotalQty})`,
+      ).toBe(expectedTotalQty);
+
+      // Per-side conservation (buys vs sells).
+      const sideQty = (arr: Array<{ qty?: number; side?: string }>, side: string) =>
+        arr.filter((x) => x.side === side).reduce((s, x) => s + (Number(x.qty) || 0), 0);
+      const buyAccounted = sideQty(fills, "buy") + sideQty(remaining, "buy");
+      const sellAccounted = sideQty(fills, "sell") + sideQty(remaining, "sell");
+      expect(buyAccounted).toBe(expectedBuyQty);
+      expect(sellAccounted).toBe(expectedSellQty);
+    }
+
+    // No trade id should be duplicated across concurrent executions.
+    const tradeIds = fills.map((f) => f.id).filter((id): id is string => !!id);
+    const uniqueTradeIds = new Set(tradeIds);
+    expect(uniqueTradeIds.size, "duplicate trade ids detected across concurrent fills").toBe(tradeIds.length);
   }
 });
