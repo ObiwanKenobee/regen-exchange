@@ -89,13 +89,49 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ github.run_id }}-${{ github.run_attempt }}
           path: playwright-report
           retention-days: 14
-      - name: Upload Playwright traces & videos
-        if: failure()
+      # Always upload per-attempt artifacts (HAR, trace, video, screenshots)
+      # using the same `<file>__<title>__attempt<N>.<ext>` naming the
+      # fixtures emit, so failing attempts are easy to correlate.
+      - name: Upload Playwright traces
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
-          path: test-results
+          name: playwright-traces-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/**/*.zip
+            test-results/**/*__attempt*.zip
           retention-days: 14
+          if-no-files-found: ignore
+      - name: Upload Playwright videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-videos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/**/*.webm
+            test-results/**/*__attempt*.webm
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Upload Playwright screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/**/*.png
+            test-results/**/*__attempt*.png
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Upload Playwright HAR files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-har-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/**/*.har
+            test-results/**/*__attempt*.har
+          retention-days: 14
+          if-no-files-found: ignore
