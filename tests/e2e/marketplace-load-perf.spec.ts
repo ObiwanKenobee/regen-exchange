@@ -2,6 +2,7 @@ import { request as pwRequest } from "@playwright/test";
 import { networkTest as test, expect } from "./fixtures";
 import { signTradeRequest } from "../../src/lib/security/trade-signature";
 import { lastOrderBookSeq, waitForOrderBookDiff } from "./realtime-helpers";
+import { loadPerfBudgets } from "./perf-budgets";
 
 /**
  * Load smoke with performance guardrails. In addition to the conservation +
@@ -20,8 +21,10 @@ import { lastOrderBookSeq, waitForOrderBookDiff } from "./realtime-helpers";
 const SECRET = process.env.TRADE_EXEC_SECRET || "dev-trade-secret";
 const ENDPOINT = "/api/public/trade-execute";
 const N = Number(process.env.E2E_PERF_LOAD_N ?? 50);
-const MAX_TTS_MS = Number(process.env.E2E_MAX_TTS_MS ?? 15_000);
-const MAX_DIFF_LAG_MS = Number(process.env.E2E_MAX_DIFF_LAG_MS ?? 3_000);
+// Fail fast if E2E_MAX_TTS_MS / E2E_MAX_DIFF_LAG_MS are set but malformed.
+// loadPerfBudgets() throws with an actionable message in that case so CI
+// surfaces the configuration error instead of silently using NaN budgets.
+const { maxTtsMs: MAX_TTS_MS, maxDiffLagMs: MAX_DIFF_LAG_MS } = loadPerfBudgets();
 
 test.describe.configure({ retries: 1 });
 

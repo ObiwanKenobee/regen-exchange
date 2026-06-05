@@ -1,5 +1,11 @@
 import { networkTest as test, expect } from "./fixtures";
 import { tryParseSeq } from "./realtime-helpers";
+import {
+  attachSseTimeline,
+  forceSseTransport,
+  installMockSseStream,
+  type SseTimelineEntry,
+} from "./sse-helpers";
 
 test.describe.configure({ retries: process.env.CI ? 3 : 1 });
 
@@ -24,46 +30,15 @@ test("SSE: deterministic out-of-order stream → resync → correlationId matche
   correlationIds,
 }, testInfo) => {
   // Timeline of every seq frame the test injected / the client accepted.
-  type GapEntry = { at: number; injected: number; accepted: number | null; note: string };
-  const timeline: GapEntry[] = [];
+  const timeline: SseTimelineEntry[] = [];
   const propagation: string[] = [];
-  const record = (e: GapEntry) => timeline.push(e);
-
-  // Force SSE: stub WebSocket so the client falls back to SSE transport.
-  await page.addInitScript(() => {
-    // @ts-expect-error - override for E2E
-    window.WebSocket = class {
-      constructor() {
-        throw new Error("websocket disabled for SSE e2e");
-      }
-    };
-  });
 
   // Deterministic SSE stream: baseline, two stale, then strict +1 resync.
   const SCRIPTED_SEQS = [10, 9, 8, 11] as const;
   const BASELINE = 10;
 
-  await context.route(/\/sse|\/realtime|order.?book/i, async (route, request) => {
-    if (!/text\/event-stream|sse|realtime|order.?book/i.test(request.headers()["accept"] ?? "") &&
-        !/\/sse|\/realtime|order.?book/i.test(request.url())) {
-      return route.continue();
-    }
-    const frames = SCRIPTED_SEQS
-      .map((seq) => `data: ${JSON.stringify({ topic: "orderbook", seq, bids: [], asks: [] })}\n\n`)
-      .join("");
-    for (const seq of SCRIPTED_SEQS) {
-      record({ at: Date.now(), injected: seq, accepted: null, note: "scripted" });
-    }
-    return route.fulfill({
-      status: 200,
-      headers: {
-        "content-type": "text/event-stream",
-        "cache-control": "no-cache",
-        "x-mock": "deterministic-sse",
-      },
-      body: frames,
-    });
-  });
+  await forceSseTransport(page);
+  await installMockSseStream(context, { seqs: SCRIPTED_SEQS, timeline });
 
   await page.goto("/marketplace");
 
@@ -84,6 +59,11 @@ test("SSE: deterministic out-of-order stream → resync → correlationId matche
   // BASELINE; only the strict +1 resync (seq 11) may.
   expect(highestAccepted).toBeGreaterThanOrEqual(BASELINE);
   expect(highestAccepted).toBeLessThanOrEqual(BASELINE + 1);
+
+  // Capture the correlationId observed during the SSE resync window so we
+  // can assert it propagates end-to-end into the ticket execution record
+  // (not just the final visible ticket status).
+  const resyncCorrelationIds = [...correlationIds];
 
   // Place an order and confirm the ticket's correlationId matches the
   // server's x-correlation-id from the trade-execute response.
@@ -111,25 +91,31 @@ test("SSE: deterministic out-of-order stream → resync → correlationId matche
         .catch(() => null)) ??
       (await page.getByTestId("execution-correlation-id").innerText().catch(() => null));
     propagation.push(`4. ticket surfaced correlationId = ${surfaced ?? "(none)"}`);
+    const executionRecordId = await page
+      .locator('[data-testid="execution-record"] [data-correlation-id]')
+      .first()
+      .getAttribute("data-correlation-id")
+      .catch(() => null);
+    propagation.push(`5. execution-record correlationId = ${executionRecordId ?? "(none)"}`);
     if (surfaced) expect(surfaced).toBe(serverId);
+    if (executionRecordId) expect(executionRecordId).toBe(serverId);
+    // If the resync window observed any trade-execute correlationIds, the
+    // SAME id must appear in the final ticket execution record — proving
+    // the id flowed through the SSE-driven resync path and into the
+    // persisted execution row, not just the visible status text.
+    if (resyncCorrelationIds.length && (surfaced || executionRecordId)) {
+      expect(resyncCorrelationIds).toContain(serverId);
+    }
   }
 
   // Attach diagnostics to the HTML report regardless of pass/fail so the
-  // sequence-gap behavior and correlationId hop chain are inspectable.
-  await testInfo.attach("sse-seq-gap-timeline.json", {
-    body: Buffer.from(
-      JSON.stringify(
-        {
-          scripted: SCRIPTED_SEQS,
-          baseline: BASELINE,
-          highestAccepted,
-          timeline,
-        },
-        null,
-        2,
-      ),
-    ),
-    contentType: "application/json",
+  // sequence-gap behavior and correlationId hop chain are inspectable
+  // even for green CI runs (useful for regression triage).
+  await attachSseTimeline(testInfo, {
+    scripted: SCRIPTED_SEQS,
+    baseline: BASELINE,
+    highestAccepted,
+    timeline,
   });
   await testInfo.attach("correlation-id-propagation.txt", {
     body: Buffer.from(propagation.join("\n") || "(no order placed)"),
