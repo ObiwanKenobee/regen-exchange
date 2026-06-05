@@ -29,7 +29,7 @@ test("load smoke: perf guardrails + conservation + no duplicate trade IDs", asyn
   page,
   baseURL,
   realtimeEvents,
-}) => {
+}, testInfo) => {
   await page.goto("/marketplace");
 
   // Wait for the stream to come up so we can measure diff lag.
@@ -98,6 +98,24 @@ test("load smoke: perf guardrails + conservation + no duplicate trade IDs", asyn
   }
 
   // --- Guardrail assertions ------------------------------------------------
+  const summary = {
+    browser: testInfo.project.name,
+    orders: N,
+    timeToTerminalStatusMs: tts,
+    maxTtsBudgetMs: MAX_TTS_MS,
+    maxOrderBookDiffLagMs: maxLag,
+    maxLagBudgetMs: MAX_DIFF_LAG_MS,
+    acceptedDiffs: diffTimes.length,
+    lastSeq,
+  };
+  // Concise perf summary -> stdout (CI logs) and HTML report attachment.
+  // eslint-disable-next-line no-console
+  console.log(`[perf-summary] ${JSON.stringify(summary)}`);
+  await testInfo.attach("perf-summary.json", {
+    body: Buffer.from(JSON.stringify(summary, null, 2)),
+    contentType: "application/json",
+  });
+
   expect(
     tts,
     `time-to-terminal-status ${tts}ms exceeded budget ${MAX_TTS_MS}ms`,
