@@ -135,3 +135,17 @@ jobs:
             test-results/**/*__attempt*.har
           retention-days: 14
           if-no-files-found: ignore
+      # Always upload SSE timeline + perf-summary diagnostics (attached by
+      # tests via testInfo.attach regardless of pass/fail) so regressions
+      # can be diffed across runs without opening the HTML report.
+      - name: Upload Playwright diagnostics (perf/SSE)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/**/perf-summary.json
+            test-results/**/sse-seq-gap-timeline.json
+            test-results/**/correlation-id-propagation.txt
+          retention-days: 14
+          if-no-files-found: ignore
