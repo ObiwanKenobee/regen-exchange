@@ -29,8 +29,6 @@ test("SSE: deterministic out-of-order stream → resync → correlationId matche
   const propagation: string[] = [];
   const record = (e: GapEntry) => timeline.push(e);
 
-  testInfo.attach.bind(testInfo);
-
   // Force SSE: stub WebSocket so the client falls back to SSE transport.
   await page.addInitScript(() => {
     // @ts-expect-error - override for E2E
