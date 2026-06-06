@@ -29,6 +29,26 @@ export interface CorrelationAssertionResult {
   matched: { ticket: boolean; executionRecord: boolean; resync: boolean };
 }
 
+export interface MultiCorrelationContext {
+  /** One entry per order/trade attempt, newest last. */
+  expected: ReadonlyArray<{
+    /** The server x-correlation-id from trade-execute for this attempt. */
+    serverId: string;
+    /** correlationIds observed in the SSE resync window for this attempt. */
+    resyncIds?: readonly string[];
+  }>;
+}
+
+export interface MultiCorrelationAssertionResult {
+  perId: Array<{
+    serverId: string;
+    surfacedMatch: boolean;
+    executionRecordMatch: boolean;
+    resyncMatch: boolean;
+  }>;
+  allMatched: boolean;
+}
+
 /**
  * Assert correlationId consistency across the SSE resync + ticket
  * execution surfaces and attach a propagation log to the HTML report.
@@ -99,4 +119,72 @@ export async function assertCorrelationIdConsistency(
   }
 
   return { serverId, surfaced, executionRecordId, matched };
+}
+
+/**
+ * Multi-id variant of {@link assertCorrelationIdConsistency} that validates
+ * an ordered list of correlationIds across several resync windows + ticket
+ * execution records. Useful for specs that submit multiple orders and want
+ * to assert ALL of them propagate end-to-end (not only the last one).
+ *
+ * The DOM is queried for every `[data-correlation-id]` and
+ * `[data-testid="execution-record"] [data-correlation-id]`; each expected
+ * serverId must appear in at least one surface. Per-attempt resync windows
+ * (if provided) must contain the matching serverId.
+ */
+export async function assertCorrelationIdsConsistency(
+  page: Page,
+  testInfo: TestInfo,
+  ctx: MultiCorrelationContext,
+): Promise<MultiCorrelationAssertionResult> {
+  expect(ctx.expected.length, "no expected correlationIds provided").toBeGreaterThan(0);
+
+  const surfaced = await page
+    .locator("[data-correlation-id]")
+    .evaluateAll((els) =>
+      els.map((e) => (e as HTMLElement).getAttribute("data-correlation-id") ?? ""),
+    )
+    .catch(() => [] as string[]);
+  const executionRecordIds = await page
+    .locator('[data-testid="execution-record"] [data-correlation-id]')
+    .evaluateAll((els) =>
+      els.map((e) => (e as HTMLElement).getAttribute("data-correlation-id") ?? ""),
+    )
+    .catch(() => [] as string[]);
+
+  const lines: string[] = [
+    `expected ${ctx.expected.length} correlationId(s)`,
+    `surfaced on ticket = [${surfaced.join(", ")}]`,
+    `execution-record    = [${executionRecordIds.join(", ")}]`,
+  ];
+
+  const perId = ctx.expected.map((e, i) => {
+    const surfacedMatch = surfaced.includes(e.serverId);
+    const executionRecordMatch = executionRecordIds.includes(e.serverId);
+    const resyncMatch = e.resyncIds ? e.resyncIds.includes(e.serverId) : true;
+    lines.push(
+      `#${i + 1} ${e.serverId} → ticket=${surfacedMatch} record=${executionRecordMatch} resync=${resyncMatch}`,
+    );
+    return { serverId: e.serverId, surfacedMatch, executionRecordMatch, resyncMatch };
+  });
+
+  await testInfo.attach("correlation-id-propagation.txt", {
+    body: Buffer.from(lines.join("\n")),
+    contentType: "text/plain",
+  });
+
+  for (const r of perId) {
+    if (surfaced.length || executionRecordIds.length) {
+      expect(
+        r.surfacedMatch || r.executionRecordMatch,
+        `correlationId ${r.serverId} not found in ticket or execution-record`,
+      ).toBe(true);
+    }
+    expect(
+      r.resyncMatch,
+      `correlationId ${r.serverId} missing from its resync window`,
+    ).toBe(true);
+  }
+
+  return { perId, allMatched: perId.every((r) => r.resyncMatch && (r.surfacedMatch || r.executionRecordMatch)) };
 }
