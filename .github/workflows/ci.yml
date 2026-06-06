@@ -92,6 +92,38 @@ jobs:
       - name: Build artifact index
         if: always()
         run: bun run scripts/build-artifact-index.ts test-results playwright-report
+      # Print the resolved path to the artifact index plus the key
+      # diagnostic filenames per test so engineers can jump straight from
+      # the CI log to the attachment they need without opening the full
+      # HTML report.
+      - name: Print artifact index summary
+        if: always()
+        run: |
+          echo "::group::Playwright artifact index"
+          INDEX="playwright-report/artifact-index.html"
+          INDEX_JSON="playwright-report/artifact-index.json"
+          if [ -f "$INDEX" ]; then
+            echo "Artifact index (HTML): $GITHUB_WORKSPACE/$INDEX"
+            echo "Artifact index (JSON): $GITHUB_WORKSPACE/$INDEX_JSON"
+          else
+            echo "No artifact index produced (no test-results found)."
+          fi
+          if [ -f "$INDEX_JSON" ]; then
+            echo ""
+            echo "Key attachments per test:"
+            bunx --bun node -e '
+              const fs = require("fs");
+              const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              const KEY = new Set(["perf-summary","sse-timeline","correlation-log"]);
+              for (const [test, items] of Object.entries(data.byTest)) {
+                console.log("• " + test);
+                for (const i of items) {
+                  if (KEY.has(i.kind)) console.log("    [" + i.kind + "] " + i.path);
+                }
+              }
+            ' "$INDEX_JSON"
+          fi
+          echo "::endgroup::"
       - name: Upload Playwright HTML report
         if: always()
         uses: actions/upload-artifact@v4
