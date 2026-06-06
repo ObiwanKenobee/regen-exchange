@@ -85,6 +85,13 @@ jobs:
         run: bun run build
       - name: Run Playwright E2E tests
         run: bun run test:e2e
+      # Generate a single artifact index (JSON + HTML) covering every
+      # attached diagnostic — runs on pass and fail so green CI still
+      # surfaces perf-summary / SSE timeline / correlation logs for
+      # regression triage without opening the full HTML report.
+      - name: Build artifact index
+        if: always()
+        run: bun run scripts/build-artifact-index.ts test-results playwright-report
       - name: Upload Playwright HTML report
         if: always()
         uses: actions/upload-artifact@v4
